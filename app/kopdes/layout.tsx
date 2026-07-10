@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-// import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { SidebarLayout } from "@/components/nav/sidebar";
-import { ArrowLeftRight, Clock, LayoutDashboard, ShoppingCart } from "lucide-react";
+import { ArrowLeftRight, LayoutDashboard, ShoppingCart } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/kopdes", icon: <LayoutDashboard /> },
@@ -15,14 +15,14 @@ export default async function KopdesLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // const session = await auth.api.getSession({
-  //   headers: await headers(),
-  // });
-  //
-  // if (!session) redirect("/login");
-  //
-  // const role = (session.user as { role?: string }).role;
-  // if (role !== "kopdes") redirect(`/${role ?? "user"}`);
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) redirect("/login");
+
+  const role = (session.user as { role?: string }).role;
+  if (role !== "kopdes") redirect(`/${role ?? "user"}`);
 
   return (
     <SidebarLayout role="kopdes" navItems={navItems}>

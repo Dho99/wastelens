@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-// import { useSession, signOut } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 import { useState } from "react";
 
 export interface TabItem {
@@ -12,7 +12,7 @@ export interface TabItem {
 }
 
 export function TabBarLayout({
-  // role,
+  role,
   tabs,
   children,
 }: {
@@ -21,22 +21,22 @@ export function TabBarLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  // const router = useRouter();
+  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
-  // const { data: session } = useSession();
+  const { data: session } = useSession();
 
-  // const userName = session?.user?.nama ?? "";
-  // const userRole = session?.user?.role ?? role;
+  const userName = session?.user?.nama ?? "";
+  const userRole = session?.user?.role ?? role;
 
   const handleLogout = async () => {
-    // setLoggingOut(true);
-    // await signOut();
-    // router.push("/login");
-    // router.refresh();
+    setLoggingOut(true);
+    await signOut();
+    router.push("/login");
+    router.refresh();
   };
 
   const isActive = (href: string) => {
-    // if (href === `/${userRole}`) return pathname === `/${userRole}`;
+    if (href === `/${userRole}`) return pathname === `/${userRole}`;
     return pathname.startsWith(href);
   };
 
@@ -62,11 +62,11 @@ export function TabBarLayout({
           <span className="text-sm font-semibold">Sampah</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* {userName && ( */}
-          {/*   <span className="text-xs text-neutral-500 max-w-32 truncate"> */}
-          {/*     {userName} */}
-          {/*   </span> */}
-          {/* )} */}
+          {userName && (
+            <span className="text-xs text-neutral-500 max-w-32 truncate">
+              {userName}
+            </span>
+          )}
           <button
             onClick={handleLogout}
             disabled={loggingOut}

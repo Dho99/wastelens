@@ -1,0 +1,253 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model user {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+
+  // Custom application fields
+  nama       String
+  saldo_koin Int    @default(0)
+  status     String @default("active")
+  role       String @default("user")
+
+  // Better Auth relations
+  sessions session[]
+  accounts account[]
+
+  // Application relations
+  dinas          Dinas[]
+  petugas        Petugas[]
+  laporan        Laporan[]
+  notifikasi     Notifikasi[]
+  transaksi_koin TransaksiKoin[]
+  kopdes         Kopdes[]
+  penukaran      Penukaran[]
+
+  @@map("user")
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime
+  updatedAt  DateTime
+
+  @@map("verification")
+}
+
+// ─── Application models ───────────────────────────────────
+
+model Dinas {
+  id         String @id @default(uuid()) @db.Uuid
+  user_id    String
+  nama_dinas String
+  kontak     String
+
+  user         user          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  petugas      Petugas[]
+  area_cakupan AreaCakupan[]
+  kendaraan    Kendaraan[]
+  laporan      Laporan[]
+
+  @@map("DINAS")
+}
+
+model Petugas {
+  id       String @id @default(uuid()) @db.Uuid
+  dinas_id String @db.Uuid
+  user_id  String
+  nama     String
+  no_hp    String
+
+  dinas   Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  user    user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  laporan Laporan[]
+
+  @@map("PETUGAS")
+}
+
+model AreaCakupan {
+  id           String @id @default(uuid()) @db.Uuid
+  dinas_id     String @db.Uuid
+  nama_wilayah String
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@map("AREA_CAKUPAN")
+}
+
+model Kendaraan {
+  id           String @id @default(uuid()) @db.Uuid
+  dinas_id     String @db.Uuid
+  jenis        String
+  kapasitas    Int
+  current_load Int
+
+  dinas   Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  laporan Laporan[]
+
+  @@map("KENDARAAN")
+}
+
+model Laporan {
+  id              String  @id @default(uuid()) @db.Uuid
+  user_id         String
+  dinas_id        String? @db.Uuid
+  petugas_id      String? @db.Uuid
+  kendaraan_id    String? @db.Uuid
+  foto_url        String
+  lokasi_lat      Float
+  lokasi_lng      Float
+  kategori_ukuran String
+  status          String
+
+  user              user               @relation(fields: [user_id], references: [id])
+  dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
+  petugas           Petugas?           @relation(fields: [petugas_id], references: [id])
+  kendaraan         Kendaraan?         @relation(fields: [kendaraan_id], references: [id])
+  foto              Foto[]
+  transaksi_koin    TransaksiKoin[]
+  verifikasi_pickup VerifikasiPickup[]
+  notifikasi        Notifikasi[]
+
+  @@map("LAPORAN")
+}
+
+model Foto {
+  id         String @id @default(uuid()) @db.Uuid
+  laporan_id String @db.Uuid
+  url        String
+
+  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+
+  @@map("FOTO")
+}
+
+model TransaksiKoin {
+  id         String @id @default(uuid()) @db.Uuid
+  user_id    String
+  laporan_id String @db.Uuid
+  jumlah     Int
+  jenis      String
+
+  user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+
+  @@map("TRANSAKSI_KOIN")
+}
+
+model VerifikasiPickup {
+  id           String   @id @default(uuid()) @db.Uuid
+  laporan_id   String   @db.Uuid
+  foto_sebelum String
+  foto_sesudah String
+  waktu        DateTime @default(now())
+
+  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+
+  @@map("VERIFIKASI_PICKUP")
+}
+
+model Notifikasi {
+  id          String  @id @default(uuid()) @db.Uuid
+  user_id     String
+  laporan_id  String  @db.Uuid
+  pesan       String
+  status_baca Boolean @default(false)
+
+  user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+
+  @@map("NOTIFIKASI")
+}
+
+model Kopdes {
+  id      String @id @default(uuid()) @db.Uuid
+  user_id String
+  nama    String
+  alamat  String
+
+  user   user     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  produk Produk[]
+
+  @@map("KOPDES")
+}
+
+model Produk {
+  id          String @id @default(uuid()) @db.Uuid
+  kopdes_id   String @db.Uuid
+  nama_barang String
+  harga_koin  Int
+  stok        Int
+
+  kopdes    Kopdes      @relation(fields: [kopdes_id], references: [id], onDelete: Cascade)
+  penukaran Penukaran[]
+
+  @@map("PRODUK")
+}
+
+model Penukaran {
+  id          String @id @default(uuid()) @db.Uuid
+  user_id     String
+  produk_id   String @db.Uuid
+  jumlah_koin Int
+
+  user   user   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  produk Produk @relation(fields: [produk_id], references: [id], onDelete: Cascade)
+
+  @@map("PENUKARAN")
+}

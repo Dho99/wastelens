@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-// import { useSession, signOut } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 
 export interface NavItem {
   label: string;
@@ -24,20 +24,20 @@ export function SidebarLayout({
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
-  // const { data: session } = useSession();
+  const { data: session } = useSession();
 
-  // const userName = session?.user?.nama ?? "";
-  // const userRole = session?.user?.role ?? role;
+  const userName = session?.user?.nama ?? "";
+  const userRole = session?.user?.role ?? role;
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    // await signOut();
+    await signOut();
     router.push("/login");
     router.refresh();
   };
 
   const isActive = (href: string) => {
-    // if (href === `/${userRole}`) return pathname === `/${userRole}`;
+    if (href === `/${userRole}`) return pathname === `/${userRole}`;
     return pathname.startsWith(href);
   };
 
@@ -98,15 +98,15 @@ export function SidebarLayout({
         </nav>
 
         <div className="border-t p-3 space-y-2">
-          {/* {userName && ( */}
-          {/*   <p className="truncate text-xs font-medium text-neutral-700 px-1"> */}
-          {/*     {userName} */}
-          {/*   </p> */}
-          {/* )} */}
-          {/* <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 capitalize"> */}
-          {/*   <span className="size-1.5 rounded-full bg-emerald-500" /> */}
-          {/*   {userRole} */}
-          {/* </span> */}
+          {userName && (
+            <p className="truncate text-xs font-medium text-neutral-700 px-1">
+              {userName}
+            </p>
+          )}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 capitalize">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            {userRole}
+          </span>
           <button
             onClick={handleLogout}
             disabled={loggingOut}
