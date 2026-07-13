@@ -2,14 +2,15 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { SidebarLayout } from "@/components/nav/sidebar";
-import { ArrowLeftRight, Flag, LayoutDashboard, Settings, Users } from "lucide-react";
+import { ArrowLeftRight, CircleDollarSign, Flag, LayoutDashboard, Settings, Users } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: <LayoutDashboard /> },
   { label: "Pengaturan", href: "/admin/settings", icon: <Settings /> },
   { label: "Pengguna", href: "/admin/users", icon: <Users /> },
-  { label: "Laporan", href: "/admin/report", icon: <Flag /> },
-  { label: "Riwayat Penukaran", href: "/admin/history", icon: <ArrowLeftRight /> },
+  { label: "Laporan", href: "/admin/reports", icon: <Flag /> },
+  { label: "Riwayat Transaksi Koin", href: "/admin/transactions/coins", icon: <CircleDollarSign /> },
+  { label: "Riwayat Penukaran", href: "/admin/transactions/products", icon: <ArrowLeftRight /> },
 ];
 
 export default async function AdminLayout({
