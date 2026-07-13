@@ -25,8 +25,8 @@ export function TabBarLayout({
   const [loggingOut, setLoggingOut] = useState(false);
   const { data: session } = useSession();
 
-  const userName = session?.user?.nama ?? "";
-  const userRole = session?.user?.role ?? role;
+  const userName = (session?.user as { nama?: string })?.nama ?? "";
+  const userRole = (session?.user as { role?: string })?.role ?? role;
 
   const handleLogout = async () => {
     setLoggingOut(true);
