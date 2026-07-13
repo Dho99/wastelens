@@ -47,4 +47,4 @@ export function verifyRedemptionPayload(payload: RedemptionPayload): boolean {
   const raw = `${payload.penukaran_id}:${payload.user_id}:${payload.produk_id}:${payload.timestamp}:${QR_SECRET}`;
   const expectedSignature = createHash("sha256").update(raw).digest("hex");
   return payload.signature === expectedSignature;
-}
+
