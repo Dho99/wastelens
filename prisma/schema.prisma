@@ -144,16 +144,19 @@ model Kendaraan {
 }
 
 model Laporan {
-  id              String  @id @default(uuid()) @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
   user_id         String
-  dinas_id        String? @db.Uuid
-  petugas_id      String? @db.Uuid
-  kendaraan_id    String? @db.Uuid
-  foto_url        String
-  lokasi_lat      Float
-  lokasi_lng      Float
-  kategori_ukuran String
-  status          String
+  dinas_id        String?  @db.Uuid
+  petugas_id      String?  @db.Uuid
+  kendaraan_id    String?  @db.Uuid
+  foto_url                String
+  lokasi_lat              Float
+  lokasi_lng              Float
+  kategori_ukuran         String
+  rekomendasi_kendaraan   String?
+  status                  String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
@@ -228,11 +231,13 @@ model Kopdes {
 }
 
 model Produk {
-  id          String @id @default(uuid()) @db.Uuid
-  kopdes_id   String @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  kopdes_id   String   @db.Uuid
   nama_barang String
   harga_koin  Int
   stok        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   kopdes    Kopdes      @relation(fields: [kopdes_id], references: [id], onDelete: Cascade)
   penukaran Penukaran[]
@@ -241,10 +246,15 @@ model Produk {
 }
 
 model Penukaran {
-  id          String @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
   user_id     String
-  produk_id   String @db.Uuid
+  produk_id   String   @db.Uuid
   jumlah_koin Int
+  status      String   @default("PENDING")
+  qr_token    String?
+  redeemed_at DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user   user   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   produk Produk @relation(fields: [produk_id], references: [id], onDelete: Cascade)
