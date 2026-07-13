@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, Plus, XCircle } from "lucide-react";
+import Link from "next/link";
 
 const ROLES = ["user", "petugas", "kopdes", "dinas", "admin"] as const;
 const ROLE_LABELS: Record<string, string> = {
@@ -92,7 +93,16 @@ export default function AdminUsersPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Kelola Pengguna</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Kelola Pengguna</h1>
+        <Link
+          href="/admin/users/add"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        >
+          <Plus size={16} />
+          Tambah Pengguna
+        </Link>
+      </div>
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <select
