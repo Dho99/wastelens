@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 
 const ROLES = ["user", "petugas", "kopdes", "dinas", "admin"] as const;
@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
   const [alasan, setAlasan] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: "20" });
@@ -45,12 +45,19 @@ export default function AdminUsersPage() {
       const json = await res.json();
       setUsers(json.data ?? []);
       setPagination(json.pagination ?? null);
-    } catch {} finally {
+    } catch {
+      /* empty */
+    } finally {
       setLoading(false);
     }
-  }
+  }, [page, roleFilter, statusFilter]);
 
-  useEffect(() => { fetchUsers(); }, [page, roleFilter, statusFilter]);
+  useEffect(() => {
+    // setLoading(true) is synchronous here, but loading is not in the
+    // dependency array so it cannot trigger a cascading render loop.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchUsers();
+  }, [fetchUsers]);
 
   async function toggleStatus(u: User) {
     const newStatus = u.status === "active" ? "nonaktif" : "active";
