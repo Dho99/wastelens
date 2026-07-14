@@ -40,7 +40,21 @@ model user {
   kopdes         Kopdes[]
   penukaran      Penukaran[]
 
+  isBanned      Boolean        @default(false)
+  bannedReasons BannedReason[]
+
   @@map("user")
+}
+
+model BannedReason {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  alasan    String
+  createdAt DateTime @default(now())
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("banned_reason")
 }
 
 model session {
@@ -90,7 +104,6 @@ model verification {
 }
 
 // ─── Application models ───────────────────────────────────
-
 model Dinas {
   id         String @id @default(uuid()) @db.Uuid
   user_id    String
@@ -144,19 +157,19 @@ model Kendaraan {
 }
 
 model Laporan {
-  id              String   @id @default(uuid()) @db.Uuid
-  user_id         String
-  dinas_id        String?  @db.Uuid
-  petugas_id      String?  @db.Uuid
-  kendaraan_id    String?  @db.Uuid
-  foto_url                String
-  lokasi_lat              Float
-  lokasi_lng              Float
-  kategori_ukuran         String
-  rekomendasi_kendaraan   String?
-  status                  String
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                    String   @id @default(uuid()) @db.Uuid
+  user_id               String
+  dinas_id              String?  @db.Uuid
+  petugas_id            String?  @db.Uuid
+  kendaraan_id          String?  @db.Uuid
+  foto_url              String
+  lokasi_lat            Float
+  lokasi_lng            Float
+  kategori_ukuran       String
+  rekomendasi_kendaraan String?
+  status                String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
@@ -246,15 +259,15 @@ model Produk {
 }
 
 model Penukaran {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   user_id     String
-  produk_id   String   @db.Uuid
+  produk_id   String    @db.Uuid
   jumlah_koin Int
-  status      String   @default("PENDING")
+  status      String    @default("PENDING")
   qr_token    String?
   redeemed_at DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   user   user   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   produk Produk @relation(fields: [produk_id], references: [id], onDelete: Cascade)
