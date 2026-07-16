@@ -2,7 +2,6 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { getTaskDetail, type TaskDetail } from "@/lib/services/petugas-task";
 import dynamic from "next/dynamic";
 import { MapPin, Truck, Building, User, Camera } from "lucide-react";
@@ -12,7 +11,7 @@ const LeafletRoutingMap = dynamic(
   { ssr: false, loading: () => <div className="h-64 animate-pulse rounded-xl bg-neutral-100" /> }
 );
 
-function TaskDetailContent({ params }: { params: Promise<{ id: string }> }) {
+export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [task, setTask] = useState<TaskDetail | null>(null);
@@ -170,17 +169,5 @@ function TaskDetailContent({ params }: { params: Promise<{ id: string }> }) {
         Kembali ke Daftar Tugas
       </button>
     </div>
-  );
-}
-
-export default function TaskDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  return (
-    <ErrorBoundary>
-      <TaskDetailContent params={params} />
-    </ErrorBoundary>
   );
 }

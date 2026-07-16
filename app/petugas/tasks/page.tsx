@@ -2,12 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { getAssignedTasks, type TaskItem } from "@/lib/services/petugas-task";
 import { getOptimizedRoute } from "@/lib/services/route-optimization";
 import { MapPin, Truck } from "lucide-react";
 
-function TaskListContent() {
+export default function TaskListPage() {
   const router = useRouter();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,13 +155,5 @@ function TaskListContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function TaskListPage() {
-  return (
-    <ErrorBoundary>
-      <TaskListContent />
-    </ErrorBoundary>
   );
 }
