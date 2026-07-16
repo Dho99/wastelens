@@ -1,31 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import {
-    getDashboardDummyData,
-    DashboardData,
-} from "./services/dashboardService";
-import { Greeting } from "./components/Greeting";
-import { BalanceCard } from "./components/BalanceCard";
-import { ReportCTA } from "./components/ReportCTA";
-import { ContributionStats } from "./components/ContributionStats";
-import { RecentActivities } from "./components/RecentActivities";
-import { EnvironmentHeroes } from "./components/EnvironmentHeroes";
-import { NearestPartners } from "./components/NearestPartners";
-import { SkeletonLoader } from "./components/SkeletonLoader";
+import type { DashboardData } from "./(dashboard)/types/dashboard";
+import { Greeting } from "./(dashboard)/components/Greeting";
+import { BalanceCard } from "./(dashboard)/components/BalanceCard";
+import { ReportCTA } from "./(dashboard)/components/ReportCTA";
+import { ContributionStats } from "./(dashboard)/components/ContributionStats";
+import { RecentActivities } from "./(dashboard)/components/RecentActivities";
+import { EnvironmentHeroes } from "./(dashboard)/components/EnvironmentHeroes";
+import { NearestPartners } from "./(dashboard)/components/NearestPartners";
+import { SkeletonLoader } from "./(dashboard)/components/SkeletonLoader";
+import { apiFetch } from "@/lib/api-client";
+import { dashboardService } from "./(dashboard)/services/dashboardService";
 
 export default function UserDashboardPage() {
-    const mockData = getDashboardDummyData();
     const { data: session } = useSession();
     const router = useRouter();
-    const [data, setData] = useState<DashboardData | null>(mockData);
-    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState<DashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const { getDashboardData } = dashboardService;
+
+    // const fetchDashboardData = useCallback(async () => {
+    //     try {
+    //         const response = await apiFetch<DashboardData>(getDashboardData);
+    //         setData(response);
+    //     } catch (error) {
+    //         console.error("Error fetching dashboard data:", error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // }, []);
 
     // useEffect(() => {
-    //     setLoading(false);
-    // }, []);
+    //     fetchDashboardData();
+    // }, [fetchDashboardData]);
 
     if (loading) {
         return <SkeletonLoader />;
