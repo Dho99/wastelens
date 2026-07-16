@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 import jsQR from "jsqr";
 
 interface RedemptionPayload {
@@ -23,12 +22,13 @@ interface RedemptionResult {
 
 type ScanStep = "idle" | "scanning" | "decoded" | "success" | "error";
 
-function ScanContent() {
+export default function ScanPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animRef = useRef<number>(0);
+  const scanFrameRef = useRef<(() => void) | null>(null);
 
   const [step, setStep] = useState<ScanStep>("idle");
   const [payload, setPayload] = useState<RedemptionPayload | null>(null);
@@ -44,30 +44,6 @@ function ScanContent() {
     }
   }, []);
 
-  const startCamera = useCallback(async () => {
-    setStep("scanning");
-    setErrorMsg("");
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-
-        videoRef.current.onloadedmetadata = () => {
-          scanFrame();
-        };
-      }
-    } catch {
-      setErrorMsg("Tidak dapat mengakses kamera. Izinkan akses kamera.");
-      setStep("error");
-    }
-  }, []);
-
   const scanFrame = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -75,7 +51,7 @@ function ScanContent() {
     const canvas = canvasRef.current;
 
     if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-      animRef.current = requestAnimationFrame(scanFrame);
+      animRef.current = requestAnimationFrame(() => scanFrameRef.current?.());
       return;
     }
 
@@ -102,8 +78,49 @@ function ScanContent() {
       }
     }
 
-    animRef.current = requestAnimationFrame(scanFrame);
+    animRef.current = requestAnimationFrame(() => scanFrameRef.current?.());
   }, [stopCamera]);
+
+  useEffect(() => {
+    scanFrameRef.current = scanFrame;
+  });
+
+  const startCamera = useCallback(async () => {
+    setStep("scanning");
+    setErrorMsg("");
+
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      setErrorMsg(
+        "Kamera tidak tersedia. Pastikan Anda mengakses melalui HTTPS atau localhost."
+      );
+      setStep("error");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+
+        videoRef.current.onloadedmetadata = () => {
+          scanFrame();
+        };
+      }
+    } catch {
+      setErrorMsg("Tidak dapat mengakses kamera. Izinkan akses kamera.");
+      setStep("error");
+    }
+  }, [scanFrame]);
+
+
 
   useEffect(() => {
     return () => stopCamera();
@@ -302,13 +319,5 @@ function ScanContent() {
         Kembali
       </button>
     </div>
-  );
-}
-
-export default function ScanPage() {
-  return (
-    <ErrorBoundary>
-      <ScanContent />
-    </ErrorBoundary>
   );
 }
