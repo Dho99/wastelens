@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { ScanLine, Package, LogOut } from "lucide-react";
 
 interface DashboardStats {
@@ -13,7 +12,7 @@ interface DashboardStats {
   total_penukaran: number;
 }
 
-function KopdesDashboardContent() {
+export default function KopdesDashboardPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -115,13 +114,5 @@ function KopdesDashboardContent() {
         ))}
       </div>
     </div>
-  );
-}
-
-export default function KopdesDashboardPage() {
-  return (
-    <ErrorBoundary>
-      <KopdesDashboardContent />
-    </ErrorBoundary>
   );
 }
