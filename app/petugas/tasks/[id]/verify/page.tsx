@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { getTaskDetail, completeTask, type TaskDetail } from "@/lib/services/petugas-task";
 
-function VerifyContent({ params }: { params: Promise<{ id: string }> }) {
+export default function VerifyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -191,17 +190,5 @@ function CameraIcon() {
         d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
       />
     </svg>
-  );
-}
-
-export default function VerifyPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  return (
-    <ErrorBoundary>
-      <VerifyContent params={params} />
-    </ErrorBoundary>
   );
 }
