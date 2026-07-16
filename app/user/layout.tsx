@@ -7,9 +7,9 @@ import { ArrowLeftRight, Camera, Clock, LayoutDashboard, Settings } from "lucide
 const tabs = [
   { label: "Beranda", href: "/user", icon: <LayoutDashboard /> },
   { label: "Scan Sampah", href: "/user/scan", icon: <Camera /> },
-  { label: "Tukar Koin", href: "/user/exchange", icon: <ArrowLeftRight /> },
+  { label: "Tukar Koin", href: "/user/reward", icon: <ArrowLeftRight /> },
   { label: "Riwayat", href: "/user/history", icon: <Clock /> },
-  { label: "Settings", href: "/user/settings", icon: <Settings /> },
+  { label: "Akun", href: "/user/profile", icon: <Settings /> },
 ];
 
 export default async function UserLayout({
