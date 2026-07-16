@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 import jsQR from "jsqr";
 
 interface RedemptionPayload {
@@ -23,7 +22,7 @@ interface RedemptionResult {
 
 type ScanStep = "idle" | "scanning" | "decoded" | "success" | "error";
 
-function ScanContent() {
+export default function ScanPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -320,13 +319,5 @@ function ScanContent() {
         Kembali
       </button>
     </div>
-  );
-}
-
-export default function ScanPage() {
-  return (
-    <ErrorBoundary>
-      <ScanContent />
-    </ErrorBoundary>
   );
 }
