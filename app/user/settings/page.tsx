@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
-import { ErrorBoundary } from "@/components/error-boundary";
 
 interface UserProfile {
   nama: string;
@@ -11,7 +10,7 @@ interface UserProfile {
   role: string;
 }
 
-function SettingsContent() {
+export default function SettingsPage() {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,13 +62,5 @@ function SettingsContent() {
         </p>
       </div>
     </div>
-  );
-}
-
-export default function SettingsPage() {
-  return (
-    <ErrorBoundary>
-      <SettingsContent />
-    </ErrorBoundary>
   );
 }
