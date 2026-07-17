@@ -12,6 +12,12 @@ function isPublic(pathname: string): boolean {
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
+  // Allow the DLH UI to be reviewed locally without requiring a seeded
+  // database account. Production keeps the normal session protection.
+  if (process.env.NODE_ENV === "development" && pathname.startsWith("/dinas")) {
+    return NextResponse.next();
+  }
+
   // Logout — redirect to login (Better Auth handles cookie clearing client-side)
   if (searchParams.has("logout")) {
     return NextResponse.redirect(new URL("/login", request.url));

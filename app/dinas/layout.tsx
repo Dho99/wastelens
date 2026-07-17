@@ -7,6 +7,10 @@ export default async function DinasLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // The DLH slicing can be previewed locally before auth/database seeding is
+  // available. This bypass is removed automatically in production builds.
+  if (process.env.NODE_ENV === "development") return children;
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
