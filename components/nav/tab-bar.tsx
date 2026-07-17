@@ -87,7 +87,7 @@ export function TabBarLayout({
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 pb-16`}>
+      <main className={`flex-1 pb-16 px-5`}>
         {children}
       </main>
 
