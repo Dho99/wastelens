@@ -11,6 +11,8 @@ import {
   Crosshair,
   Layers3,
   MapPin,
+  Minus,
+  Plus,
   Sparkles,
   X,
 } from "lucide-react";
@@ -43,31 +45,33 @@ function MapCanvas({ reportOpen, onOpenReport }: { reportOpen: boolean; onOpenRe
         className="pointer-events-none absolute left-[-41.95%] top-[-6.75%] h-auto w-[234.8%] max-w-none select-none transition-transform duration-300"
         style={{ transform: `scale(${zoom})` }}
       />
-      <div className="absolute left-6 top-5 flex rounded-full bg-white/90 p-1 text-xs shadow-sm backdrop-blur-sm">
+      <div className="absolute left-5 top-5 flex h-[62px] rounded-full bg-[#fff0d2] p-1.5 text-sm shadow-[0_13px_18px_rgba(18,27,22,0.42)] sm:left-7 sm:h-[68px] sm:text-base">
         <button
           type="button"
           onClick={() => setView("heatmap")}
-          className={`rounded-full px-4 py-2 font-bold ${view === "heatmap" ? "bg-[#087529] text-white" : "text-[#2f3833]"}`}
+          className={`min-w-[120px] rounded-full px-5 font-extrabold transition-colors sm:min-w-[145px] ${view === "heatmap" ? "bg-[#087529] text-white" : "text-[#17231d] hover:bg-white/35"}`}
         >
           Heatmap
         </button>
         <button
           type="button"
           onClick={() => setView("points")}
-          className={`rounded-full px-4 py-2 font-semibold ${view === "points" ? "bg-[#087529] text-white" : "text-[#2f3833]"}`}
+          className={`min-w-[145px] rounded-full px-5 font-semibold transition-colors sm:min-w-[175px] ${view === "points" ? "bg-[#087529] text-white" : "text-[#17231d] hover:bg-white/35"}`}
         >
           Titik Laporan
         </button>
       </div>
 
-      <div className="absolute left-6 top-20 grid gap-2">
-        <div className="overflow-hidden rounded-full bg-white/90 shadow-sm backdrop-blur-sm">
-          <button type="button" onClick={() => setZoom((value) => Math.min(1.35, value + 0.1))} aria-label="Perbesar peta" className="grid size-11 place-items-center border-b border-slate-200 text-xl hover:bg-white">+</button>
-          <button type="button" onClick={() => setZoom((value) => Math.max(0.85, value - 0.1))} aria-label="Perkecil peta" className="grid size-11 place-items-center text-2xl hover:bg-white">−</button>
+      <div className="absolute left-5 top-[100px] grid gap-4 sm:left-7 sm:top-[108px]">
+        <div className="grid gap-3 rounded-[34px] bg-[#fff0d2] p-3 shadow-[0_13px_18px_rgba(18,27,22,0.42)]">
+          <button type="button" onClick={() => setZoom((value) => Math.min(1.35, value + 0.1))} aria-label="Perbesar peta" className="grid size-14 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_7px_rgba(50,64,56,0.22)] transition hover:bg-white sm:size-16"><Plus className="size-8" strokeWidth={2.2} /></button>
+          <button type="button" onClick={() => setZoom((value) => Math.max(0.85, value - 0.1))} aria-label="Perkecil peta" className="grid size-14 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_7px_rgba(50,64,56,0.22)] transition hover:bg-white sm:size-16"><Minus className="size-8" strokeWidth={2.2} /></button>
         </div>
-        <button type="button" onClick={() => setLocated((value) => !value)} aria-pressed={located} aria-label="Lokasi saya" className={`grid size-12 place-items-center rounded-full shadow-sm ${located ? "bg-[#087529] text-white" : "bg-white/90 hover:bg-white"}`}>
-          <Crosshair className="size-5" />
-        </button>
+        <div className="rounded-[34px] bg-[#fff0d2] p-3 shadow-[0_13px_18px_rgba(18,27,22,0.42)]">
+          <button type="button" onClick={() => setLocated((value) => !value)} aria-pressed={located} aria-label="Lokasi saya" className={`grid size-14 place-items-center rounded-full shadow-[0_2px_7px_rgba(50,64,56,0.22)] transition sm:size-16 ${located ? "bg-[#087529] text-white" : "bg-[#f4faff] text-[#12232c] hover:bg-white"}`}>
+            <Crosshair className="size-8" strokeWidth={2.3} />
+          </button>
+        </div>
       </div>
 
       {located && <span className="absolute left-1/2 top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white bg-[#087529] shadow-xl"><span className="size-2 rounded-full bg-white" /></span>}
