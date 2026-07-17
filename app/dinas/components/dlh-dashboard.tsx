@@ -1,0 +1,388 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import {
+  Bell,
+  ChevronDown,
+  ChevronUp,
+  ClipboardCheck,
+  ClipboardList,
+  Crosshair,
+  Layers3,
+  Map,
+  MapPin,
+  Menu,
+  MoreVertical,
+  Settings,
+  Sparkles,
+  UserCog,
+  Warehouse,
+  X,
+} from "lucide-react";
+
+const navItems = [
+  { label: "Dashboard Peta", icon: Map, active: true },
+  { label: "Kelola Laporan", icon: ClipboardList },
+  { label: "Kelola Logistik", icon: Warehouse },
+  { label: "Kelola Akun", icon: UserCog },
+];
+
+const vehicles = [
+  { id: "truck-01", name: "Truk Sampah 01", meta: "Kapasitas 10 ton • 1.2km" },
+  { id: "truck-05", name: "Truk Sampah 05", meta: "Kapasitas 5 ton • 2.5km" },
+];
+
+const officers = [
+  { id: "budi", initials: "BS", name: "Budi Santoso", meta: "Aktif • 0.5km dari lokasi" },
+  { id: "siti", initials: "SA", name: "Siti Aminah", meta: "Aktif • 1.2km dari lokasi" },
+];
+
+type Dropdown = "vehicle" | "officer" | null;
+
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <>
+      {open && (
+        <button
+          type="button"
+          aria-label="Tutup menu"
+          className="fixed inset-0 z-40 bg-slate-950/35 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[258px] flex-col border-r border-[#ccddd5] bg-[#e9f6fc] transition-transform duration-200 lg:static lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="px-[18px] pt-[23px]">
+          <Link href="/dinas" className="block text-[23px] font-extrabold tracking-[-0.04em] text-[#086a28]">
+            DLH Dashboard
+          </Link>
+          <p className="mt-1 text-[12px] text-[#738077]">Government Portal</p>
+        </div>
+
+        <nav className="mt-5 space-y-2 px-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={onClose}
+                className={`flex h-16 w-full items-center gap-3 rounded-[24px] px-4 text-[15px] font-semibold transition-colors ${
+                  item.active
+                    ? "bg-[#b9ebd0] text-[#477762]"
+                    : "text-[#3f5148] hover:bg-white/60"
+                }`}
+              >
+                <Icon className="size-5" strokeWidth={2.2} />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto p-[18px]">
+          <div className="flex items-center gap-3 rounded-[22px] bg-white/20 p-2">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#d8eee6] text-sm font-bold text-[#17662d]">
+              AD
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-[#17251e]">Admin DLH</p>
+              <p className="truncate text-[10px] text-[#718078]">Wilayah Jakarta Pusat</p>
+            </div>
+            <button type="button" aria-label="Menu akun" className="rounded-full p-1 text-[#66776e] hover:bg-white/60">
+              <MoreVertical className="size-5" />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function DashboardHeader({ onMenu }: { onMenu: () => void }) {
+  return (
+    <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
+      <button type="button" onClick={onMenu} className="mr-3 rounded-lg p-2 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
+        <Menu className="size-5" />
+      </button>
+      <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">
+        Dinas Lingkungan Hidup
+      </h1>
+      <div className="ml-5 hidden h-7 w-px bg-[#cedbd4] md:block" />
+      <div className="ml-5 hidden items-center gap-2 rounded-full bg-[#e2f2ea] px-3 py-1 text-xs font-bold text-[#176c31] md:flex">
+        <span className="size-2 rounded-full bg-[#08752a]" />
+        System Status: Online
+      </div>
+      <div className="ml-auto flex items-center gap-2 sm:gap-5">
+        <button type="button" aria-label="Notifikasi" className="rounded-full p-2 hover:bg-slate-100">
+          <Bell className="size-5" strokeWidth={2.2} />
+        </button>
+        <button type="button" aria-label="Pengaturan" className="hidden rounded-full p-2 hover:bg-slate-100 sm:block">
+          <Settings className="size-5" strokeWidth={2.2} />
+        </button>
+        <div className="flex size-8 items-center justify-center rounded-full border border-[#c6d1cb] bg-[#e7f2ee] text-[10px] font-extrabold text-[#17662d]">
+          AD
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function MapCanvas({ reportOpen, onOpenReport }: { reportOpen: boolean; onOpenReport: () => void }) {
+  const [view, setView] = useState<"heatmap" | "points">("heatmap");
+
+  return (
+    <section className="relative min-h-[420px] flex-1 overflow-hidden bg-[#64c5ed] lg:min-w-[430px]">
+      <Image
+        src="/images/dlh-dashboard-reference.png"
+        alt="Peta heatmap kepadatan laporan sampah wilayah Jakarta"
+        width={1444}
+        height={1028}
+        priority
+        className="pointer-events-none absolute left-[-41.95%] top-[-6.75%] h-auto w-[234.8%] max-w-none select-none"
+      />
+      <div className="absolute left-6 top-5 flex rounded-full bg-white/90 p-1 text-xs shadow-sm backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => setView("heatmap")}
+          className={`rounded-full px-4 py-2 font-bold ${view === "heatmap" ? "bg-[#087529] text-white" : "text-[#2f3833]"}`}
+        >
+          Heatmap
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("points")}
+          className={`rounded-full px-4 py-2 font-semibold ${view === "points" ? "bg-[#087529] text-white" : "text-[#2f3833]"}`}
+        >
+          Titik Laporan
+        </button>
+      </div>
+
+      <div className="absolute left-6 top-20 grid gap-2">
+        <div className="overflow-hidden rounded-full bg-white/90 shadow-sm backdrop-blur-sm">
+          <button type="button" aria-label="Perbesar peta" className="grid size-11 place-items-center border-b border-slate-200 text-xl hover:bg-white">+</button>
+          <button type="button" aria-label="Perkecil peta" className="grid size-11 place-items-center text-2xl hover:bg-white">−</button>
+        </div>
+        <button type="button" aria-label="Lokasi saya" className="grid size-12 place-items-center rounded-full bg-white/90 shadow-sm hover:bg-white">
+          <Crosshair className="size-5" />
+        </button>
+      </div>
+
+      {view === "points" && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[
+            [26, 36], [47, 48], [69, 31], [76, 67], [37, 72], [61, 59],
+          ].map(([left, top], index) => (
+            <span
+              key={`${left}-${top}`}
+              className="absolute grid size-7 place-items-center rounded-full border-2 border-white bg-[#08752a] text-[10px] font-bold text-white shadow-lg"
+              style={{ left: `${left}%`, top: `${top}%` }}
+            >
+              {index + 1}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {!reportOpen && (
+        <button
+          type="button"
+          onClick={onOpenReport}
+          className="absolute bottom-5 right-5 flex items-center gap-2 rounded-full bg-[#087529] px-5 py-3 text-sm font-bold text-white shadow-lg"
+        >
+          <MapPin className="size-4" /> Buka laporan aktif
+        </button>
+      )}
+    </section>
+  );
+}
+
+function DropdownField({
+  type,
+  label,
+  placeholder,
+  active,
+  onToggle,
+  selected,
+  onSelect,
+}: {
+  type: Exclude<Dropdown, null>;
+  label: string;
+  placeholder: string;
+  active: Dropdown;
+  onToggle: (type: Exclude<Dropdown, null>) => void;
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  const isOpen = active === type;
+  const selectedItem = type === "vehicle" ? vehicles.find((item) => item.id === selected) : officers.find((item) => item.id === selected);
+
+  return (
+    <div className="relative">
+      <label className="mb-2 block text-sm font-bold text-[#1f2924]">{label}</label>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        onClick={() => onToggle(type)}
+        className={`flex h-[47px] w-full items-center justify-between rounded-full border bg-white px-4 text-left text-sm transition-colors ${
+          isOpen ? "border-2 border-[#08752a]" : "border-[#859287]"
+        }`}
+      >
+        <span className="truncate">{selectedItem?.name ?? placeholder}</span>
+        {isOpen ? <ChevronUp className="size-4 shrink-0" /> : <ChevronDown className="size-4 shrink-0 text-[#657269]" />}
+      </button>
+
+      {isOpen && (
+        <div className="absolute inset-x-0 top-[77px] z-30 overflow-hidden rounded-[24px] border border-[#b9c7bd] bg-white py-1 shadow-[0_12px_28px_rgba(24,46,34,0.2)]">
+          {type === "vehicle"
+            ? vehicles.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelect(item.id)}
+                  className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-[#f1faf5]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold">{item.name}</p>
+                    <p className="truncate text-[11px] text-[#667168]">{item.meta}</p>
+                  </div>
+                  <span className="size-2 rounded-full bg-[#08752a]" />
+                </button>
+              ))
+            : officers.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelect(item.id)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[#f1faf5]"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#c9eed9] text-xs font-bold text-[#4b8b69]">{item.initials}</span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-extrabold">{item.name}</p>
+                    <p className="truncate text-[10px] text-[#187234]">{item.meta}</p>
+                  </div>
+                </button>
+              ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportPanel({ onClose }: { onClose: () => void }) {
+  const [dropdown, setDropdown] = useState<Dropdown>(null);
+  const [vehicle, setVehicle] = useState("");
+  const [officer, setOfficer] = useState("");
+  const [assigned, setAssigned] = useState(false);
+
+  const toggleDropdown = (next: Exclude<Dropdown, null>) => setDropdown((current) => (current === next ? null : next));
+
+  return (
+    <aside className="fixed inset-x-0 bottom-0 top-16 z-20 flex w-full flex-col border-l border-[#d8e2dd] bg-white lg:relative lg:inset-auto lg:w-[39%] lg:min-w-[480px] lg:max-w-[560px] lg:shrink-0">
+      <div className="flex h-[93px] shrink-0 items-center bg-[#e9f7fd] px-6">
+        <div>
+          <h2 className="text-xl font-extrabold tracking-[-0.02em] text-[#17231d]">Report #WL-099</h2>
+          <p className="mt-0.5 text-xs text-[#758079]">Kelurahan Menteng, Jakarta Pusat</p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Tutup laporan" className="ml-auto rounded-full p-2 hover:bg-white/70">
+          <X className="size-6" />
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-5 overflow-y-auto px-6 py-4">
+        <div className="relative h-[294px] overflow-hidden rounded-[20px] border border-[#bcc8c1] bg-slate-200">
+          <Image
+            src="/images/dlh-dashboard-reference.png"
+            alt="Tumpukan sampah pada laporan WL-099"
+            width={1444}
+            height={1028}
+            className="absolute left-[-173%] top-[-58.3%] h-auto w-[278.2%] max-w-none"
+          />
+          <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-[#147632] px-3 py-1 text-xs font-semibold text-white shadow-sm">
+            <Layers3 className="size-3.5" /> AI Verified
+          </span>
+        </div>
+
+        <div className="flex gap-4 rounded-[20px] border border-[#ade6c7] bg-[#edfbf4] px-5 py-6 text-[#48715f]">
+          <Sparkles className="mt-1 size-7 shrink-0" />
+          <div>
+            <p className="text-sm font-bold">AI Analysis: Large Trash Pile</p>
+            <p className="mt-1 text-sm leading-5 text-[#6c8c7d]">Deteksi penumpukan sampah anorganik masif berukuran ~15m³. Membutuhkan truk kapasitas besar (Armada Tipe C).</p>
+          </div>
+        </div>
+
+        <DropdownField
+          type="vehicle"
+          label="Pilih Armada"
+          placeholder="Pilih Armada Tersedia"
+          active={dropdown}
+          onToggle={toggleDropdown}
+          selected={vehicle}
+          onSelect={(id) => { setVehicle(id); setDropdown(null); setAssigned(false); }}
+        />
+
+        <DropdownField
+          type="officer"
+          label="Pilih Petugas"
+          placeholder="Pilih Petugas Lapangan"
+          active={dropdown}
+          onToggle={toggleDropdown}
+          selected={officer}
+          onSelect={(id) => { setOfficer(id); setDropdown(null); setAssigned(false); }}
+        />
+
+        <div className="rounded-[24px] border border-[#c3d2c6] px-4 py-4">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold tracking-wide text-[#7a857d]">Estimasi Waktu Jemput</span>
+            <span className="text-sm font-extrabold text-[#08752a]">14 Menit</span>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <span className="font-semibold tracking-wide text-[#7a857d]">Tingkat Prioritas</span>
+            <span className="rounded-sm bg-[#ffdada] px-2 py-1 font-bold text-[#b00000]">Tinggi</span>
+          </div>
+        </div>
+
+        {assigned && (
+          <div className="flex items-center gap-2 rounded-xl bg-[#e4f7eb] px-4 py-3 text-sm font-semibold text-[#11672c]" role="status">
+            <ClipboardCheck className="size-5" /> Armada dan petugas berhasil ditugaskan.
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-[#d8e2dd] bg-[#f2faff] p-6">
+        <button
+          type="button"
+          disabled={!vehicle || !officer}
+          onClick={() => setAssigned(true)}
+          className="flex h-[54px] w-full items-center justify-center gap-3 rounded-full bg-[#087529] text-sm font-extrabold text-white shadow-md transition hover:bg-[#065d21] disabled:cursor-not-allowed disabled:bg-[#8fb39b]"
+        >
+          <ClipboardCheck className="size-5" />
+          {assigned ? "Armada Ditugaskan" : "Tugaskan Armada"}
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export function DlhDashboard() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(true);
+
+  return (
+    <div className="flex h-dvh min-h-[680px] overflow-hidden bg-[#f4fbff] text-[#17231d]">
+      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <DashboardHeader onMenu={() => setMenuOpen(true)} />
+        <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          <MapCanvas reportOpen={reportOpen} onOpenReport={() => setReportOpen(true)} />
+          {reportOpen && <ReportPanel onClose={() => setReportOpen(false)} />}
+        </main>
+      </div>
+    </div>
+  );
+}
