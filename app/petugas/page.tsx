@@ -48,7 +48,7 @@ export default function PetugasDashboardPage() {
     <div className="min-h-screen pb-8 font-sans">
 
       {/* Main Content */}
-      <main className="p-4 space-y-6">
+      <div className="py-4 space-y-6">
 
         {/* Summary section */}
         <section className="space-y-3">
@@ -136,7 +136,7 @@ export default function PetugasDashboardPage() {
             )}
           </div>
         </section>
-      </main>
+      </div>
 
       {/* Floating Action Button */}
       <button className="fixed bottom-24 right-4 w-12 h-12 bg-[#1b5e20] rounded-full shadow-lg flex items-center justify-center text-white z-50">
