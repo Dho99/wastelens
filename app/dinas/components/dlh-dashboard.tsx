@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DlhShell } from "./dlh-shell";
 import {
@@ -173,10 +174,10 @@ function DropdownField({
 }
 
 function ReportPanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const [dropdown, setDropdown] = useState<Dropdown>(null);
   const [vehicle, setVehicle] = useState("");
   const [officer, setOfficer] = useState("");
-  const [assigned, setAssigned] = useState(false);
 
   const toggleDropdown = (next: Exclude<Dropdown, null>) => setDropdown((current) => (current === next ? null : next));
 
@@ -221,7 +222,7 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
           active={dropdown}
           onToggle={toggleDropdown}
           selected={vehicle}
-          onSelect={(id) => { setVehicle(id); setDropdown(null); setAssigned(false); }}
+          onSelect={(id) => { setVehicle(id); setDropdown(null); }}
         />
 
         <DropdownField
@@ -231,7 +232,7 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
           active={dropdown}
           onToggle={toggleDropdown}
           selected={officer}
-          onSelect={(id) => { setOfficer(id); setDropdown(null); setAssigned(false); }}
+          onSelect={(id) => { setOfficer(id); setDropdown(null); }}
         />
 
         <div className="rounded-[24px] border border-[#c3d2c6] px-4 py-4">
@@ -245,22 +246,17 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {assigned && (
-          <div className="flex items-center gap-2 rounded-xl bg-[#e4f7eb] px-4 py-3 text-sm font-semibold text-[#11672c]" role="status">
-            <ClipboardCheck className="size-5" /> Armada dan petugas berhasil ditugaskan.
-          </div>
-        )}
       </div>
 
       <div className="shrink-0 border-t border-[#d8e2dd] bg-[#f2faff] p-6">
         <button
           type="button"
           disabled={!vehicle || !officer}
-          onClick={() => setAssigned(true)}
+          onClick={() => router.push(`/dinas/assignments/WL-099?vehicle=${vehicle}&officer=${officer}`)}
           className="flex h-[54px] w-full items-center justify-center gap-3 rounded-full bg-[#087529] text-sm font-extrabold text-white shadow-md transition hover:bg-[#065d21] disabled:cursor-not-allowed disabled:bg-[#8fb39b]"
         >
           <ClipboardCheck className="size-5" />
-          {assigned ? "Armada Ditugaskan" : "Tugaskan Armada"}
+          Tugaskan Armada
         </button>
       </div>
     </aside>
