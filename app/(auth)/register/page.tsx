@@ -4,6 +4,8 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUp } from "@/lib/auth-client";
+import { Eye, EyeClosed, Lock, Mail, User } from "lucide-react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [seePassword, setSeePassword] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,29 +43,14 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-emerald-600">
-            <svg
-              className="size-7 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-              />
-            </svg>
-          </div>
-          <h1 className="mt-4 text-2xl font-bold">Daftar Akun</h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Buat akun baru untuk mulai menggunakan Sampah
-          </p>
+        <div className="text-center mb-8">
+          <h1 className="mt-4 text-xl font-bold text-primary mb-2">WasteLens</h1>
+          <div className="w-14 h-1 bg-primary rounded-full m-auto mb-8" />
+          <p className="text-xl text-neutral-950 mb-2">Buat akun baru</p>
+          <p className="text-neutral-700">Langkah awal untuk lingkungan yang lebih bersih dan berkelanjutan.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
@@ -72,74 +60,103 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="nama"
-              className="mb-1 block text-sm font-medium text-neutral-700"
+              className="mb-1 block text-sm font-medium text-neutral-700 ms-4"
             >
               Nama Lengkap
             </label>
-            <input
-              id="nama"
-              type="text"
-              value={nama}
-              onChange={(e) => setNama(e.target.value)}
-              required
-              className="w-full rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              placeholder="Nama Anda"
-            />
+            <div className="border border-neutral-300 rounded-full group flex items-center px-4 focus-within:border-primary focus-within:ring-1">
+              <User size={18} className="text-neutral-500" />
+              <input
+                id="nama"
+                type="text"
+                value={nama}
+                onChange={(e) => setNama(e.target.value)}
+                required
+                className="w-full px-2 py-2.5 outline-none"
+                placeholder="Nama Anda"
+              />
+            </div>
           </div>
 
           <div>
             <label
               htmlFor="email"
-              className="mb-1 block text-sm font-medium text-neutral-700"
+              className="mb-1 block text-sm font-medium text-neutral-700 ms-4"
             >
               Email
             </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="w-full rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              placeholder="nama@email.com"
-            />
+            <div className="border border-neutral-300 rounded-full group flex items-center px-4 focus-within:border-primary focus-within:ring-1">
+              <Mail size={18} className="text-neutral-500" />
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full px-2 py-2.5 outline-none"
+                placeholder="nama@email.com"
+              />
+            </div>
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="mb-1 block text-sm font-medium text-neutral-700"
+              className="mb-1 block text-sm font-medium text-neutral-700 ms-4"
             >
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              placeholder="Minimal 8 karakter"
-            />
+            <div className="border border-neutral-300 rounded-full group flex items-center px-4 focus-within:border-primary focus-within:ring-1">
+              <Lock size={18} className="text-neutral-500" />
+              <input
+                id="password"
+                type={seePassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full px-4 py-2.5 outline-none"
+                placeholder="••••••••"
+              />
+              <button type="button" onClick={() => setSeePassword(!seePassword)} className="cursor-pointer">
+                {seePassword ?
+                  <EyeClosed className="text-neutral-500" /> :
+                  <Eye className="text-neutral-500" />
+                }
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            className="w-full rounded-full bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
           >
             {loading ? "Memproses..." : "Daftar"}
           </button>
         </form>
 
+        <div className="flex items-center justify-center gap-2 text-neutral-500 text-sm">
+          <div className="h-px flex-1 bg-neutral-300" />
+          <span>Atau masuk dengan</span>
+          <div className="h-px flex-1 bg-neutral-300" />
+        </div>
+
+        <button
+          type="button"
+          disabled={loading}
+          className="w-full rounded-full px-4 py-2.5 font-semibold cursor-pointer border border-neutral-300 flex items-center justify-center gap-2"
+        >
+          <Image src={"/icon/gugel.svg"} alt="google" width={20} height={20} />
+          {loading ? "Memproses..." : "Google"}
+        </button>
+
         <p className="text-center text-sm text-neutral-500">
           Sudah punya akun?{" "}
           <Link
             href="/login"
-            className="font-medium text-emerald-600 hover:text-emerald-700"
+            className="font-medium text-primary hover:text-primary/90"
           >
             Masuk
           </Link>

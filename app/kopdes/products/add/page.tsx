@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 
 type InputMode = "manual" | "upload";
 
@@ -266,13 +265,5 @@ function AddProductContent() {
                 </div>
             )}
         </div>
-    );
-}
-
-export default function AddProductPage() {
-    return (
-        <ErrorBoundary>
-            <AddProductContent />
-        </ErrorBoundary>
     );
 }
