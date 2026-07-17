@@ -13,11 +13,9 @@ export interface TabItem {
 }
 
 export function TabBarLayout({
-  role,
   tabs,
   children,
 }: {
-  role: string;
   tabs: TabItem[];
   children: React.ReactNode;
 }) {
@@ -97,12 +95,12 @@ export function TabBarLayout({
         ========================================================================
       */}
       <nav className="fixed inset-x-0 bottom-0 z-50 bg-transparent max-w-screen-sm mx-auto w-full px-4 pb-4 pointer-events-none">
-        <div className={`bg-white rounded-t-4xl rounded-b-3xl items-end grid grid-cols-${tabs.length} p-2 pointer-events-auto border border-gray-100/50 shadow-xl`}>
+        <div className={`bg-white rounded-t-4xl rounded-b-3xl items-end flex p-2 pointer-events-auto border border-gray-100/50 shadow-xl`}>
           {tabs.map((tab, index) => {
             return tab.primaryMenu ? (
               <div
                 key={index}
-                className="flex flex-col items-center p-2 relative z-20"
+                className="flex flex-col items-center p-2 relative z-20 flex-1"
               >
                 <Link
                   href={tab.href}
@@ -119,7 +117,7 @@ export function TabBarLayout({
               <Link
                 key={index}
                 href={tab.href}
-                className={`flex flex-col items-center gap-1 font-medium transition-all duration-200 p-2 ${pathname === `${tab.href}`
+                className={`flex-1 flex flex-col items-center gap-1 font-medium transition-all duration-200 p-2 ${pathname === `${tab.href}`
                   ? "text-[#0D631B] bg-primary/10 rounded-2xl"
                   : " "
                   }`}
