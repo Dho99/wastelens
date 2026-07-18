@@ -61,22 +61,12 @@ export default function ProfilePage() {
         onEditAvatar={() => console.log("Edit avatar clicked...")}
       />
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="text-center border border-neutral-300 p-4 rounded-xl flex flex-col items-center">
-          <div className="m-auto bg-primary/20 p-2 rounded-full text-primary mb-2">
-            <Icon path={mdiCheckboxMarkedCircleOutline} size={1} />
-          </div>
-          <h4 className="text-2xl font-bold">142</h4>
-          <p>Tugas Selesai</p>
+      <div className="text-center border border-neutral-300 p-4 rounded-xl flex flex-col items-center mb-8">
+        <div className="m-auto bg-primary/20 p-2 rounded-full text-primary mb-2">
+          <Icon path={mdiCheckboxMarkedCircleOutline} size={1} />
         </div>
-
-        <div className="text-center border border-neutral-300 p-4 rounded-xl flex flex-col items-center">
-          <div className="m-auto bg-accent/20 p-2 rounded-full text-accent mb-2">
-            <Icon path={mdiStar} size={1} />
-          </div>
-          <h4 className="text-2xl font-bold">{"4.9/5"}</h4>
-          <p>Rating</p>
-        </div>
+        <h4 className="text-2xl font-bold">142</h4>
+        <p>Tugas Selesai</p>
       </div>
 
       <p className="mb-2">Pengaturan Akun</p>
@@ -91,19 +81,13 @@ export default function ProfilePage() {
           <div className="bg-primary/20 p-2 rounded-lg text-primary">
             <Icon path={mdiSecurity} size={1} />
           </div>
-          <span className="font-medium">Keamanan Akun</span>
-        </Link>
-        <Link href={"/petugas/profile/detail"} className="flex items-center p-4 gap-2 border-b border-neutral-300">
-          <div className="bg-primary/20 p-2 rounded-lg text-primary">
-            <Icon path={mdiBell} size={1} />
-          </div>
-          <span className="font-medium">Notifikasi</span>
+          <span className="font-medium">Ganti Kata Sandi</span>
         </Link>
         <Link href={"/petugas/profile/detail"} className="flex items-center p-4 gap-2 border-b border-neutral-300">
           <div className="bg-primary/20 p-2 rounded-lg text-primary">
             <Icon path={mdiHelpBoxOutline} size={1} />
           </div>
-          <span className="font-medium">Informasi Pribadi</span>
+          <span className="font-medium">Pusat Bantuan</span>
         </Link>
       </div>
 
