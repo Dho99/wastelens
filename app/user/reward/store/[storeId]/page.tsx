@@ -3,9 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useTabBar } from "@/components/nav/tab-bar-context";
-
-// Services
-import { getStoreDetailDummyData, StoreDetail } from "./services/storeDetailService";
+import { useStoreDetail } from "./hooks/useStoreDetail";
 
 // Slices
 import { StoreHeader } from "./components/StoreHeader";
@@ -21,29 +19,16 @@ interface PageProps {
 export default function StoreDetailPage({ params }: PageProps) {
   const router = useRouter();
   const resolvedParams = use(params);
-  const [store, setStore] = useState<StoreDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<StoreCategoryFilter>("ALL");
   const { setHideTabBar } = useTabBar();
+  const { data: store, isLoading } = useStoreDetail(resolvedParams.storeId);
 
   useEffect(() => {
     setHideTabBar(true);
     return () => setHideTabBar(false);
   }, [setHideTabBar]);
 
-  // Initial cart: 1 Minyak Goreng (prod-1), 1 Gula Pasir (prod-2) to match screenshot total koin (1.300)
-  const [cart, setCart] = useState<Record<string, number>>({
-    "prod-1": 1,
-    "prod-2": 1,
-    "prod-3": 0
-  });
-
-  useEffect(() => {
-    // Fetch mock details using param storeId
-    const data = getStoreDetailDummyData(resolvedParams.storeId);
-    setStore(data);
-    setLoading(false);
-  }, [resolvedParams.storeId]);
+  const [cart, setCart] = useState<Record<string, number>>({});
 
   // Adjust cart items
   const handleAddProduct = (productId: string) => {
@@ -64,7 +49,7 @@ export default function StoreDetailPage({ params }: PageProps) {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4 p-4 animate-pulse">
         <div className="flex justify-between items-center h-10" />
