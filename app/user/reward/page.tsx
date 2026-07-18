@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-// Services
-import { getRewardDummyData, RewardData } from "./services/rewardService";
+import { useReward } from "./hooks/useReward";
 
 // Slices
 import { RewardBalance } from "./components/RewardBalance";
@@ -12,19 +11,12 @@ import { NearestPartners } from "./components/NearestPartners";
 import { RedemptionHistory } from "./components/RedemptionHistory";
 
 export default function RewardPage() {
-    const [data, setData] = useState<RewardData | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    useEffect(() => {
-        // Load mock reward dataset from service layer
-        const mockData = getRewardDummyData();
-        setData(mockData);
-        setLoading(false);
-    }, []);
+    const { data, isLoading } = useReward();
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="space-y-4 p-4 animate-pulse">
                 <div className="h-28 bg-gray-200 rounded-3xl" />

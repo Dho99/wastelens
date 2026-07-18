@@ -1,15 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useTabBar } from "@/components/nav/tab-bar-context";
-
-// Services
-import {
-    getRedemptionDetailDummyData,
-    RedemptionDetail,
-} from "./services/detailService";
+import { useRewardDetail } from "./hooks/useRewardDetail";
 
 // Slices
 import { DetailHeader } from "./components/DetailHeader";
@@ -24,16 +19,8 @@ interface PageProps {
 function HistoryDetailContent({ params }: PageProps) {
     const router = useRouter();
     const resolvedParams = use(params);
-    const [detail, setDetail] = useState<RedemptionDetail | null>(null);
-    const [loading, setLoading] = useState(true);
     const { setHideTabBar } = useTabBar();
-
-    useEffect(() => {
-        // Fetch mock detailed reward transaction from service layer
-        const data = getRedemptionDetailDummyData(resolvedParams.rewardId);
-        setDetail(data);
-        setLoading(false);
-    }, [resolvedParams.rewardId]);
+    const { data: detail, isLoading } = useRewardDetail(resolvedParams.rewardId);
 
     useEffect(() => {
         setHideTabBar(true);
@@ -47,7 +34,7 @@ function HistoryDetailContent({ params }: PageProps) {
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="space-y-4 p-4 animate-pulse">
                 <div className="flex justify-between items-center h-10" />
