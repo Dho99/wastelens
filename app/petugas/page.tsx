@@ -8,7 +8,6 @@ import {
   mdiClockOutline,
   mdiChevronRight,
   mdiAlertOutline,
-  mdiMapOutline,
   mdiClipboardText
 } from '@mdi/js';
 import Image from 'next/image';
@@ -123,26 +122,15 @@ export default function PetugasDashboardPage() {
                   </div>
                 </div>
                 <div className="px-3 pb-3 pt-1">
-                  {i == 0 ?
-                    <button className="w-full bg-primary text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
-                      Mulai Tugas <Icon path={mdiChevronRight} className="w-4 h-4" />
-                    </button> :
-                    <button className="w-full bg-white border-[1.5px] border-primary text-primary font-semibold py-2 rounded-xl text-sm">
-                      Lihat Detail
-                    </button>
-                  }
+                  <button className="w-full bg-primary text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
+                    Mulai Tugas <Icon path={mdiChevronRight} className="w-4 h-4" />
+                  </button> :
                 </div>
               </div>
             )}
           </div>
         </section>
       </div>
-
-      {/* Floating Action Button */}
-      <button className="fixed bottom-24 right-4 w-12 h-12 bg-[#1b5e20] rounded-full shadow-lg flex items-center justify-center text-white z-50">
-        <Icon path={mdiMapOutline} className="w-5 h-5" />
-      </button>
-
     </div>
   );
 }
