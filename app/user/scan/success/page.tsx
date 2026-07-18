@@ -4,22 +4,23 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTabBar } from "@/components/nav/tab-bar-context";
 
-// Services
-import {
-    getSuccessDummyData,
-    SuccessReportData,
-} from "./services/successService";
-
-// Slices
 import { SuccessBadge } from "./components/SuccessBadge";
 import { ReportIdCard } from "./components/ReportIdCard";
 import { ImpactCard } from "./components/ImpactCard";
-import { EnvironmentView } from "./components/EnvironmentView";
+import { ScanPhotoCard } from "./components/ScanPhotoCard";
 import { SuccessActions } from "./components/SuccessActions";
 
 export default function SuccessPage() {
     const router = useRouter();
-    const [data, setData] = useState<SuccessReportData | null>(null);
+    const [data, setData] = useState<{
+        reportId: string;
+        status: string;
+        rewardStatus: string;
+        reportTime: string;
+        locationName: string;
+        scanImageUrl?: string;
+        landscapeImageUrl: string;
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const { setHideTabBar } = useTabBar();
 
@@ -29,13 +30,9 @@ export default function SuccessPage() {
     }, [setHideTabBar]);
 
     useEffect(() => {
-        // Load success reporting details from localStorage or fallback to dummy data
         const saved = localStorage.getItem("success_report_data");
         if (saved) {
             setData(JSON.parse(saved));
-        } else {
-            const mockData = getSuccessDummyData();
-            setData(mockData);
         }
         setLoading(false);
     }, []);
@@ -62,28 +59,27 @@ export default function SuccessPage() {
     return (
         <div className="bg-[#FAF9F5] min-h-screen pb-12 flex flex-col justify-between">
             <div>
-                {/* 1. Large Top Success checkmark & labels */}
                 <SuccessBadge />
 
-                {/* 2. Report ID & Timestamp Card */}
                 <ReportIdCard
                     reportId={data.reportId}
                     reportTime={data.reportTime}
                 />
 
-                {/* 3. Impact Tally coins description Card */}
-                <ImpactCard rewardPoints={data.rewardPoints} />
+                <ImpactCard rewardPoints={0} />
 
-                {/* 4. Beautiful landscape environment visual tag */}
-                <EnvironmentView
-                    locationName={data.locationName}
-                    landscapeImageUrl={data.landscapeImageUrl}
-                />
+                {data.scanImageUrl && (
+                    <ScanPhotoCard
+                        imageUrl={data.scanImageUrl}
+                        locationName={data.locationName}
+                    />
+                )}
             </div>
 
-            {/* 5. Bottom Navigation Actions Buttons */}
             <SuccessActions
-                onCheckStatus={() => router.push("/user/history/report/88210")}
+                onCheckStatus={() =>
+                    router.push(`/user/history/report/${data.reportId}`)
+                }
                 onGoHome={() => router.push("/user")}
             />
         </div>
