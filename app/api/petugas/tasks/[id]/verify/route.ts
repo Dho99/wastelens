@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-const KOIN_PER_VERIFIKASI = 10;
+import { grantVerificationReward } from "@/server/modules/rewards/reward.service";
+import { triggerUserEvent } from "@/server/websocket/pusher.service";
+import {
+  createReportVerifiedEvent,
+  createCoinRewardedEvent,
+} from "@/server/websocket/websocket.events";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json({ error: "Unauthorized", code: "AUTH" }, { status: 401 });
     }
@@ -38,7 +39,7 @@ export async function POST(
     if (!foto_sesudah) {
       return NextResponse.json(
         { error: "foto_sesudah is required", code: "VALIDATION" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +47,7 @@ export async function POST(
       const laporan = await tx.laporan.findUnique({
         where: { id },
         include: {
-          user: { select: { id: true, saldo_koin: true } },
+          user: { select: { id: true } },
         },
       });
 
@@ -76,48 +77,41 @@ export async function POST(
         data: { status: "SELESAI" },
       });
 
+      let rewardJumlah = 0;
       if (laporan.user_id) {
-        const existingTransaksi = await tx.transaksiKoin.findFirst({
-          where: {
-            laporan_id: id,
-            user_id: laporan.user_id,
-            jenis: "kredit",
-          },
-        });
-
-        if (existingTransaksi) {
-          await tx.transaksiKoin.update({
-            where: { id: existingTransaksi.id },
-            data: { jumlah: { increment: KOIN_PER_VERIFIKASI } },
-          });
-        } else {
-          await tx.transaksiKoin.create({
-            data: {
-              user_id: laporan.user_id,
-              laporan_id: id,
-              jumlah: KOIN_PER_VERIFIKASI,
-              jenis: "kredit",
-            },
-          });
-        }
-
-        await tx.user.update({
-          where: { id: laporan.user_id },
-          data: { saldo_koin: { increment: KOIN_PER_VERIFIKASI } },
-        });
+        const reward = await grantVerificationReward(id);
+        rewardJumlah = reward.jumlah;
 
         await tx.notifikasi.create({
           data: {
             user_id: laporan.user_id,
             laporan_id: id,
-            pesan: `Laporan sampah Anda telah selesai ditangani oleh ${petugas.nama}. Koin +${KOIN_PER_VERIFIKASI} telah ditambahkan.`,
+            pesan: `Laporan sampah Anda telah selesai ditangani oleh ${petugas.nama}. Koin +${reward.jumlah} telah ditambahkan.`,
             status_baca: false,
           },
         });
       }
 
-      return { status: "SELESAI", message: "Tugas selesai" };
+      return {
+        status: "SELESAI",
+        message: "Tugas selesai",
+        rewardJumlah,
+        userId: laporan.user_id,
+      };
     });
+
+    const userId = (result as any).userId as string | null;
+    const rewardJumlah = (result as any).rewardJumlah as number;
+    if (userId) {
+      triggerUserEvent(
+        userId,
+        createReportVerifiedEvent({ laporanId: id }),
+      );
+      triggerUserEvent(
+        userId,
+        createCoinRewardedEvent({ laporanId: id, jumlah: rewardJumlah ?? 0 }),
+      );
+    }
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {

@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
                 orderBy: { createdAt: "desc" },
                 take: 5,
             }),
-            prisma.laporan.groupBy({
+            prisma.transaksiKoin.groupBy({
                 by: ["user_id"],
-                _count: { id: true },
-                orderBy: { _count: { id: "desc" } },
+                _sum: { jumlah: true },
+                orderBy: { _sum: { jumlah: "desc" } },
                 take: 3,
             }),
             prisma.kopdes.findMany({
@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
             name: userMap.get(entry.user_id)?.nama ?? "Unknown",
             avatarUrl: userMap.get(entry.user_id)?.image ?? "",
             isTop: i === 0,
+            totalCoins: entry._sum.jumlah ?? 0,
         }));
 
         const partners: NearestPartner[] = kopdesList.map((k) => ({

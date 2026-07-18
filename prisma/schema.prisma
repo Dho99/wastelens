@@ -171,6 +171,49 @@ model Laporan {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
+  // Location enhancement
+  lokasi_accuracy       Float?     @map("lokasi_accuracy")
+  lokasi_confirmed_lat  Float?     @map("lokasi_confirmed_lat")
+  lokasi_confirmed_lng  Float?     @map("lokasi_confirmed_lng")
+  lokasi_device_lat     Float?     @map("lokasi_device_lat")
+  lokasi_device_lng     Float?     @map("lokasi_device_lng")
+  lokasi_captured_at    DateTime?  @map("lokasi_captured_at")
+  lokasi_exif_lat       Float?     @map("lokasi_exif_lat")
+  lokasi_exif_lng       Float?     @map("lokasi_exif_lng")
+  risk_flags            String[]  @default([])
+
+  // Reverse-geocoded address
+  address_text  String?  @map("address_text")
+  road_name     String?  @map("road_name")
+  district      String?  @map("district")
+  city          String?  @map("city")
+  province      String?  @map("province")
+  country       String?  @map("country")
+
+  // Photo metadata
+  photo_hash            String?    @map("photo_hash")
+  photo_mime_type       String?    @map("photo_mime_type")
+  photo_size_bytes      Int?       @map("photo_size_bytes")
+
+  // Analysis
+  waste_types             String[]  @default([])
+  drainage_risk           Boolean?  @default(false) @map("drainage_risk")
+  access_obstruction_risk Boolean?  @default(false) @map("access_obstruction_risk")
+  visual_indicators       String[]  @default([]) @map("visual_indicators")
+  confidence              Float?
+  needs_manual_review     Boolean?  @default(false) @map("needs_manual_review")
+  analysis_provider       String?   @map("analysis_provider")
+  analysed_at             DateTime? @map("analysed_at")
+
+  // Priority
+  priority_score          Float?  @map("priority_score")
+  priority_level          String? @map("priority_level")
+  priority_weight_version String? @map("priority_weight_version")
+
+  // Idempotency & load
+  client_request_id   String? @unique @map("client_request_id")
+  estimated_load_unit Int?    @map("estimated_load_unit")
+
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
   petugas           Petugas?           @relation(fields: [petugas_id], references: [id])
@@ -187,6 +230,9 @@ model Foto {
   id         String @id @default(uuid()) @db.Uuid
   laporan_id String @db.Uuid
   url        String
+  hash       String?
+  mime_type  String? @map("mime_type")
+  size_bytes Int?    @map("size_bytes")
 
   laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
@@ -203,6 +249,7 @@ model TransaksiKoin {
   user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
+  @@unique([laporan_id, jenis])
   @@map("TRANSAKSI_KOIN")
 }
 
@@ -273,4 +320,29 @@ model Penukaran {
   produk Produk @relation(fields: [produk_id], references: [id], onDelete: Cascade)
 
   @@map("PENUKARAN")
+}
+
+enum TemporaryUploadStatus {
+  ACTIVE
+  USED
+  EXPIRED
+
+  @@map("TEMPORARY_UPLOAD_STATUS")
+}
+
+model TemporaryUpload {
+  id            String                @id @default(uuid()) @db.Uuid
+  user_id       String
+  provider      String                @default("cloudinary")
+  public_id     String
+  secure_url    String
+  resource_type String                @default("image")
+  mime_type     String
+  size_bytes    Int
+  status        TemporaryUploadStatus @default(ACTIVE)
+  createdAt     DateTime              @default(now())
+  expiresAt     DateTime
+  usedAt        DateTime?
+
+  @@map("TEMPORARY_UPLOAD")
 }
