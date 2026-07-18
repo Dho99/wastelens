@@ -109,6 +109,7 @@ export async function GET(request: NextRequest) {
             name: userMap.get(entry.user_id)?.name ?? "Unknown",
             avatarUrl: userMap.get(entry.user_id)?.image ?? "",
             isTop: i === 0,
+            totalCoins: entry._sum.jumlah ?? 0,
         }));
 
         const partners: NearestPartner[] = kopdesList.map((k) => ({

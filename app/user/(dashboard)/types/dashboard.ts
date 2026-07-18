@@ -26,6 +26,7 @@ export interface EnvironmentHero {
     name: string;
     avatarUrl: string;
     isTop?: boolean;
+    totalCoins?: number;
 }
 
 export interface NearestPartner {

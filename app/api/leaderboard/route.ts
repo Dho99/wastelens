@@ -4,6 +4,19 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
+    const koinGroup = await prisma.transaksiKoin.groupBy({
+      by: ["user_id"],
+      _sum: { jumlah: true },
+      _count: { id: true },
+      orderBy: { _sum: { jumlah: "desc" } },
+      take: 10,
+    });
+
+    const userIds = koinGroup.map((entry) => entry.user_id);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, nama: true },
+    });
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -111,6 +124,11 @@ export async function GET(request: NextRequest) {
         },
       ];
 
+    const result = koinGroup.map((entry) => ({
+      nama: userMap.get(entry.user_id)?.nama ?? "Unknown",
+      total_laporan: entry._count.id,
+      total_koin: entry._sum.jumlah ?? 0,
+    }));
       listPool = [
         { rank: 4, nama: "Dewi Sartika", xp: 8890, badge: "Pahlawan Lingkungan", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80", rankChange: -1 },
         { rank: 5, nama: "Hendra Kusuma", xp: 7540, badge: "Pelopor Hijau", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80", rankChange: 4 },
@@ -197,7 +215,7 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
       { error: message, code: "INTERNAL" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

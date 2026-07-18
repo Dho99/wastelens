@@ -1,19 +1,13 @@
 import React from "react";
 
 interface ViewfinderProps {
-  backgroundImageUrl: string;
+  children?: React.ReactNode;
 }
 
-export const Viewfinder: React.FC<ViewfinderProps> = ({ backgroundImageUrl }) => {
+export const Viewfinder: React.FC<ViewfinderProps> = ({ children }) => {
   return (
-    <div className="absolute inset-0 z-10 w-full h-full bg-neutral-900 overflow-hidden">
-      {/* Background Camera Feed Mockup */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={backgroundImageUrl}
-        alt="Camera Feed"
-        className="w-full h-full object-cover opacity-90 select-none pointer-events-none"
-      />
+    <div className="absolute inset-0 z-10 w-full h-full overflow-hidden pointer-events-none">
+      {children}
 
       {/* Frame overlay */}
       <div className="absolute inset-x-5 top-28 bottom-48 flex items-center justify-center">

@@ -1,111 +1,216 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTabBar } from "@/components/nav/tab-bar-context";
 
-// Custom UI components
 import { ScanHeader } from "./components/ScanHeader";
 import { Viewfinder } from "./components/Viewfinder";
 import { ControlPanel } from "./components/ControlPanel";
 import { LocationOverlay } from "./components/LocationOverlay";
+import { CameraScanner, type CameraScannerHandle } from "./components/CameraScanner";
+import { CameraPermissionError } from "./components/CameraPermissionError";
+import { validatePhotoFile } from "./services/scan.client";
+
+type ScanStage =
+  | "IDLE"
+  | "CAMERA_READY"
+  | "CAPTURED"
+  | "UPLOADING"
+  | "CAMERA_ERROR";
 
 export default function ScanPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { setHideTabBar } = useTabBar();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<CameraScannerHandle>(null);
 
-  // Settings states
   const [flashOn, setFlashOn] = useState(false);
-  const [locationName] = useState("Jakarta Selatan, Indonesia");
+  const [scanStage, setScanStage] = useState<ScanStage>("IDLE");
+  const [capturedFile, setCapturedFile] = useState<File | null>(null);
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
-  // Check query parameter mockResult=error
-  useEffect(() => {
-    const mockResult = searchParams.get("mockResult");
-    if (mockResult === "error") {
-      localStorage.setItem("mock_result", "error");
-      console.log("Mock result set to: error via query param");
-    } else {
-      localStorage.removeItem("mock_result");
-    }
-  }, [searchParams]);
+  const isCaptured = scanStage === "CAPTURED";
 
-  // Hide tab bar on mount
   useEffect(() => {
     setHideTabBar(true);
-    return () => setHideTabBar(false);
-  }, [setHideTabBar]);
+    return () => {
+      setHideTabBar(false);
+      if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+    };
+  }, [setHideTabBar, capturedPreview]);
 
-  // Save base64 image and move to validating step
-  const proceedToValidation = useCallback((base64Data: string, fileName: string = "") => {
-    // Save image base64 and photo url in localStorage
-    localStorage.setItem("captured_image", base64Data);
-    localStorage.setItem("captured_image_base64", base64Data.split(",")[1] || base64Data);
-
-    // If filename contains "invalid", force error scenario
-    if (fileName.toLowerCase().includes("invalid")) {
-      localStorage.setItem("mock_result", "error");
+  const uploadAndProceed = useCallback(async (file: File) => {
+    const validationError = validatePhotoFile(file);
+    if (validationError) {
+      alert(validationError);
+      return;
     }
 
-    router.push("/user/scan/validation");
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const res = await fetch("/api/laporan/upload", { method: "POST", body: formData });
+      const payload = await res.json();
+
+      if (!res.ok || !payload.success) {
+        alert(payload.error ?? "Gagal mengupload foto");
+        return;
+      }
+
+      localStorage.setItem("scan_meta", JSON.stringify({
+        temporaryImageId: payload.data.temporaryImageId,
+        photoUrl: payload.data.url,
+        photoMimeType: file.type,
+      }));
+
+      router.push("/user/scan/validation");
+    } catch {
+      alert("Gagal mengupload foto. Silakan coba lagi.");
+    } finally {
+      setUploading(false);
+    }
   }, [router]);
 
-  // Handle Shutter click (Capture mock stack image)
-  const handleShutterClick = useCallback(async () => {
-    try {
-      const imgRes = await fetch("/images/waste_bags_stack.png");
-      const blob = await imgRes.blob();
+  const handleCapture = useCallback((result: { file: File; previewUrl: string }) => {
+    setCapturedFile(result.file);
+    setCapturedPreview(result.previewUrl);
+    setScanStage("CAPTURED");
+  }, []);
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        proceedToValidation(reader.result as string, "waste_bags_stack.png");
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      console.error("Failed to load camera asset:", err);
-      // Fallback fallback base64 or redictect
-      router.push("/user/scan/validation");
+  const handleCaptureError = useCallback((message: string) => {
+    setCameraError(message);
+    setScanStage("CAMERA_ERROR");
+  }, []);
+
+  const handleCameraReady = useCallback(() => {
+    setScanStage("CAMERA_READY");
+  }, []);
+
+  const handleRetake = useCallback(() => {
+    if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+    setCapturedFile(null);
+    setCapturedPreview(null);
+    setCameraError(null);
+    setScanStage("IDLE");
+  }, [capturedPreview]);
+
+  const handleUsePhoto = useCallback(() => {
+    if (capturedFile) {
+      uploadAndProceed(capturedFile);
     }
-  }, [proceedToValidation, router]);
+  }, [capturedFile, uploadAndProceed]);
 
-  // Handle Gallery click (Trigger hidden file input)
+  const handleShutterClick = useCallback(() => {
+    if (scanStage === "CAPTURED") {
+      handleUsePhoto();
+      return;
+    }
+    cameraRef.current?.capture();
+  }, [scanStage, handleUsePhoto]);
+
   const handleGalleryClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file selection from gallery/camera capture input
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validation: Only images
-    if (!file.type.startsWith("image/")) {
-      alert("Format file tidak valid. Harap pilih file gambar.");
-      return;
-    }
-
-    // Validation: Size limit (max 10MB)
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-    if (file.size > MAX_SIZE) {
-      alert("Ukuran file terlalu besar. Batas maksimal adalah 10MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      proceedToValidation(reader.result as string, file.name);
-    };
-    reader.readAsDataURL(file);
+    await uploadAndProceed(file);
+    e.target.value = "";
   };
 
   const handleFlipCamera = () => {
-    alert("Kamera dibalik: Menggunakan kamera depan.");
+    setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
+  };
+
+  const handleRetryCamera = () => {
+    setCameraError(null);
+    setScanStage("IDLE");
   };
 
   return (
     <div className="relative min-h-screen w-full h-full overflow-hidden select-none bg-black">
-      {/* Hidden File Input for Gallery / Camera capture */}
+      {/* z-0: Camera feed or captured preview */}
+      {scanStage !== "CAMERA_ERROR" && !isCaptured && (
+        <CameraScanner
+          key={facingMode}
+          ref={cameraRef}
+          facingMode={facingMode}
+          onCapture={handleCapture}
+          onError={handleCaptureError}
+          onCameraReady={handleCameraReady}
+        />
+      )}
+
+      {isCaptured && capturedPreview && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={capturedPreview}
+          alt="Preview"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+
+      {/* z-10: Viewfinder overlay (bounding box) */}
+      {!isCaptured && scanStage !== "CAMERA_ERROR" && (
+        <Viewfinder />
+      )}
+
+      {/* z-10: Permission error overlay */}
+      {scanStage === "CAMERA_ERROR" && (
+        <CameraPermissionError
+          message={cameraError ?? "Gagal mengakses kamera"}
+          onRetry={handleRetryCamera}
+          onGalleryFallback={handleGalleryClick}
+        />
+      )}
+
+      {/* z-20+: UI elements */}
+      <ScanHeader
+        flashOn={flashOn}
+        onClose={() => router.push("/user")}
+        onToggleFlash={() => setFlashOn((prev) => !prev)}
+        onSettingsClick={isCaptured ? handleRetake : undefined}
+      />
+
+      {/* Captured state: retake / use buttons */}
+      {isCaptured && (
+        <div className="absolute inset-x-0 bottom-36 z-30 flex items-center justify-center gap-4">
+          <button
+            onClick={handleRetake}
+            className="px-6 py-3 bg-white/15 backdrop-blur-md text-white font-semibold text-sm rounded-xl hover:bg-white/25 transition-all active:scale-95"
+          >
+            Ulang
+          </button>
+          <button
+            onClick={handleUsePhoto}
+            disabled={uploading}
+            className="px-6 py-3 bg-[#287A38] text-white font-semibold text-sm rounded-xl hover:bg-[#1e6329] transition-all active:scale-95 disabled:opacity-50"
+          >
+            {uploading ? "Mengupload..." : "Gunakan"}
+          </button>
+        </div>
+      )}
+
+      {/* Camera controls (hidden in captured state) */}
+      {!isCaptured && (
+        <ControlPanel
+          galleryThumbnailUrl={capturedPreview ?? undefined}
+          onShutterClick={handleShutterClick}
+          onGalleryClick={handleGalleryClick}
+          onFlipCamera={handleFlipCamera}
+          uploading={uploading}
+        />
+      )}
+
+      <LocationOverlay locationName="Menggunakan GPS..." />
+
       <input
         type="file"
         ref={fileInputRef}
@@ -113,28 +218,6 @@ export default function ScanPage() {
         onChange={handleFileChange}
         className="hidden"
       />
-
-      {/* 1. Viewfinder Camera Feed (piled garbage background image) */}
-      <Viewfinder backgroundImageUrl="/images/waste_bags_stack.png" />
-
-      {/* 2. Top Navigation header control overlay */}
-      <ScanHeader
-        flashOn={flashOn}
-        onClose={() => router.push("/user")}
-        onToggleFlash={() => setFlashOn((prev) => !prev)}
-        onSettingsClick={() => alert("Pengaturan kamera dibuka.")}
-      />
-
-      {/* 3. Bottom controls panel (Shutter, Gallery, Flip Camera) */}
-      <ControlPanel
-        galleryThumbnailUrl="/images/gallery_thumbnail.png"
-        onShutterClick={handleShutterClick}
-        onGalleryClick={handleGalleryClick}
-        onFlipCamera={handleFlipCamera}
-      />
-
-      {/* 4. Bottom coordinates & Location details */}
-      <LocationOverlay locationName={locationName} />
     </div>
   );
 }
