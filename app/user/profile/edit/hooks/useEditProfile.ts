@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import type { UserProfileData } from "../../services/profileService";
+import type { UserProfileData } from "../../types/profileService";
 
 export function useProfileQuery() {
     return useQuery({
@@ -13,14 +13,15 @@ export function useUpdateProfile() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: { fullName: string; email: string }) =>
-            apiFetch("/api/user/profile", {
+        mutationFn: (data: Partial<UserProfileData>) =>
+            apiFetch<UserProfileData>("/api/user/profile", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+        onSuccess: async (updatedProfile) => {
+            await queryClient.setQueryData(["user-profile"], updatedProfile);
+            await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
         },
     });
 }

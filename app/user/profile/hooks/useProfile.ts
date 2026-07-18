@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import type { UserProfileData } from "../services/profileService";
+import type { UserProfileData } from "../types/profileService";
 
 export function useProfile() {
     return useQuery({
