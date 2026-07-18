@@ -29,9 +29,14 @@ export default function SuccessPage() {
     }, [setHideTabBar]);
 
     useEffect(() => {
-        // Load mock success reporting details from service layer
-        const mockData = getSuccessDummyData();
-        setData(mockData);
+        // Load success reporting details from localStorage or fallback to dummy data
+        const saved = localStorage.getItem("success_report_data");
+        if (saved) {
+            setData(JSON.parse(saved));
+        } else {
+            const mockData = getSuccessDummyData();
+            setData(mockData);
+        }
         setLoading(false);
     }, []);
 

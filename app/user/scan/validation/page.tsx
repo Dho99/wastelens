@@ -6,6 +6,7 @@ import { useTabBar } from "@/components/nav/tab-bar-context";
 
 // Services
 import { getInitialValidationSteps, ValidationStep } from "./services/validationService";
+import { mockValidateWasteImage } from "../services/waste-validation.service";
 
 // Slices
 import { DetectionOverlay } from "./components/DetectionOverlay";
@@ -22,6 +23,53 @@ export default function ValidationPage() {
     setHideTabBar(true);
     return () => setHideTabBar(false);
   }, [setHideTabBar]);
+
+
+
+  const [validationResult, setValidationResult] = useState<{ isValid: boolean } | null>(null);
+
+  // Trigger mock validation on mount
+  useEffect(() => {
+    const runValidation = async () => {
+      const shouldFail = localStorage.getItem("mock_result") === "error";
+      try {
+        const result = await mockValidateWasteImage(shouldFail);
+        setValidationResult(result);
+
+        if (result.isValid) {
+          // Build Report Confirm Data for the next screens
+          const confirmData = {
+            citizenPhotoUrl: localStorage.getItem("captured_image") || "/images/waste_bags_stack.png",
+            address: "Jl. Sudirman No. 42, Jakarta Pusat", // default location placeholder
+            mapPreviewUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&auto=format&fit=crop&q=80",
+            reportTime: new Date().toLocaleString("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            }) + " WIB",
+            aiClassification: result.detectedObject,
+            aiAccuracy: Math.round(result.confidence * 100),
+            wasteCategories: result.wasteCategory,
+            rewardPoints: 50,
+          };
+          localStorage.setItem("report_confirm_data", JSON.stringify(confirmData));
+          localStorage.setItem("classification_result", JSON.stringify({
+            isWasteDetected: result.isValid,
+            kategori_ukuran: result.estimatedVolume.toLowerCase(),
+            rekomendasi_kendaraan: "tossa",
+            confidence: result.confidence
+          }));
+        }
+      } catch (err) {
+        console.error("Mock validation failed:", err);
+        setValidationResult({ isValid: false });
+      }
+    };
+    runValidation();
+  }, []);
 
   useEffect(() => {
     // Set initial validation progress stepper values
@@ -78,10 +126,17 @@ export default function ValidationPage() {
       ]);
     }, 3000);
 
-    // Transition 3: Auto-redirect to success screen (after 3.8s)
+    // Transition 3: Auto-redirect to location permission or error screen (after 3.8s)
     const t3 = setTimeout(() => {
-      console.log("Validation complete! Redirecting to success screen...");
-      router.push("/user/scan/success");
+      // Access current state via local lookup or defaults
+      const shouldFail = localStorage.getItem("mock_result") === "error";
+      if (shouldFail) {
+        console.log("Validation complete! Redirecting to error screen...");
+        router.push("/user/scan/fallback");
+      } else {
+        console.log("Validation complete! Redirecting to location screen...");
+        router.push("/user/scan/location");
+      }
     }, 3800);
 
     return () => {
