@@ -2,8 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { signOut } from "@/lib/auth-client";
 import {
   Bell,
   ClipboardList,
@@ -26,7 +27,16 @@ const navItems = [
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [accountMenu, setAccountMenu] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut();
+    router.replace("/login");
+    router.refresh();
+  };
 
   return (
     <>
@@ -79,9 +89,9 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
               <Link href="/dinas/settings" onClick={onClose} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-[#edf8f2]">
                 <Settings className="size-4" /> Pengaturan
               </Link>
-              <Link href="/login?logout=1" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
-                <LogOut className="size-4" /> Keluar
-              </Link>
+              <button type="button" onClick={handleLogout} disabled={loggingOut} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                <LogOut className="size-4" /> {loggingOut ? "Keluar..." : "Keluar"}
+              </button>
             </div>
           )}
           <div className="flex items-center gap-3 rounded-[22px] bg-white/20 p-2">

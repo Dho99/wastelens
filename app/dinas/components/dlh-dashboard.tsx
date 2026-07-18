@@ -45,29 +45,29 @@ function MapCanvas({ reportOpen, onOpenReport }: { reportOpen: boolean; onOpenRe
         className="pointer-events-none absolute left-[-41.95%] top-[-6.75%] h-auto w-[234.8%] max-w-none select-none transition-transform duration-300"
         style={{ transform: `scale(${zoom})` }}
       />
-      <div className="absolute left-5 top-5 flex h-12 rounded-full bg-[#fff0d2] p-1 text-xs shadow-[0_9px_13px_rgba(18,27,22,0.38)] sm:left-6 sm:h-[52px] sm:text-sm">
+      <div className="absolute left-5 top-5 flex h-12 gap-1 rounded-full bg-white/80 p-1 text-xs sm:left-6 sm:h-[52px] sm:text-sm">
         <button
           type="button"
           onClick={() => setView("heatmap")}
-          className={`min-w-[94px] rounded-full px-4 font-extrabold transition-colors sm:min-w-[108px] ${view === "heatmap" ? "bg-[#087529] text-white" : "text-[#17231d] hover:bg-white/35"}`}
+          className={`min-w-[94px] rounded-full px-4 font-extrabold transition-colors sm:min-w-[108px] ${view === "heatmap" ? "bg-[#087529] text-white shadow-[0_6px_12px_rgba(18,27,22,0.3)]" : "bg-transparent text-[#17231d] hover:bg-white/15"}`}
         >
           Heatmap
         </button>
         <button
           type="button"
           onClick={() => setView("points")}
-          className={`min-w-[118px] rounded-full px-4 font-semibold transition-colors sm:min-w-[132px] ${view === "points" ? "bg-[#087529] text-white" : "text-[#17231d] hover:bg-white/35"}`}
+          className={`min-w-[118px] rounded-full px-4 font-semibold transition-colors sm:min-w-[132px] ${view === "points" ? "bg-[#087529] text-white shadow-[0_6px_12px_rgba(18,27,22,0.3)]" : "bg-transparent text-[#17231d] hover:bg-white/15"}`}
         >
           Titik Laporan
         </button>
       </div>
 
       <div className="absolute left-5 top-[84px] grid gap-3 sm:left-6 sm:top-[88px]">
-        <div className="grid gap-2 rounded-[26px] bg-[#fff0d2] p-2 shadow-[0_9px_13px_rgba(18,27,22,0.38)]">
+        <div className="grid gap-2 rounded-[26px] bg-white/80 p-2">
           <button type="button" onClick={() => setZoom((value) => Math.min(1.35, value + 0.1))} aria-label="Perbesar peta" className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"><Plus className="size-6" strokeWidth={2.2} /></button>
           <button type="button" onClick={() => setZoom((value) => Math.max(0.85, value - 0.1))} aria-label="Perkecil peta" className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"><Minus className="size-6" strokeWidth={2.2} /></button>
         </div>
-        <div className="rounded-[26px] bg-[#fff0d2] p-2 shadow-[0_9px_13px_rgba(18,27,22,0.38)]">
+        <div className="rounded-[26px] bg-white/80 p-2">
           <button type="button" onClick={() => setLocated((value) => !value)} aria-pressed={located} aria-label="Lokasi saya" className={`grid size-11 place-items-center rounded-full shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition sm:size-12 ${located ? "bg-[#087529] text-white" : "bg-[#f4faff] text-[#12232c] hover:bg-white"}`}>
             <Crosshair className="size-6" strokeWidth={2.3} />
           </button>
@@ -77,17 +77,20 @@ function MapCanvas({ reportOpen, onOpenReport }: { reportOpen: boolean; onOpenRe
       {located && <span className="absolute left-1/2 top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white bg-[#087529] shadow-xl"><span className="size-2 rounded-full bg-white" /></span>}
 
       {view === "points" && (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="pointer-events-none absolute inset-0">
           {[
             [26, 36], [47, 48], [69, 31], [76, 67], [37, 72], [61, 59],
           ].map(([left, top], index) => (
-            <span
+            <button
+              type="button"
               key={`${left}-${top}`}
-              className="absolute grid size-7 place-items-center rounded-full border-2 border-white bg-[#08752a] text-[10px] font-bold text-white shadow-lg"
+              onClick={onOpenReport}
+              aria-label={`Buka laporan ${index + 1}`}
+              className="pointer-events-auto absolute grid size-7 place-items-center rounded-full border-2 border-white bg-[#08752a] text-[10px] font-bold text-white shadow-lg transition hover:scale-110 hover:bg-[#065d21]"
               style={{ left: `${left}%`, top: `${top}%` }}
             >
               {index + 1}
-            </span>
+            </button>
           ))}
         </div>
       )}
