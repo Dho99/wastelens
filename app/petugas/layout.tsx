@@ -42,8 +42,10 @@ export default async function PetugasLayout({
   if (role !== "petugas") redirect(`/${role ?? "user"}`);
 
   return (
-    <TabBarLayout role="petugas" tabs={tabs}>
-      {children}
+    <TabBarLayout tabs={tabs}>
+      <div className="mx-5">
+        {children}
+      </div>
     </TabBarLayout>
   );
 }
