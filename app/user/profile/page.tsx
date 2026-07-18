@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { signOut } from "@/lib/auth-client";
-
-// Services
-import { getUserProfileDummyData, UserProfileData } from "./services/profileService";
+import { useProfile } from "./hooks/useProfile";
 
 // Slices
 import { ProfileHeader } from "./components/ProfileHeader";
@@ -17,16 +15,8 @@ import { AppSettingsCard } from "./components/AppSettingsCard";
 
 function ProfileContent() {
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  useEffect(() => {
-    // Fetch mock user profile data from service layer
-    const data = getUserProfileDummyData();
-    setProfile(data);
-    setLoading(false);
-  }, []);
+  const [loggingOut, setLoggingOut] = React.useState(false);
+  const { data: profile, isLoading } = useProfile();
 
   const handleLogout = async () => {
     try {
@@ -42,7 +32,7 @@ function ProfileContent() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4 p-4 animate-pulse">
         <div className="flex justify-between items-center h-10" />
