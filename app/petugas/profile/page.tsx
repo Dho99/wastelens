@@ -2,21 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth-client";
-
-// Services
-import { getUserProfileDummyData } from "@/app/user/profile/services/profileService";
+import { signOut, useSession } from "@/lib/auth-client";
 
 // Slices
 import { ProfileAvatar } from "@/app/user/profile/components/ProfileAvatar";
-import { mdiAccount, mdiBell, mdiCheckboxMarkedCircleOutline, mdiHelpBoxOutline, mdiLogout, mdiSecurity, mdiStar } from "@mdi/js";
+import { mdiAccount, mdiCheckboxMarkedCircleOutline, mdiHelpBoxOutline, mdiLogout, mdiSecurity } from "@mdi/js";
 import Icon from "@mdi/react";
 import Link from "next/link";
+
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
-  const profile = getUserProfileDummyData();
+  const { data: session, isPending } = useSession();
+
+  const displayName =
+    (session?.user as { name?: string })?.name ||
+    session?.user?.name ||
+    "Pengguna";
+  const avatarUrl = session?.user?.image || PLACEHOLDER_IMAGE;
 
   const handleLogout = async () => {
     try {
@@ -32,22 +38,14 @@ export default function ProfilePage() {
     }
   };
 
-  // if (loading) {
-  //   return (
-  //     <div className="space-y-4 p-4 animate-pulse">
-  //       <div className="flex justify-between items-center h-10" />
-  //       <div className="h-28 w-28 bg-gray-200 rounded-full mx-auto" />
-  //       <div className="h-6 w-32 bg-gray-200 rounded-md mx-auto" />
-  //       <div className="h-16 bg-gray-200 rounded-3xl" />
-  //       <div className="h-48 bg-gray-200 rounded-3xl" />
-  //     </div>
-  //   );
-  // }
-
-  if (!profile) {
+  if (isPending) {
     return (
-      <div className="p-8 text-center text-gray-500">
-        Gagal memuat profil pengguna.
+      <div className="space-y-4 p-4 animate-pulse">
+        <div className="flex justify-between items-center h-10" />
+        <div className="h-28 w-28 bg-gray-200 rounded-full mx-auto" />
+        <div className="h-6 w-32 bg-gray-200 rounded-md mx-auto" />
+        <div className="h-16 bg-gray-200 rounded-3xl" />
+        <div className="h-48 bg-gray-200 rounded-3xl" />
       </div>
     );
   }
@@ -55,9 +53,9 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen pb-8">
       <ProfileAvatar
-        name={profile.name}
+        name={displayName}
         ecoRole={"Petugas Senior"}
-        avatarUrl={profile.profileImageUrl}
+        avatarUrl={avatarUrl}
         onEditAvatar={() => console.log("Edit avatar clicked...")}
       />
 
