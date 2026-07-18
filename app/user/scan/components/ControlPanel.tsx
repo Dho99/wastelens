@@ -14,9 +14,26 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onFlipCamera,
 }) => {
   return (
-    <div className="absolute bottom-24 left-0 right-0 z-20 flex items-center justify-around px-8">
-      {/* Placeholder to keep shutter button centered */}
-      <div className="w-12 h-12 flex-shrink-0" />
+    <div className="absolute bottom-16 left-0 right-0 z-20 flex items-center justify-between px-8 select-none">
+      
+      {/* 1. Gallery Button with Thumbnail & Label underneath */}
+      <div className="flex flex-col items-center gap-1.5 w-16">
+        <button
+          onClick={onGalleryClick}
+          className="w-12 h-12 rounded-xl overflow-hidden border border-white/40 shadow-md active:scale-90 transition-all duration-200 focus:outline-none"
+          aria-label="Open Gallery"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={galleryThumbnailUrl}
+            alt="Gallery Thumbnail"
+            className="w-full h-full object-cover"
+          />
+        </button>
+        <span className="text-[9px] font-black text-white/90 tracking-widest text-center uppercase">
+          Galeri
+        </span>
+      </div>
 
       {/* 2. Double-Ring Shutter Button */}
       <button
@@ -33,10 +50,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/45 active:scale-90 transition-all duration-200 shadow-md focus:outline-none"
         aria-label="Switch camera"
       >
+        {/* camera-flip/switch icon */}
         <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
-          <path d="M20,4H16.83L15,2H9L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,18H4V6H8.05L9.88,4H14.12L15.95,6H20V18M12,8A4,4 0 1,0 16,12A4,4 0 0,0 12,8M12,14A2,2 0 1,1 14,12A2,2 0 0,1 12,14Z" />
+          <path d="M9 12c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3-3 1.34-3 3m10-8h-3.17L14 2H10L8.17 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 14H5V6h4.05l1.83-2h2.24l1.83 2H19v12m-7-9c-2.76 0-5 2.24-5 5h2c0-1.66 1.34-3 3-3s3 1.34 3 3-1.34 3-3 3c-.76 0-1.44-.28-1.96-.74L8.62 15.68C9.5 16.5 10.69 17 12 17c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
         </svg>
       </button>
+
     </div>
   );
 };

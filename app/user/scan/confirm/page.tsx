@@ -6,6 +6,7 @@ import { useTabBar } from "@/components/nav/tab-bar-context";
 
 // Services
 import { getConfirmDummyData, ConfirmData } from "./services/confirmService";
+import { mockSubmitWasteReport } from "../services/waste-validation.service";
 
 // Slices
 import { ConfirmHeader } from "./components/ConfirmHeader";
@@ -19,6 +20,7 @@ export default function ConfirmPage() {
   const router = useRouter();
   const [data, setData] = useState<ConfirmData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const { setHideTabBar } = useTabBar();
 
   useEffect(() => {
@@ -27,15 +29,74 @@ export default function ConfirmPage() {
   }, [setHideTabBar]);
 
   useEffect(() => {
-    // Load confirm mock dataset from service layer
-    const mockData = getConfirmDummyData();
-    setData(mockData);
+    // Load confirm dataset from localStorage or fallback to mock data
+    const saved = localStorage.getItem("report_confirm_data");
+    if (saved) {
+      setData(JSON.parse(saved));
+    } else {
+      setData(getConfirmDummyData());
+    }
     setLoading(false);
   }, []);
 
-  const handleSubmitReport = () => {
-    console.log("Confirming report detail... redirecting to processing AI validation");
-    router.push("/user/scan/validation");
+  const handleSubmitReport = async () => {
+    setSubmitting(true);
+    try {
+      // 1. Run the mock submit transition
+      const mockRes = await mockSubmitWasteReport();
+
+      // 2. Call the actual backend API to persist report if data is available
+      const rawClassification = localStorage.getItem("classification_result");
+      const base64 = localStorage.getItem("captured_image_base64");
+      const latStr = localStorage.getItem("captured_lat");
+      const lngStr = localStorage.getItem("captured_lng");
+
+      if (rawClassification && base64 && latStr && lngStr) {
+        const classification = JSON.parse(rawClassification);
+        const lat = parseFloat(latStr);
+        const lng = parseFloat(lngStr);
+
+        const res = await fetch("/api/laporan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: base64,
+            lat,
+            lng,
+            kategori_ukuran: classification.kategori_ukuran,
+            rekomendasi_kendaraan: classification.rekomendasi_kendaraan,
+            deskripsi: localStorage.getItem("captured_deskripsi") || "",
+          }),
+        });
+
+        if (res.ok) {
+          const resData = await res.json();
+          // Update report ID from the actual saved entry
+          mockRes.reportId = resData.id || mockRes.reportId;
+        }
+      }
+
+      // Save success report details for display on success screen
+      localStorage.setItem(
+        "success_report_data",
+        JSON.stringify({
+          reportId: mockRes.reportId,
+          submittedAt: new Date(mockRes.submittedAt).toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }) + " WIB",
+          rewardPoints: mockRes.rewardPoints,
+          locationName: data?.address || "Jakarta Pusat",
+        })
+      );
+
+      router.push("/user/scan/success");
+    } catch (err) {
+      console.error("Failed to submit report:", err);
+      alert("Gagal mengirim laporan. Silakan coba lagi.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -90,6 +151,7 @@ export default function ConfirmPage() {
         rewardPoints={data.rewardPoints}
         onSubmit={handleSubmitReport}
         onEdit={() => router.back()}
+        submitting={submitting}
       />
     </div>
   );
