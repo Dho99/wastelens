@@ -20,18 +20,16 @@ model user {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+  address       String?
+  phoneNumber   String?
 
-  // Custom application fields
-  nama       String
   saldo_koin Int    @default(0)
   status     String @default("active")
   role       String @default("user")
 
-  // Better Auth relations
   sessions session[]
   accounts account[]
 
-  // Application relations
   dinas          Dinas[]
   petugas        Petugas[]
   laporan        Laporan[]

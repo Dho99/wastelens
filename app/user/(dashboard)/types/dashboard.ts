@@ -16,7 +16,7 @@ export interface RecentActivity {
     id: string;
     location: string;
     time: string;
-    status: "SELESAI" | "DIPROSES" | "PERLU_DIPERIKSA";
+    status: "SELESAI" | "DIPROSES" | "PERLU DIPERIKSA";
     points?: number;
     imageUrl: string;
 }
