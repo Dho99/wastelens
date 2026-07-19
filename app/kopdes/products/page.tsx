@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { Plus } from "lucide-react";
 
 interface ProdukItem {
@@ -13,7 +12,7 @@ interface ProdukItem {
     createdAt: string;
 }
 
-function ProductsContent() {
+export default function ProductsPage() {
     const router = useRouter();
     const [produk, setProduk] = useState<ProdukItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -99,13 +98,5 @@ function ProductsContent() {
                 </div>
             )}
         </div>
-    );
-}
-
-export default function ProductsPage() {
-    return (
-        <ErrorBoundary>
-            <ProductsContent />
-        </ErrorBoundary>
     );
 }

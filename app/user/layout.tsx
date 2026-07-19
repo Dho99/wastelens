@@ -2,14 +2,42 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { TabBarLayout } from "@/components/nav/tab-bar";
-import { ArrowLeftRight, Camera, Clock, LayoutDashboard, Settings } from "lucide-react";
+import {
+  mdiHomeVariant,
+  mdiHistory,
+  mdiCamera,
+  mdiWalletGiftcard,
+  mdiAccountOutline,
+} from "@mdi/js";
+import Icon from "@mdi/react";
 
 const tabs = [
-  { label: "Beranda", href: "/user", icon: <LayoutDashboard /> },
-  { label: "Scan Sampah", href: "/user/scan", icon: <Camera /> },
-  { label: "Tukar Koin", href: "/user/exchange", icon: <ArrowLeftRight /> },
-  { label: "Riwayat", href: "/user/history", icon: <Clock /> },
-  { label: "Settings", href: "/user/settings", icon: <Settings /> },
+  {
+    label: "Beranda",
+    href: `/user`,
+    icon: <Icon path={mdiHomeVariant} size={1} />,
+  },
+  {
+    label: "Riwayat",
+    href: `/user/history`,
+    icon: <Icon path={mdiHistory} size={1} />,
+  },
+  {
+    label: "Lapor",
+    href: `/user/scan`,
+    icon: <Icon path={mdiCamera} size={1} />,
+    primaryMenu: true,
+  },
+  {
+    label: "Reward",
+    href: `/user/reward`,
+    icon: <Icon path={mdiWalletGiftcard} size={1} />,
+  },
+  {
+    label: "Akun",
+    href: `/user/profile`,
+    icon: <Icon path={mdiAccountOutline} size={1} />,
+  },
 ];
 
 export default async function UserLayout({
