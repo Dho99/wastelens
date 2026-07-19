@@ -5,6 +5,6 @@ import type { LaporanItem } from "../types/history.ts";
 export function useHistory() {
     return useQuery({
         queryKey: ["user-history"],
-        queryFn: () => apiFetch<LaporanItem[]>("/api/user/history"),
+        queryFn: () => apiFetch<LaporanItem[]>("/api/laporan/history"),
     });
 }
