@@ -12,7 +12,6 @@ import {
   Save,
   X,
 } from "lucide-react";
-import { DlhShell } from "./dlh-shell";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 const timeline = [
@@ -26,6 +25,7 @@ const timeline = [
 
 function LocationMap() {
   return (
+      <>
     <div className="relative h-[230px] overflow-hidden bg-[#d9f1f7] sm:h-[270px]">
       <div className="absolute -left-10 top-7 h-7 w-[115%] -rotate-6 bg-white shadow-[0_0_0_3px_#bed6df]" />
       <div className="absolute -left-14 bottom-12 h-8 w-[120%] rotate-3 bg-white shadow-[0_0_0_3px_#c4d8df]" />
@@ -47,6 +47,7 @@ function LocationMap() {
       </span>
       <div className="absolute inset-x-0 bottom-0 h-10 bg-[#72d1e9]/45" />
     </div>
+      </>
   );
 }
 
@@ -78,7 +79,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <main className="min-h-0 flex-1 overflow-y-auto bg-[#f4fbff] px-4 pb-10 pt-8 sm:px-7 lg:px-10">
         <div className="mx-auto max-w-[1180px]">
           <div className="flex items-start gap-4">
@@ -282,6 +283,6 @@ export function ReportDetail({ reportId }: { reportId: string }) {
           </form>
         </div>
       )}
-    </DlhShell>
+      </>
   );
 }

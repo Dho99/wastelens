@@ -13,7 +13,6 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { DlhShell } from "./dlh-shell";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 export function AdminProfile() {
@@ -30,7 +29,7 @@ export function AdminProfile() {
   ).length;
 
   return (
-    <DlhShell hideHeader>
+      <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <h1 className="text-xl font-extrabold text-[#087529]">
@@ -310,7 +309,7 @@ export function AdminProfile() {
           </form>
         </div>
       )}
-    </DlhShell>
+      </>
   );
 }
 
@@ -328,6 +327,7 @@ function StatCard({
   trend: string;
 }) {
   return (
+      <>
     <div className="rounded-[24px] border border-[#d4ded7] bg-white p-5 shadow-sm">
       <div className="flex items-start">
         <span
@@ -344,5 +344,6 @@ function StatCard({
       <p className="mt-4 text-3xl font-extrabold">{value}</p>
       <p className="mt-1 text-sm text-[#667169]">{label}</p>
     </div>
+      </>
   );
 }

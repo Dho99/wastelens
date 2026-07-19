@@ -15,7 +15,6 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { DlhShell } from "./dlh-shell";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 const inputClass =
@@ -110,7 +109,7 @@ export function AddOfficerForm() {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <button
@@ -350,7 +349,7 @@ export function AddOfficerForm() {
           </section>
         </div>
       )}
-    </DlhShell>
+      </>
   );
 }
 
@@ -366,6 +365,7 @@ function SelectField({
   children: React.ReactNode;
 }) {
   return (
+      <>
     <label className="text-sm font-semibold">
       {label}
       <span className="relative block">
@@ -380,5 +380,6 @@ function SelectField({
         <ChevronDown className="pointer-events-none absolute right-4 top-[18px] size-4 text-[#667169]" />
       </span>
     </label>
+      </>
   );
 }

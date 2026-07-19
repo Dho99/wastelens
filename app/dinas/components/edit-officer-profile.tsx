@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { DlhShell } from "./dlh-shell";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 const inputClass =
@@ -56,7 +55,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <button
@@ -284,7 +283,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
           </section>
         </div>
       )}
-    </DlhShell>
+      </>
   );
 }
 
@@ -298,6 +297,7 @@ function ProfileStat({
   value: string;
 }) {
   return (
+      <>
     <div className="flex items-center gap-3 rounded-2xl bg-[#e5f3fa] px-4 py-3">
       <span className="text-[#087529] [&_svg]:size-4">{icon}</span>
       <div>
@@ -307,6 +307,7 @@ function ProfileStat({
         <p className="text-sm font-semibold">{value}</p>
       </div>
     </div>
+      </>
   );
 }
 
@@ -320,6 +321,7 @@ function Toggle({
   onClick: () => void;
 }) {
   return (
+      <>
     <div className="mt-3 flex items-center text-sm font-medium">
       <span>{label}</span>
       <button
@@ -333,11 +335,13 @@ function Toggle({
         />
       </button>
     </div>
+      </>
   );
 }
 
 function AreaMap() {
   return (
+      <>
     <div className="relative min-h-[150px] overflow-hidden rounded-[20px] border border-[#bdcbbd] bg-[#dfeaed]">
       <div className="absolute -left-6 top-10 h-5 w-[120%] -rotate-6 bg-white/80" />
       <div className="absolute left-[30%] -top-5 h-[130%] w-5 rotate-[24deg] bg-white/75" />
@@ -352,5 +356,6 @@ function AreaMap() {
         <p className="text-sm font-extrabold">Menteng, Jakarta Pusat</p>
       </div>
     </div>
+      </>
   );
 }

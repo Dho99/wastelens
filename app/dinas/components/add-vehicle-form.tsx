@@ -19,7 +19,6 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
-import { DlhShell } from "./dlh-shell";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 type OperationalStatus = "Beroperasi" | "Maintenance" | "Standby";
@@ -59,7 +58,7 @@ export function AddVehicleForm() {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <button
@@ -297,7 +296,7 @@ export function AddVehicleForm() {
           </section>
         </div>
       )}
-    </DlhShell>
+      </>
   );
 }
 
@@ -313,6 +312,7 @@ function InfoCard({
   children: React.ReactNode;
 }) {
   return (
+      <>
     <div className="flex gap-3 rounded-[20px] border border-[#bdcbbd] bg-white p-3.5">
       <span
         className={`grid size-10 shrink-0 place-items-center rounded-xl [&_svg]:size-4 ${color}`}
@@ -324,5 +324,6 @@ function InfoCard({
         <p className="mt-1 text-xs leading-5 text-[#667169]">{children}</p>
       </div>
     </div>
+      </>
   );
 }

@@ -16,7 +16,6 @@ import {
   X,
 } from "lucide-react";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
-import { DlhShell } from "./dlh-shell";
 
 const fieldClass =
   "mt-2 h-12 w-full rounded-full border-2 border-[#bdcbbd] bg-white px-5 text-sm font-normal outline-none transition focus:border-[#087529]";
@@ -75,7 +74,7 @@ export function EditAdminProfile() {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <button
@@ -299,14 +298,16 @@ export function EditAdminProfile() {
           </div>
         </main>
       </div>
-    </DlhShell>
+      </>
   );
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
+      <>
     <h2 className="relative inline-block pb-3 text-lg font-extrabold after:absolute after:bottom-0 after:left-0 after:h-1 after:w-12 after:rounded-full after:bg-[#087529]">
       {children}
     </h2>
+      </>
   );
 }

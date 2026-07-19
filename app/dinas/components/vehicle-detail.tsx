@@ -13,7 +13,6 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { DlhShell } from "./dlh-shell";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
@@ -45,7 +44,7 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <main className="min-h-0 flex-1 overflow-y-auto bg-[#f4fbff] p-4 sm:p-5">
         <div className="mx-auto max-w-[1220px]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -322,6 +321,6 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
           </form>
         </div>
       )}
-    </DlhShell>
+      </>
   );
 }

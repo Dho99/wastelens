@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
-import { DlhShell } from "./dlh-shell";
 
 type PasswordField = "current" | "next" | "confirm";
 
@@ -101,7 +100,7 @@ export function ChangeAdminPassword() {
   };
 
   return (
-    <DlhShell hideHeader>
+      <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <button
@@ -280,7 +279,7 @@ export function ChangeAdminPassword() {
           </div>
         </main>
       </div>
-    </DlhShell>
+      </>
   );
 }
 
