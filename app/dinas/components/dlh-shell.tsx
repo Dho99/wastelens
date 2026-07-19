@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
+import { useDlhStore } from "@/lib/dlh-store";
 import {
   Bell,
   ClipboardList,
@@ -26,6 +27,7 @@ const navItems = [
 ];
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const store = useDlhStore();
   const pathname = usePathname();
   const router = useRouter();
   const [accountMenu, setAccountMenu] = useState(false);
@@ -97,8 +99,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           <div className="flex items-center gap-3 rounded-[22px] bg-white/20 p-2">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#d8eee6] text-sm font-bold text-[#17662d]">AD</div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-[#17251e]">Admin DLH</p>
-              <p className="truncate text-[10px] text-[#718078]">Wilayah Jakarta Pusat</p>
+              <p className="truncate text-sm font-bold text-[#17251e]">{store.admin.name}</p>
+              <p className="truncate text-[10px] text-[#718078]">Wilayah {store.settings.region}</p>
             </div>
             <button type="button" onClick={() => setAccountMenu((value) => !value)} aria-expanded={accountMenu} aria-label="Menu akun" className="rounded-full p-1 text-[#66776e] hover:bg-white/60">
               <MoreVertical className="size-5" />
@@ -111,12 +113,13 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 function DashboardHeader({ onMenu }: { onMenu: () => void }) {
+  const store = useDlhStore();
   return (
     <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
       <button type="button" onClick={onMenu} className="mr-3 rounded-lg p-2 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
         <Menu className="size-5" />
       </button>
-      <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">Dinas Lingkungan Hidup</h1>
+      <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">{store.settings.agency}</h1>
       <div className="ml-5 hidden h-7 w-px bg-[#cedbd4] md:block" />
       <div className="ml-5 hidden items-center gap-2 rounded-full bg-[#e2f2ea] px-3 py-1 text-xs font-bold text-[#176c31] md:flex">
         <span className="size-2 rounded-full bg-[#08752a]" /> System Status: Online
@@ -135,14 +138,19 @@ function DashboardHeader({ onMenu }: { onMenu: () => void }) {
   );
 }
 
-export function DlhShell({ children }: { children: ReactNode }) {
+export function DlhShell({ children, hideHeader = false }: { children: ReactNode; hideHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="flex h-dvh min-h-[680px] overflow-hidden bg-[#f4fbff] text-[#17231d]">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader onMenu={() => setMenuOpen(true)} />
+        {!hideHeader && <DashboardHeader onMenu={() => setMenuOpen(true)} />}
+        {hideHeader && (
+          <button type="button" onClick={() => setMenuOpen(true)} className="fixed left-4 top-4 z-30 rounded-xl bg-white p-2 shadow-md lg:hidden" aria-label="Buka menu">
+            <Menu className="size-5" />
+          </button>
+        )}
         {children}
       </div>
     </div>

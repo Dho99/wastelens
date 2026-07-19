@@ -16,6 +16,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { updateDlhStore } from "@/lib/dlh-store";
 
 const vehicles = [
   { id: "truck-01", name: "Truk Sampah 01", meta: "Kapasitas 10 ton • 1.2km" },
@@ -187,6 +188,14 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
   const [officer, setOfficer] = useState("");
 
   const toggleDropdown = (next: Exclude<Dropdown, null>) => setDropdown((current) => (current === next ? null : next));
+  const assignFleet = () => {
+    updateDlhStore((draft) => {
+      const report = draft.reports.find((item) => item.status === "Menunggu");
+      if (report) report.status = "Diproses";
+      draft.notifications.unshift({ id: Date.now(), title: "Armada berhasil ditugaskan", message: `${vehicle} dan ${officer} ditugaskan untuk laporan prioritas.`, time: "Baru saja", type: "truck", read: false });
+    });
+    router.push(`/dinas/assignments/WL-099?vehicle=${vehicle}&officer=${officer}`);
+  };
 
   return (
     <aside className="fixed inset-x-0 bottom-0 top-16 z-20 flex w-full flex-col border-l border-[#d8e2dd] bg-white lg:relative lg:inset-auto lg:w-[39%] lg:min-w-[480px] lg:max-w-[560px] lg:shrink-0">
@@ -259,7 +268,7 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           disabled={!vehicle || !officer}
-          onClick={() => router.push(`/dinas/assignments/WL-099?vehicle=${vehicle}&officer=${officer}`)}
+          onClick={assignFleet}
           className="flex h-[54px] w-full items-center justify-center gap-3 rounded-full bg-[#087529] text-sm font-extrabold text-white shadow-md transition hover:bg-[#065d21] disabled:cursor-not-allowed disabled:bg-[#8fb39b]"
         >
           <ClipboardCheck className="size-5" />
