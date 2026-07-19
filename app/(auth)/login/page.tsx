@@ -12,11 +12,11 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from") ?? "/";
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [seePassword, setSeePassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [seePassword, setSeePassword] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

@@ -3,34 +3,31 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
-  }),
-  emailAndPassword: {
-    enabled: true,
-    // Use nama as the user's display name field
-    autoSignIn: true,
-  },
-  user: {
-    additionalFields: {
-      nama: {
-        type: "string",
-        required: true,
-      },
-      saldo_koin: {
-        type: "number",
-        defaultValue: 0,
-      },
-      status: {
-        type: "string",
-        defaultValue: "active",
-      },
-      role: {
-        type: "string",
-        defaultValue: "user",
-      },
+    database: prismaAdapter(prisma, {
+        provider: "postgresql",
+    }),
+    trustedOrigins: [
+        "https://phosphorescently-stretchier-sharyl.ngrok-free.dev",
+        "http://localhost:3000",
+    ],
+    emailAndPassword: {
+        enabled: true,
+        autoSignIn: true,
     },
-  },
-  // Map Better Auth's "name" field to our "nama"
-  // Better Auth requires "name" for signUp; we'll pass both
+    user: {
+        additionalFields: {
+            saldo_koin: {
+                type: "number",
+                defaultValue: 0,
+            },
+            status: {
+                type: "string",
+                defaultValue: "active",
+            },
+            role: {
+                type: "string",
+                defaultValue: "user",
+            },
+        },
+    },
 });
