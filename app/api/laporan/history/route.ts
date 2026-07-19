@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
             where: { user_id: userId },
             include: {
                 foto: { take: 1 },
+                transaksi_koin: { take: 1, select: { jumlah: true } }
             },
             orderBy: { createdAt: "desc" },
         });
