@@ -1,12 +1,21 @@
 import React from "react";
 
 export const DetectionOverlay: React.FC = () => {
+  const [photoUrl, setPhotoUrl] = React.useState("https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=800&auto=format&fit=crop&q=80");
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem("captured_image");
+    if (saved) {
+      setPhotoUrl(saved);
+    }
+  }, []);
+
   return (
     <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-gray-100 shadow-inner">
       {/* Background Image of Littered Pavement matching design */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=800&auto=format&fit=crop&q=80"
+        src={photoUrl}
         alt="Littered pavement"
         className="w-full h-full object-cover"
       />

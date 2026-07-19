@@ -4,12 +4,14 @@ interface ActionSubmitProps {
   rewardPoints: number;
   onSubmit: () => void;
   onEdit: () => void;
+  submitting?: boolean;
 }
 
 export const ActionSubmit: React.FC<ActionSubmitProps> = ({
   rewardPoints,
   onSubmit,
   onEdit,
+  submitting = false,
 }) => {
   const [declared, setDeclared] = useState(false);
 
@@ -35,14 +37,21 @@ export const ActionSubmit: React.FC<ActionSubmitProps> = ({
           {/* Kirim Laporan Button */}
           <button
             onClick={onSubmit}
-            disabled={!declared}
-            className={`w-full py-3.5 rounded-2xl font-black text-xs transition-all duration-250 active:scale-95 shadow-sm ${
-              declared
+            disabled={!declared || submitting}
+            className={`w-full py-3.5 rounded-2xl font-black text-xs transition-all duration-250 active:scale-95 shadow-sm flex items-center justify-center gap-2 ${
+              declared && !submitting
                 ? "bg-[#287A38] hover:bg-[#20632d] text-white shadow-emerald-700/10"
                 : "bg-gray-300 text-gray-400 cursor-not-allowed"
             }`}
           >
-            Kirim Laporan
+            {submitting ? (
+              <>
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                <span>Mengirim Laporan...</span>
+              </>
+            ) : (
+              "Kirim Laporan"
+            )}
           </button>
 
           {/* Edit Data Button */}

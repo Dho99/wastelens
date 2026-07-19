@@ -23,9 +23,12 @@ function AboutPageContent() {
 
   useEffect(() => {
     // Fetch mock about data payload from service layer
-    const aboutData = getAboutDummyData();
-    setData(aboutData);
-    setLoading(false);
+    const panggil = () => {
+      const aboutData = getAboutDummyData();
+      setData(aboutData);
+      setLoading(false);
+    }
+    panggil()
   }, []);
 
   useEffect(() => {
