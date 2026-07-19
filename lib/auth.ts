@@ -6,12 +6,9 @@ export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: "postgresql",
     }),
-    trustedOrigins: [
-        "https://phosphorescently-stretchier-sharyl.ngrok-free.dev",
-        "http://localhost:3000",
-    ],
     emailAndPassword: {
         enabled: true,
+        // Use nama as the user's display name field
         autoSignIn: true,
     },
     user: {
@@ -30,4 +27,6 @@ export const auth = betterAuth({
             },
         },
     },
+    // Map Better Auth's "name" field to our "nama"
+    // Better Auth requires "name" for signUp; we'll pass both
 });
