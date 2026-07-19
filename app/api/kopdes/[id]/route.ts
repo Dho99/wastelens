@@ -18,7 +18,7 @@ export async function GET(
       where: { id },
       include: {
         produk: {
-          where: { stok: { gt: 0 } },
+          where: { isActive: true },
           orderBy: { nama_barang: "asc" },
         },
       },
@@ -26,6 +26,10 @@ export async function GET(
 
     if (!kopdes) {
       return NextResponse.json({ success: false, error: "Kopdes not found", code: "NOT_FOUND" }, { status: 404 });
+    }
+
+    if (!kopdes.isActive) {
+      return NextResponse.json({ success: false, error: "Koperasi tidak aktif", code: "COOPERATIVE_INACTIVE" }, { status: 400 });
     }
 
     const data = {
@@ -40,6 +44,8 @@ export async function GET(
         name: p.nama_barang,
         category: "LAINNYA" as const,
         coinsPrice: p.harga_koin,
+        stock: p.stok,
+        isActive: p.isActive,
         imageUrl: "",
       })),
     };
