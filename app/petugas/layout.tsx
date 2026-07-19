@@ -2,11 +2,29 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { TabBarLayout } from "@/components/nav/tab-bar";
-import { Clipboard, LayoutDashboard } from "lucide-react";
+import Icon from "@mdi/react";
+import {
+  mdiHistory,
+  mdiAccountOutline,
+  mdiClipboardTextOutline
+} from "@mdi/js";
 
 const tabs = [
-  { label: "Beranda", href: "/petugas", icon: <LayoutDashboard /> },
-  { label: "Tugas", href: "/petugas/tasks", icon: <Clipboard /> },
+  {
+    label: "tugas",
+    href: `/petugas`,
+    icon: <Icon path={mdiClipboardTextOutline} size={1} />,
+  },
+  {
+    label: "Riwayat",
+    href: `/petugas/history`,
+    icon: <Icon path={mdiHistory} size={1} />,
+  },
+  {
+    label: "Akun",
+    href: `/petugas/profile`,
+    icon: <Icon path={mdiAccountOutline} size={1} />,
+  },
 ];
 
 export default async function PetugasLayout({
@@ -24,8 +42,10 @@ export default async function PetugasLayout({
   if (role !== "petugas") redirect(`/${role ?? "user"}`);
 
   return (
-    <TabBarLayout role="petugas" tabs={tabs}>
-      {children}
+    <TabBarLayout tabs={tabs}>
+      <div className="mx-5">
+        {children}
+      </div>
     </TabBarLayout>
   );
 }

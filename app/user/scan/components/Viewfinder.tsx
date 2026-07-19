@@ -1,19 +1,13 @@
 import React from "react";
 
 interface ViewfinderProps {
-  backgroundImageUrl: string;
+  children?: React.ReactNode;
 }
 
-export const Viewfinder: React.FC<ViewfinderProps> = ({ backgroundImageUrl }) => {
+export const Viewfinder: React.FC<ViewfinderProps> = ({ children }) => {
   return (
-    <div className="absolute inset-0 z-10 w-full h-full bg-neutral-900 overflow-hidden">
-      {/* Background Camera Feed Mockup */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={backgroundImageUrl}
-        alt="Camera Feed"
-        className="w-full h-full object-cover opacity-90 select-none pointer-events-none"
-      />
+    <div className="absolute inset-0 z-10 w-full h-full overflow-hidden pointer-events-none">
+      {children}
 
       {/* Frame overlay */}
       <div className="absolute inset-x-5 top-28 bottom-48 flex items-center justify-center">
@@ -36,7 +30,7 @@ export const Viewfinder: React.FC<ViewfinderProps> = ({ backgroundImageUrl }) =>
             <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
               <path d="M19,16A3,3 0 0,1 16,19H8A3,3 0 0,1 5,16V9A3,3 0 0,1 8,6H16A3,3 0 0,1 19,9V16M16,4H8A5,5 0 0,0 3,9V16A5,5 0 0,0 8,21H16A5,5 0 0,0 21,16V9A5,5 0 0,0 16,4M16,11H8V9H16V11M16,15H8V13H16V15Z" />
             </svg>
-            <span>Deteksi Sampah</span>
+            <span>DETEKSI SAMPAH</span>
           </div>
 
           {/* Spacer */}

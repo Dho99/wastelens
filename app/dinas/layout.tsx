@@ -2,14 +2,13 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { SidebarLayout } from "@/components/nav/sidebar";
-import { BarChart3, Car, Earth, LayoutDashboard, Users } from "lucide-react";
+import { Map, ClipboardList, Warehouse, UserCog } from "lucide-react";
 
 const navItems = [
-  { label: "Dashboard", href: "/dinas", icon: <LayoutDashboard /> },
-  { label: "Laporan", href: "/dinas/reports", icon: <BarChart3 /> },
-  { label: "Cakupan Area", href: "/dinas/area-coverage", icon: <Earth /> },
-  { label: "Petugas", href: "/dinas/petugas", icon: <Users /> },
-  { label: "Kendaraan", href: "/dinas/vehicle", icon: <Car /> },
+  { label: "Dashboard Peta", href: "/dinas", icon: <Map /> },
+  { label: "Kelola Laporan", href: "/dinas/reports", icon: <ClipboardList /> },
+  { label: "Kelola Logistik", href: "/dinas/logistics", icon: <Warehouse /> },
+  { label: "Kelola Akun", href: "/dinas/accounts", icon: <UserCog /> },
 ];
 
 export default async function DinasLayout({

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { ClientLayout } from "@/components/client-layout";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -44,6 +45,7 @@ export default function RootLayout({
             <body className="min-h-full flex flex-col">
                 <ClientLayout>{children}</ClientLayout>
                 <PWAInstallPrompt />
+                <Toaster position="top-center" richColors />
             </body>
         </html>
     );
