@@ -17,10 +17,6 @@ export const auth = betterAuth({
     },
     user: {
         additionalFields: {
-            nama: {
-                type: "string",
-                required: true,
-            },
             saldo_koin: {
                 type: "number",
                 defaultValue: 0,
