@@ -2,92 +2,164 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { signOut } from "@/lib/auth-client";
-import { useDlhStore } from "@/lib/dlh-store";
-import { Bell, LogOut, Settings } from "lucide-react";
+import { hydrateDlhStore, useDlhStore, useDlhSyncStatus } from "@/lib/dlh-store";
+import {
+  Bell,
+  ClipboardList,
+  LogOut,
+  Map,
+  Menu,
+  MoreVertical,
+  Settings,
+  UserCog,
+  Warehouse,
+  X,
+} from "lucide-react";
 
-function DashboardHeader() {
+const navItems = [
+  { label: "Dashboard Peta", href: "/dinas", icon: Map },
+  { label: "Kelola Laporan", href: "/dinas/reports", icon: ClipboardList },
+  { label: "Kelola Logistik", href: "/dinas/logistics", icon: Warehouse },
+  { label: "Kelola Akun", href: "/dinas/accounts", icon: UserCog },
+];
+
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const store = useDlhStore();
+  const pathname = usePathname();
+  const router = useRouter();
   const [accountMenu, setAccountMenu] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut();
+    router.replace("/login");
+    router.refresh();
+  };
+
   return (
-    <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
-      <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">
-        {store.settings.agency}
-      </h1>
-      <div className="ml-5 hidden h-7 w-px bg-[#cedbd4] md:block" />
-      <div className="ml-5 hidden items-center gap-2 rounded-full bg-[#e2f2ea] px-3 py-1 text-xs font-bold text-[#176c31] md:flex">
-        <span className="size-2 rounded-full bg-[#08752a]" /> System Status:
-        Online
-      </div>
-      <div className="ml-auto flex items-center gap-2 sm:gap-5">
-        <Link
-          href="/dinas/notifications"
-          aria-label="Notifikasi"
-          className="relative rounded-full p-2 hover:bg-slate-100"
-        >
-          <Bell className="size-5" strokeWidth={2.2} />
-          <span className="absolute right-1 top-1 size-2 rounded-full border border-white bg-red-500" />
-        </Link>
-        <Link
-          href="/dinas/settings"
-          aria-label="Pengaturan"
-          className="hidden rounded-full p-2 hover:bg-slate-100 sm:block"
-        >
-          <Settings className="size-5" strokeWidth={2.2} />
-        </Link>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setAccountMenu((v) => !v)}
-            aria-expanded={accountMenu}
-            aria-label="Menu akun"
-            className="flex size-8 items-center justify-center rounded-full border border-[#c6d1cb] bg-[#e7f2ee] text-[10px] font-extrabold text-[#17662d]"
-          >
-            AD
-          </button>
-          {accountMenu && (
-            <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-[#c8d8d0] bg-white p-2 shadow-xl z-50">
+    <>
+      {open && (
+        <button
+          type="button"
+          aria-label="Tutup menu"
+          className="fixed inset-0 z-40 bg-slate-950/35 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[258px] flex-col border-r border-[#ccddd5] bg-[#e9f6fc] transition-transform duration-200 lg:static lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <button type="button" onClick={onClose} className="absolute right-3 top-3 rounded-full p-2 hover:bg-white/70 lg:hidden" aria-label="Tutup menu">
+          <X className="size-5" />
+        </button>
+        <div className="px-[18px] pt-[23px]">
+          <Link href="/dinas" onClick={onClose} className="block text-[23px] font-extrabold tracking-[-0.04em] text-[#086a28]">
+            DLH Dashboard
+          </Link>
+          <p className="mt-1 text-[12px] text-[#738077]">Government Portal</p>
+        </div>
+
+        <nav className="mt-5 space-y-2 px-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.href === "/dinas" ? pathname === item.href : pathname.startsWith(item.href);
+            return (
               <Link
-                href="/dinas/settings"
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-[#edf8f2]"
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={`flex h-16 w-full items-center gap-3 rounded-[24px] px-4 text-[15px] font-semibold transition-colors ${
+                  active ? "bg-[#b9ebd0] text-[#477762]" : "text-[#3f5148] hover:bg-white/60"
+                }`}
               >
+                <Icon className="size-5" strokeWidth={2.2} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="relative mt-auto p-[18px]">
+          {accountMenu && (
+            <div className="absolute bottom-[82px] left-4 right-4 overflow-hidden rounded-2xl border border-[#c8d8d0] bg-white p-2 shadow-xl">
+              <Link href="/dinas/settings" onClick={onClose} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-[#edf8f2]">
                 <Settings className="size-4" /> Pengaturan
               </Link>
-              <button
-                type="button"
-                onClick={async () => {
-                  setLoggingOut(true);
-                  await signOut();
-                  window.location.href = "/login";
-                }}
-                disabled={loggingOut}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-              >
-                <LogOut className="size-4" />{" "}
-                {loggingOut ? "Keluar..." : "Keluar"}
+              <button type="button" onClick={handleLogout} disabled={loggingOut} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                <LogOut className="size-4" /> {loggingOut ? "Keluar..." : "Keluar"}
               </button>
             </div>
           )}
+          <div className="flex items-center gap-3 rounded-[22px] bg-white/20 p-2">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#d8eee6] text-sm font-bold text-[#17662d]">AD</div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-[#17251e]">{store.admin.name}</p>
+              <p className="truncate text-[10px] text-[#718078]">Wilayah {store.settings.region}</p>
+            </div>
+            <button type="button" onClick={() => setAccountMenu((value) => !value)} aria-expanded={accountMenu} aria-label="Menu akun" className="rounded-full p-1 text-[#66776e] hover:bg-white/60">
+              <MoreVertical className="size-5" />
+            </button>
+          </div>
         </div>
+      </aside>
+    </>
+  );
+}
+
+function DashboardHeader({ onMenu }: { onMenu: () => void }) {
+  const store = useDlhStore();
+  const syncStatus = useDlhSyncStatus();
+  const unreadCount = store.notifications.filter((item) => !item.read).length;
+  const statusLabel = syncStatus === "syncing" ? "Menyinkronkan" : syncStatus === "offline" ? "Offline" : "Online";
+  return (
+    <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
+      <button type="button" onClick={onMenu} className="mr-3 rounded-lg p-2 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
+        <Menu className="size-5" />
+      </button>
+      <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">{store.settings.agency}</h1>
+      <div className="ml-5 hidden h-7 w-px bg-[#cedbd4] md:block" />
+      <div className="ml-5 hidden items-center gap-2 rounded-full bg-[#e2f2ea] px-3 py-1 text-xs font-bold text-[#176c31] md:flex">
+        <span className={`size-2 rounded-full ${syncStatus === "offline" ? "bg-red-500" : syncStatus === "syncing" ? "animate-pulse bg-amber-500" : "bg-[#08752a]"}`} /> System Status: {statusLabel}
+      </div>
+      <div className="ml-auto flex items-center gap-2 sm:gap-5">
+        <Link href="/dinas/notifications" aria-label={unreadCount ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"} className="relative rounded-full p-2 hover:bg-slate-100">
+          <Bell className="size-5" strokeWidth={2.2} />
+          {unreadCount > 0 && <span className="absolute right-1 top-1 size-2 rounded-full border border-white bg-red-500" aria-hidden="true" />}
+        </Link>
+        <Link href="/dinas/settings" aria-label="Pengaturan" className="hidden rounded-full p-2 hover:bg-slate-100 sm:block">
+          <Settings className="size-5" strokeWidth={2.2} />
+        </Link>
+        <Link href="/dinas/accounts" className="flex size-8 items-center justify-center rounded-full border border-[#c6d1cb] bg-[#e7f2ee] text-[10px] font-extrabold text-[#17662d]">AD</Link>
       </div>
     </header>
   );
 }
 
-export function DlhShell({
-  children,
-  hideHeader = false,
-}: {
-  children: ReactNode;
-  hideHeader?: boolean;
-}) {
+export function DlhShell({ children, hideHeader = false }: { children: ReactNode; hideHeader?: boolean }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    void hydrateDlhStore();
+  }, []);
+
   return (
-    <>
-      {!hideHeader && <DashboardHeader />}
-      {children}
-    </>
+    <div className="flex h-dvh min-h-[680px] overflow-hidden bg-[#f4fbff] text-[#17231d]">
+      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        {!hideHeader && <DashboardHeader onMenu={() => setMenuOpen(true)} />}
+        {hideHeader && (
+          <button type="button" onClick={() => setMenuOpen(true)} className="fixed left-4 top-4 z-30 rounded-xl bg-white p-2 shadow-md lg:hidden" aria-label="Buka menu">
+            <Menu className="size-5" />
+          </button>
+        )}
+        {children}
+      </div>
+    </div>
   );
 }
