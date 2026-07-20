@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const userIds = koinGroup.map((entry) => entry.user_id);
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, nama: true },
+      select: { id: true, name: true },
     });
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     let userAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
 
     if (session?.user) {
-      userNama = session.user.nama || session.user.name || "Ahmad Hidayat";
+      userNama = session.user.name || "Ahmad Hidayat";
       userAvatar = session.user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
       
       // Look up dynamic coins from DB to make XP feel alive

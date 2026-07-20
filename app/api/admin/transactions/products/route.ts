@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-          user: { select: { id: true, nama: true } },
+          user: { select: { id: true, name: true } },
           produk: {
             select: { id: true, nama_barang: true, kopdes: { select: { nama: true } } },
           },
@@ -37,9 +37,20 @@ export async function GET(request: NextRequest) {
       prisma.penukaran.count(),
     ]);
 
+    const mappedData = data.map((r) => ({
+      ...r,
+      user: {
+        id: r.user.id,
+        nama: r.user.name,
+      }
+    }));
+
     return NextResponse.json({
-      data,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      success: true,
+      data: {
+        items: mappedData,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";

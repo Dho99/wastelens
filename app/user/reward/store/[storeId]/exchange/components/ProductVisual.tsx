@@ -14,12 +14,18 @@ export const ProductVisual: React.FC<ProductVisualProps> = ({
   return (
     <div className="px-4 mb-4">
       <div className="relative aspect-square w-full rounded-[32px] overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt={productName}
-          className="w-full h-full object-cover"
-        />
+        {imageUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={imageUrl}
+            alt={productName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-semibold">
+            Gambar tidak tersedia
+          </div>
+        )}
 
         {/* Availability Badge */}
         {isAvailable && (

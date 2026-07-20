@@ -55,7 +55,7 @@ export default async function UserLayout({
   if (role !== "user") redirect(`/${role ?? "user"}`);
 
   return (
-    <TabBarLayout role="user" tabs={tabs}>
+    <TabBarLayout tabs={tabs}>
       {children}
     </TabBarLayout>
   );

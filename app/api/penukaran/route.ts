@@ -1,8 +1,6 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateRedemptionQR, generateRedemptionPayload } from "@/lib/services/qr";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +27,7 @@ export async function POST(request: NextRequest) {
     const result = await prisma.$transaction(async (tx) => {
       const produk = await tx.produk.findUnique({
         where: { id: produk_id },
+        include: { kopdes: true },
       });
 
       if (!produk) {
@@ -66,19 +65,14 @@ export async function POST(request: NextRequest) {
         data: { stok: { decrement: 1 } },
       });
 
-      const qrPayload = generateRedemptionPayload(
-        crypto.randomUUID(),
-        userId,
-        produk_id
-      );
-      const qrToken = JSON.stringify(qrPayload);
-
       const penukaran = await tx.penukaran.create({
         data: {
           user_id: userId,
           produk_id,
+          kopdes_id: produk.kopdes_id,
+          unit_coin_price: produk.harga_koin,
           jumlah_koin: produk.harga_koin,
-          qr_token: qrToken,
+          expires_at: new Date(Date.now() + 10 * 60 * 1000),
         },
       });
 
@@ -90,12 +84,9 @@ export async function POST(request: NextRequest) {
       return { penukaran, sisa_koin: updatedUser!.saldo_koin, nama_barang: produk.nama_barang };
     });
 
-    const qrData = await generateRedemptionQR(result.penukaran.id, userId, produk_id);
-
     return NextResponse.json(
       {
         penukaran_id: result.penukaran.id,
-        qr_data_url: qrData,
         sisa_koin: result.sisa_koin,
         nama_barang: result.nama_barang,
       },
