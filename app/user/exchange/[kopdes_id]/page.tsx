@@ -195,7 +195,7 @@ function ProdukContent({ params }: { params: Promise<{ kopdes_id: string }> }) {
       const data: CreateRedemptionResponse = await res.json();
 
       if (!res.ok) {
-        setRedeemError(data.error ?? data.code ?? "Gagal menukar koin");
+        setRedeemError(data.errorCode ?? data.message ?? "Gagal menukar koin");
         setRedeeming(false);
         return;
       }
