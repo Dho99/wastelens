@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ChevronDown, Loader2, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
+import type { EntityDinas } from "../../types/entities";
+import { useDinasList } from "../../hooks/useEntities";
+import { useCreateUser } from "../../hooks/useUsers";
 
 const ROLES = ["user", "petugas", "kopdes", "dinas", "admin"] as const;
 const ROLE_LABELS: Record<string, string> = {
@@ -14,62 +18,27 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
 };
 
-type DinasOption = {
-  id: string;
-  nama_dinas: string;
-  kontak: string;
-};
-
 export default function AddUserPage() {
   const router = useRouter();
 
-  // Common fields
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
 
-  // Dinas fields (petugas role)
-  const [dinasList, setDinasList] = useState<DinasOption[]>([]);
   const [dinasId, setDinasId] = useState("");
 
-  // Dinas fields (dinas role)
   const [namaDinas, setNamaDinas] = useState("");
   const [kontakDinas, setKontakDinas] = useState("");
 
-  // Kopdes fields
   const [kopdesNama, setKopdesNama] = useState("");
   const [kopdesAlamat, setKopdesAlamat] = useState("");
 
-  // State
-  const [loading, setLoading] = useState(false);
-  const [loadingDinas, setLoadingDinas] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const fetchDinas = useCallback(async () => {
-    setLoadingDinas(true);
-    try {
-      const res = await fetch("/api/admin/dinas");
-      if (res.ok) {
-        const data: DinasOption[] = await res.json();
-        setDinasList(data);
-        if (data.length > 0) setDinasId(data[0].id);
-      }
-    } catch {
-    } finally {
-      setLoadingDinas(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (role === "petugas") {
-      // fetchDinas is stable (useCallback with []), and role is the
-      // only trigger; suppressing the rule matches the codebase convention.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchDinas();
-    }
-  }, [role, fetchDinas]);
+  const { data: dinasList, isLoading: loadingDinas } = useDinasList();
+  const { mutateAsync: createUser, isPending: loading } = useCreateUser();
 
   function resetForm() {
     setNama("");
@@ -88,7 +57,6 @@ export default function AddUserPage() {
     setError("");
     setSuccess("");
 
-    // Basic client-side validation
     if (role === "petugas" && !dinasId) {
       setError("Pilih Dinas terlebih dahulu");
       return;
@@ -101,8 +69,6 @@ export default function AddUserPage() {
       if (!kopdesNama.trim()) { setError("Nama Kopdes wajib diisi"); return; }
       if (!kopdesAlamat.trim()) { setError("Alamat Kopdes wajib diisi"); return; }
     }
-
-    setLoading(true);
 
     const body: Record<string, string> = {
       nama: nama.trim(),
@@ -122,34 +88,18 @@ export default function AddUserPage() {
     }
 
     try {
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        setError(json.error ?? "Gagal membuat pengguna");
-        setLoading(false);
-        return;
-      }
-
-      setSuccess(json.message ?? "Pengguna berhasil dibuat");
+      await createUser(body);
+      setSuccess("Pengguna berhasil dibuat");
       resetForm();
-
       setTimeout(() => router.push("/admin/users"), 1200);
-    } catch {
-      setError("Gagal menghubungi server");
-    } finally {
-      setLoading(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Gagal menghubungi server";
+      setError(message);
     }
   }
 
   return (
     <div className="mx-auto max-w-lg p-6 lg:p-8">
-      {/* Header */}
       <Link
         href="/admin/users"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-800 transition-colors"
@@ -174,7 +124,6 @@ export default function AddUserPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Nama */}
         <div>
           <label htmlFor="nama" className="mb-1.5 block text-sm font-medium text-neutral-700">
             Nama Lengkap
@@ -191,7 +140,6 @@ export default function AddUserPage() {
           />
         </div>
 
-        {/* Email */}
         <div>
           <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-neutral-700">
             Email
@@ -209,7 +157,6 @@ export default function AddUserPage() {
           />
         </div>
 
-        {/* Password */}
         <div>
           <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-neutral-700">
             Password
@@ -228,7 +175,6 @@ export default function AddUserPage() {
           />
         </div>
 
-        {/* Role selector */}
         <div>
           <label htmlFor="role" className="mb-1.5 block text-sm font-medium text-neutral-700">
             Role
@@ -254,9 +200,6 @@ export default function AddUserPage() {
           </div>
         </div>
 
-        {/* ── Role-specific fields ──────────────────── */}
-
-        {/* Petugas: Dinas dropdown */}
         {role === "petugas" && (
           <div>
             <label htmlFor="dinas" className="mb-1.5 block text-sm font-medium text-neutral-700">
@@ -267,7 +210,7 @@ export default function AddUserPage() {
                 <Loader2 size={14} className="animate-spin" />
                 Memuat daftar Dinas...
               </div>
-            ) : dinasList.length === 0 ? (
+            ) : !dinasList || dinasList.length === 0 ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
                 Belum ada Dinas. Silakan buat Dinas terlebih dahulu.
               </div>
@@ -280,7 +223,7 @@ export default function AddUserPage() {
                   disabled={loading}
                   className="w-full appearance-none rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
                 >
-                  {dinasList.map((d) => (
+                  {dinasList.map((d: EntityDinas) => (
                     <option key={d.id} value={d.id}>
                       {d.nama_dinas}
                     </option>
@@ -295,7 +238,6 @@ export default function AddUserPage() {
           </div>
         )}
 
-        {/* Dinas role: nama & kontak */}
         {role === "dinas" && (
           <>
             <div>
@@ -331,7 +273,6 @@ export default function AddUserPage() {
           </>
         )}
 
-        {/* Kopdes role: nama & alamat */}
         {role === "kopdes" && (
           <>
             <div>
@@ -367,7 +308,6 @@ export default function AddUserPage() {
           </>
         )}
 
-        {/* Submit & Cancel */}
         <div className="flex gap-3 pt-2">
           <Link
             href="/admin/users"

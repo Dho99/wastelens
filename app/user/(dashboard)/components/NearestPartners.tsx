@@ -1,5 +1,5 @@
 import React from "react";
-import { NearestPartner } from "../services/dashboardService";
+import { NearestPartner } from "../../services/dashboardService";
 
 interface NearestPartnersProps {
   partners: NearestPartner[];

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
           status: { not: "SELESAI" },
         },
         include: {
-          user: { select: { nama: true } },
+          user: { select: { name: true } },
           kendaraan: { select: { jenis: true } },
           dinas: { select: { nama_dinas: true } },
         },
