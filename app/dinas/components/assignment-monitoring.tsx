@@ -26,7 +26,7 @@ export function AssignmentMonitoring({ reportId }: { reportId: string }) {
   const report = store.reports.find((item) => item.id === reportId);
 
   return (
-    <main className="min-h-dvh bg-[#f2f9fe] text-[#17231d]">
+    <main className="min-h-0 flex-1 overflow-y-auto bg-[#f2f9fe] text-[#17231d]">
       <header className="flex h-16 items-center border-b border-[#bccdbf] px-5 sm:px-7">
         <button type="button" onClick={() => router.back()} aria-label="Kembali" className="rounded-full p-2 transition hover:bg-white">
           <ArrowLeft className="size-6" />
