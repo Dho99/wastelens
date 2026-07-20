@@ -298,6 +298,9 @@ export default function ProductsPage() {
                           <button
                             type="button"
                             aria-label="Edit"
+                            onClick={() =>
+                              router.push(`/kopdes/products/edit/${item.id}`)
+                            }
                             className="grid size-8 place-items-center rounded-lg border border-[#b9cabc] text-[#465148] hover:bg-white transition-colors"
                           >
                             <Pencil className="size-3.5" />
