@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const [penukaran, total] = await Promise.all([
       prisma.penukaran.findMany({
         where: {
-          produk: { kopdes_id: kopdes.id },
+          kopdes_id: kopdes.id,
         },
         include: {
           produk: { select: { nama_barang: true } },
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.penukaran.count({
         where: {
-          produk: { kopdes_id: kopdes.id },
+          kopdes_id: kopdes.id,
         },
       }),
     ]);

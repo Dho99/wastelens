@@ -16,37 +16,11 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { updateDlhStore } from "@/lib/dlh-store";
-
-const vehicles = [
-  { id: "truck-01", name: "Truk Sampah 01", meta: "Kapasitas 10 ton • 1.2km" },
-  { id: "truck-05", name: "Truk Sampah 05", meta: "Kapasitas 5 ton • 2.5km" },
-];
-
-const officers = [
-  {
-    id: "budi",
-    initials: "BS",
-    name: "Budi Santoso",
-    meta: "Aktif • 0.5km dari lokasi",
-  },
-  {
-    id: "siti",
-    initials: "SA",
-    name: "Siti Aminah",
-    meta: "Aktif • 1.2km dari lokasi",
-  },
-];
+import { type DlhOfficer, type DlhReport, type DlhVehicle, updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 type Dropdown = "vehicle" | "officer" | null;
 
-function MapCanvas({
-  reportOpen,
-  onOpenReport,
-}: {
-  reportOpen: boolean;
-  onOpenReport: () => void;
-}) {
+function MapCanvas({ reports, reportOpen, onOpenReport }: { reports: DlhReport[]; reportOpen: boolean; onOpenReport: (id: string) => void }) {
   const [view, setView] = useState<"heatmap" | "points">("heatmap");
   const [zoom, setZoom] = useState(1);
   const [located, setLocated] = useState(false);
@@ -81,73 +55,46 @@ function MapCanvas({
 
       <div className="absolute left-5 top-[84px] grid gap-3 sm:left-6 sm:top-[88px]">
         <div className="grid gap-2 rounded-[26px] bg-white/80 p-2">
-          <button
-            type="button"
-            onClick={() => setZoom((value) => Math.min(1.35, value + 0.1))}
-            aria-label="Perbesar peta"
-            className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"
-          >
-            <Plus className="size-6" strokeWidth={2.2} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setZoom((value) => Math.max(0.85, value - 0.1))}
-            aria-label="Perkecil peta"
-            className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"
-          >
-            <Minus className="size-6" strokeWidth={2.2} />
-          </button>
+          <button type="button" onClick={() => setZoom((value) => Math.min(1.35, value + 0.1))} aria-label="Perbesar peta" className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"><Plus className="size-6" strokeWidth={2.2} /></button>
+          <button type="button" onClick={() => setZoom((value) => Math.max(0.85, value - 0.1))} aria-label="Perkecil peta" className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"><Minus className="size-6" strokeWidth={2.2} /></button>
         </div>
         <div className="rounded-[26px] bg-white/80 p-2">
-          <button
-            type="button"
-            onClick={() => setLocated((value) => !value)}
-            aria-pressed={located}
-            aria-label="Lokasi saya"
-            className={`grid size-11 place-items-center rounded-full shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition sm:size-12 ${located ? "bg-[#087529] text-white" : "bg-[#f4faff] text-[#12232c] hover:bg-white"}`}
-          >
+          <button type="button" onClick={() => setLocated((value) => !value)} aria-pressed={located} aria-label="Lokasi saya" className={`grid size-11 place-items-center rounded-full shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition sm:size-12 ${located ? "bg-[#087529] text-white" : "bg-[#f4faff] text-[#12232c] hover:bg-white"}`}>
             <Crosshair className="size-6" strokeWidth={2.3} />
           </button>
         </div>
       </div>
 
-      {located && (
-        <span className="absolute left-1/2 top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white bg-[#087529] shadow-xl">
-          <span className="size-2 rounded-full bg-white" />
-        </span>
-      )}
+      {located && <span className="absolute left-1/2 top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white bg-[#087529] shadow-xl"><span className="size-2 rounded-full bg-white" /></span>}
 
       {view === "points" && (
         <div className="pointer-events-none absolute inset-0">
-          {[
-            [26, 36],
-            [47, 48],
-            [69, 31],
-            [76, 67],
-            [37, 72],
-            [61, 59],
-          ].map(([left, top], index) => (
+          {reports.map((report, index) => {
+            const positions = [[26, 36], [47, 48], [69, 31], [76, 67], [37, 72], [61, 59]];
+            const [left, top] = positions[index % positions.length];
+            return (
             <button
               type="button"
-              key={`${left}-${top}`}
-              onClick={onOpenReport}
-              aria-label={`Buka laporan ${index + 1}`}
+              key={report.id}
+              onClick={() => onOpenReport(report.id)}
+              aria-label={`Buka laporan ${report.id}`}
               className="pointer-events-auto absolute grid size-7 place-items-center rounded-full border-2 border-white bg-[#08752a] text-[10px] font-bold text-white shadow-lg transition hover:scale-110 hover:bg-[#065d21]"
               style={{ left: `${left}%`, top: `${top}%` }}
             >
               {index + 1}
             </button>
-          ))}
+          );})}
         </div>
       )}
 
       {!reportOpen && (
         <button
           type="button"
-          onClick={onOpenReport}
+          onClick={() => reports[0] && onOpenReport(reports[0].id)}
+          disabled={!reports.length}
           className="absolute bottom-5 right-5 flex items-center gap-2 rounded-full bg-[#087529] px-5 py-3 text-sm font-bold text-white shadow-lg"
         >
-          <MapPin className="size-4" /> Buka laporan aktif
+          <MapPin className="size-4" /> {reports.length ? `Buka ${reports.length} laporan aktif` : "Tidak ada laporan aktif"}
         </button>
       )}
     </section>
@@ -162,6 +109,8 @@ function DropdownField({
   onToggle,
   selected,
   onSelect,
+  vehicles,
+  officers,
 }: {
   type: Exclude<Dropdown, null>;
   label: string;
@@ -170,18 +119,15 @@ function DropdownField({
   onToggle: (type: Exclude<Dropdown, null>) => void;
   selected: string;
   onSelect: (id: string) => void;
+  vehicles: { id: string; name: string; meta: string }[];
+  officers: { id: string; initials: string; name: string; meta: string }[];
 }) {
   const isOpen = active === type;
-  const selectedItem =
-    type === "vehicle"
-      ? vehicles.find((item) => item.id === selected)
-      : officers.find((item) => item.id === selected);
+  const selectedItem = type === "vehicle" ? vehicles.find((item) => item.id === selected) : officers.find((item) => item.id === selected);
 
   return (
     <div className="relative">
-      <label className="mb-2 block text-sm font-bold text-[#1f2924]">
-        {label}
-      </label>
+      <label className="mb-2 block text-sm font-bold text-[#1f2924]">{label}</label>
       <button
         type="button"
         aria-expanded={isOpen}
@@ -191,11 +137,7 @@ function DropdownField({
         }`}
       >
         <span className="truncate">{selectedItem?.name ?? placeholder}</span>
-        {isOpen ? (
-          <ChevronUp className="size-4 shrink-0" />
-        ) : (
-          <ChevronDown className="size-4 shrink-0 text-[#657269]" />
-        )}
+        {isOpen ? <ChevronUp className="size-4 shrink-0" /> : <ChevronDown className="size-4 shrink-0 text-[#657269]" />}
       </button>
 
       {isOpen && (
@@ -209,12 +151,8 @@ function DropdownField({
                   className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-[#f1faf5]"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold">
-                      {item.name}
-                    </p>
-                    <p className="truncate text-[11px] text-[#667168]">
-                      {item.meta}
-                    </p>
+                    <p className="truncate text-sm font-extrabold">{item.name}</p>
+                    <p className="truncate text-[11px] text-[#667168]">{item.meta}</p>
                   </div>
                   <span className="size-2 rounded-full bg-[#08752a]" />
                 </button>
@@ -226,16 +164,10 @@ function DropdownField({
                   onClick={() => onSelect(item.id)}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[#f1faf5]"
                 >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#c9eed9] text-xs font-bold text-[#4b8b69]">
-                    {item.initials}
-                  </span>
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#c9eed9] text-xs font-bold text-[#4b8b69]">{item.initials}</span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-extrabold">
-                      {item.name}
-                    </p>
-                    <p className="truncate text-[10px] text-[#187234]">
-                      {item.meta}
-                    </p>
+                    <p className="truncate text-sm font-extrabold">{item.name}</p>
+                    <p className="truncate text-[10px] text-[#187234]">{item.meta}</p>
                   </div>
                 </button>
               ))}
@@ -245,49 +177,38 @@ function DropdownField({
   );
 }
 
-function ReportPanel({ onClose }: { onClose: () => void }) {
+function ReportPanel({ report, vehicles, officers, onClose }: { report: DlhReport; vehicles: DlhVehicle[]; officers: DlhOfficer[]; onClose: () => void }) {
   const router = useRouter();
   const [dropdown, setDropdown] = useState<Dropdown>(null);
   const [vehicle, setVehicle] = useState("");
   const [officer, setOfficer] = useState("");
+  const vehicleOptions = vehicles.filter((item) => item.status === "Beroperasi").map((item) => ({ id: item.id, name: `${item.type} • ${item.plate}`, meta: `Kapasitas ${item.capacity} • ${item.area}` }));
+  const officerOptions = officers.map((item) => ({ id: item.id, initials: item.initials, name: item.name, meta: `${item.role} • ${item.zone}` }));
 
-  const toggleDropdown = (next: Exclude<Dropdown, null>) =>
-    setDropdown((current) => (current === next ? null : next));
+  const toggleDropdown = (next: Exclude<Dropdown, null>) => setDropdown((current) => (current === next ? null : next));
   const assignFleet = () => {
     updateDlhStore((draft) => {
-      const report = draft.reports.find((item) => item.status === "Menunggu");
-      if (report) report.status = "Diproses";
-      draft.notifications.unshift({
-        id: Date.now(),
-        title: "Armada berhasil ditugaskan",
-        message: `${vehicle} dan ${officer} ditugaskan untuk laporan prioritas.`,
-        time: "Baru saja",
-        type: "truck",
-        read: false,
-      });
+      const target = draft.reports.find((item) => item.id === report.id);
+      if (target) {
+        target.status = "Diproses";
+        target.assignedVehicleId = vehicle;
+        target.assignedOfficerId = officer;
+      }
+      const vehicleName = draft.vehicles.find((item) => item.id === vehicle)?.plate ?? vehicle;
+      const officerName = draft.officers.find((item) => item.id === officer)?.name ?? officer;
+      draft.notifications.unshift({ id: Date.now(), title: "Armada berhasil ditugaskan", message: `${vehicleName} dan ${officerName} ditugaskan untuk laporan #${report.id}.`, time: "Baru saja", type: "truck", read: false });
     });
-    router.push(
-      `/dinas/assignments/WL-099?vehicle=${vehicle}&officer=${officer}`,
-    );
+    router.push(`/dinas/assignments/${report.id}?vehicle=${encodeURIComponent(vehicle)}&officer=${encodeURIComponent(officer)}`);
   };
 
   return (
     <aside className="fixed inset-x-0 bottom-0 top-16 z-20 flex w-full flex-col border-l border-[#d8e2dd] bg-white lg:relative lg:inset-auto lg:w-[39%] lg:min-w-[480px] lg:max-w-[560px] lg:shrink-0">
       <div className="flex h-[93px] shrink-0 items-center bg-[#e9f7fd] px-6">
         <div>
-          <h2 className="text-xl font-extrabold tracking-[-0.02em] text-[#17231d]">
-            Report #WL-099
-          </h2>
-          <p className="mt-0.5 text-xs text-[#758079]">
-            Kelurahan Menteng, Jakarta Pusat
-          </p>
+          <h2 className="text-xl font-extrabold tracking-[-0.02em] text-[#17231d]">Laporan #{report.id}</h2>
+          <p className="mt-0.5 text-xs text-[#758079]">{report.location} • {report.district}</p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Tutup laporan"
-          className="ml-auto rounded-full p-2 hover:bg-white/70"
-        >
+        <button type="button" onClick={onClose} aria-label="Tutup laporan" className="ml-auto rounded-full p-2 hover:bg-white/70">
           <X className="size-6" />
         </button>
       </div>
@@ -295,11 +216,12 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
       <div className="flex-1 space-y-5 overflow-y-auto px-6 py-4">
         <div className="relative h-[294px] overflow-hidden rounded-[20px] border border-[#bcc8c1] bg-slate-200">
           <Image
-            src="/images/dlh-dashboard-reference.png"
-            alt="Tumpukan sampah pada laporan WL-099"
-            width={1444}
-            height={1028}
-            className="absolute left-[-173%] top-[-58.3%] h-auto w-[278.2%] max-w-none"
+            src={report.photoUrl ?? "/images/dlh-dashboard-reference.png"}
+            alt={`Foto laporan ${report.id}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 520px"
+            unoptimized={Boolean(report.photoUrl?.startsWith("data:"))}
           />
           <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-[#147632] px-3 py-1 text-xs font-semibold text-white shadow-sm">
             <Layers3 className="size-3.5" /> AI Verified
@@ -310,10 +232,7 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
           <Sparkles className="mt-1 size-7 shrink-0" />
           <div>
             <p className="text-sm font-bold">AI Analysis: Large Trash Pile</p>
-            <p className="mt-1 text-sm leading-5 text-[#6c8c7d]">
-              Deteksi penumpukan sampah anorganik masif berukuran ~15m³.
-              Membutuhkan truk kapasitas besar (Armada Tipe C).
-            </p>
+            <p className="mt-1 text-sm leading-5 text-[#6c8c7d]">Deteksi penumpukan sampah anorganik masif berukuran ~15m³. Membutuhkan truk kapasitas besar (Armada Tipe C).</p>
           </div>
         </div>
 
@@ -324,10 +243,9 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
           active={dropdown}
           onToggle={toggleDropdown}
           selected={vehicle}
-          onSelect={(id) => {
-            setVehicle(id);
-            setDropdown(null);
-          }}
+          onSelect={(id) => { setVehicle(id); setDropdown(null); }}
+          vehicles={vehicleOptions}
+          officers={officerOptions}
         />
 
         <DropdownField
@@ -337,30 +255,22 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
           active={dropdown}
           onToggle={toggleDropdown}
           selected={officer}
-          onSelect={(id) => {
-            setOfficer(id);
-            setDropdown(null);
-          }}
+          onSelect={(id) => { setOfficer(id); setDropdown(null); }}
+          vehicles={vehicleOptions}
+          officers={officerOptions}
         />
 
         <div className="rounded-[24px] border border-[#c3d2c6] px-4 py-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold tracking-wide text-[#7a857d]">
-              Estimasi Waktu Jemput
-            </span>
-            <span className="text-sm font-extrabold text-[#08752a]">
-              14 Menit
-            </span>
+            <span className="font-semibold tracking-wide text-[#7a857d]">Estimasi Waktu Jemput</span>
+            <span className="text-sm font-extrabold text-[#08752a]">14 Menit</span>
           </div>
           <div className="mt-3 flex items-center justify-between text-xs">
-            <span className="font-semibold tracking-wide text-[#7a857d]">
-              Tingkat Prioritas
-            </span>
-            <span className="rounded-sm bg-[#ffdada] px-2 py-1 font-bold text-[#b00000]">
-              Tinggi
-            </span>
+            <span className="font-semibold tracking-wide text-[#7a857d]">Tingkat Prioritas</span>
+            <span className="rounded-sm bg-[#ffdada] px-2 py-1 font-bold text-[#b00000]">Tinggi</span>
           </div>
         </div>
+
       </div>
 
       <div className="shrink-0 border-t border-[#d8e2dd] bg-[#f2faff] p-6">
@@ -379,16 +289,17 @@ function ReportPanel({ onClose }: { onClose: () => void }) {
 }
 
 export function DlhDashboard() {
-  const [reportOpen, setReportOpen] = useState(true);
+  const store = useDlhStore();
+  const activeReports = store.reports.filter((report) => report.status !== "Selesai");
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(activeReports[0]?.id ?? null);
+  const selectedReport = activeReports.find((report) => report.id === selectedReportId) ?? activeReports[0];
+  const reportOpen = Boolean(selectedReportId && selectedReport);
 
   return (
     <DlhShell>
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <MapCanvas
-          reportOpen={reportOpen}
-          onOpenReport={() => setReportOpen(true)}
-        />
-        {reportOpen && <ReportPanel onClose={() => setReportOpen(false)} />}
+        <MapCanvas reports={activeReports} reportOpen={reportOpen} onOpenReport={setSelectedReportId} />
+        {reportOpen && selectedReport && <ReportPanel report={selectedReport} vehicles={store.vehicles} officers={store.officers} onClose={() => setSelectedReportId(null)} />}
       </main>
     </DlhShell>
   );

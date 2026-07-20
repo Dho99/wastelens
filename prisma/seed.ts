@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../lib/generated/prisma/client'
+import { auth } from '../lib/auth'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
@@ -16,159 +17,181 @@ async function main() {
   const twoDaysLater = new Date(now.getTime() + 2 * 86400000)
 
   // ─── 1. USERS ─────────────────────────────────────────────
-  const admin = await prisma.user.create({
-    data: {
-      id: 'admin-001',
-      name: 'Admin Utama',
+  type UserSeed = {
+    email: string
+    password: string
+    name: string
+    role: string
+    saldo_koin: number
+    status: string
+    address: string | null
+    phoneNumber: string | null
+    image: string | null
+    createdAt: Date
+    emailVerified: boolean
+    isBanned?: boolean
+  }
+
+  const usersData: UserSeed[] = [
+    {
       email: 'admin@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=Admin',
-      createdAt: twoWeeksAgo,
-      updatedAt: now,
+      password: 'password123',
+      name: 'Admin Utama',
+      role: 'admin',
+      saldo_koin: 0,
+      status: 'active',
       address: 'Jl. Sudirman No. 1, Jakarta Pusat',
       phoneNumber: '081234567890',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=Admin',
+      createdAt: twoWeeksAgo,
+      emailVerified: true,
+    },
+    {
+      email: 'dinas1@wastelens.com',
+      password: 'password123',
+      name: 'Budi Santoso',
+      role: 'dinas',
       saldo_koin: 0,
       status: 'active',
-      role: 'admin',
-    },
-  })
-
-  const dinasHead1 = await prisma.user.create({
-    data: {
-      id: 'dinas-head-001',
-      name: 'Budi Santoso',
-      email: 'dinas1@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=BS',
-      createdAt: twoWeeksAgo,
-      updatedAt: now,
       address: 'Jl. Merdeka No. 10, Bandung',
       phoneNumber: '081234567891',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=BS',
+      createdAt: twoWeeksAgo,
+      emailVerified: true,
+    },
+    {
+      email: 'dinas2@wastelens.com',
+      password: 'password123',
+      name: 'Siti Rahmawati',
+      role: 'dinas',
       saldo_koin: 0,
       status: 'active',
-      role: 'dinas',
-    },
-  })
-
-  const dinasHead2 = await prisma.user.create({
-    data: {
-      id: 'dinas-head-002',
-      name: 'Siti Rahmawati',
-      email: 'dinas2@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=SR',
-      createdAt: twoWeeksAgo,
-      updatedAt: now,
       address: 'Jl. Diponegoro No. 5, Surabaya',
       phoneNumber: '081234567892',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=SR',
+      createdAt: twoWeeksAgo,
+      emailVerified: true,
+    },
+    {
+      email: 'petugas1@wastelens.com',
+      password: 'password123',
+      name: 'Ahmad Rizki',
+      role: 'petugas',
       saldo_koin: 0,
       status: 'active',
-      role: 'dinas',
-    },
-  })
-
-  const petugas1 = await prisma.user.create({
-    data: {
-      id: 'petugas-001',
-      name: 'Ahmad Rizki',
-      email: 'petugas1@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=AR',
-      createdAt: oneWeekAgo,
-      updatedAt: now,
       address: 'Jl. Pahlawan No. 3, Bandung',
       phoneNumber: '081234567893',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=AR',
+      createdAt: oneWeekAgo,
+      emailVerified: true,
+    },
+    {
+      email: 'petugas2@wastelens.com',
+      password: 'password123',
+      name: 'Dewi Lestari',
+      role: 'petugas',
       saldo_koin: 0,
       status: 'active',
-      role: 'petugas',
-    },
-  })
-
-  const petugas2 = await prisma.user.create({
-    data: {
-      id: 'petugas-002',
-      name: 'Dewi Lestari',
-      email: 'petugas2@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=DL',
-      createdAt: oneWeekAgo,
-      updatedAt: now,
       address: 'Jl. Kenanga No. 8, Surabaya',
       phoneNumber: '081234567894',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=DL',
+      createdAt: oneWeekAgo,
+      emailVerified: true,
+    },
+    {
+      email: 'kopdes1@wastelens.com',
+      password: 'password123',
+      name: 'H. Abdullah',
+      role: 'kopdes',
       saldo_koin: 0,
       status: 'active',
-      role: 'petugas',
-    },
-  })
-
-  const kopdesUser = await prisma.user.create({
-    data: {
-      id: 'kopdes-001',
-      name: 'H. Abdullah',
-      email: 'kopdes1@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=HA',
-      createdAt: oneWeekAgo,
-      updatedAt: now,
       address: 'Jl. Raya Desa No. 1, Kec. Tumpang, Malang',
       phoneNumber: '081234567895',
-      saldo_koin: 0,
-      status: 'active',
-      role: 'kopdes',
-    },
-  })
-
-  const warga1 = await prisma.user.create({
-    data: {
-      id: 'warga-001',
-      name: 'Rina Wati',
-      email: 'warga1@wastelens.com',
-      emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=RW',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=HA',
       createdAt: oneWeekAgo,
-      updatedAt: now,
-      address: 'Jl. Anggrek No. 12, Bandung',
-      phoneNumber: '081234567896',
+      emailVerified: true,
+    },
+    {
+      email: 'warga1@wastelens.com',
+      password: 'password123',
+      name: 'Rina Wati',
+      role: 'user',
       saldo_koin: 150,
       status: 'active',
-      role: 'user',
-    },
-  })
-
-  const warga2 = await prisma.user.create({
-    data: {
-      id: 'warga-002',
-      name: 'Joko Prasetyo',
-      email: 'warga2@wastelens.com',
+      address: 'Jl. Anggrek No. 12, Bandung',
+      phoneNumber: '081234567896',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=RW',
+      createdAt: oneWeekAgo,
       emailVerified: true,
-      image: 'https://api.dicebear.com/9.x/initials/svg?seed=JP',
-      createdAt: threeDaysAgo,
-      updatedAt: now,
-      address: 'Jl. Mawar No. 7, Surabaya',
-      phoneNumber: '081234567897',
+    },
+    {
+      email: 'warga2@wastelens.com',
+      password: 'password123',
+      name: 'Joko Prasetyo',
+      role: 'user',
       saldo_koin: 50,
       status: 'active',
-      role: 'user',
+      address: 'Jl. Mawar No. 7, Surabaya',
+      phoneNumber: '081234567897',
+      image: 'https://api.dicebear.com/9.x/initials/svg?seed=JP',
+      createdAt: threeDaysAgo,
+      emailVerified: true,
     },
-  })
-
-  const bannedUser = await prisma.user.create({
-    data: {
-      id: 'banned-001',
-      name: 'Samsul Bahri',
+    {
       email: 'banned@wastelens.com',
-      emailVerified: false,
-      image: null,
-      createdAt: oneMonthAgo,
-      updatedAt: now,
-      address: null,
-      phoneNumber: null,
+      password: 'password123',
+      name: 'Samsul Bahri',
+      role: 'user',
       saldo_koin: 0,
       status: 'banned',
-      role: 'user',
+      address: null,
+      phoneNumber: null,
+      image: null,
+      createdAt: oneMonthAgo,
+      emailVerified: false,
       isBanned: true,
     },
-  })
+  ]
+
+  const userMap = new Map<string, string>()
+
+  for (const data of usersData) {
+    const result = await auth.api.signUpEmail({
+      body: {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        role: data.role,
+        saldo_koin: data.saldo_koin,
+        status: data.status,
+      },
+      asResponse: false,
+    })
+
+    const userId = ((result as { user?: { id: string } })?.user?.id) ?? ''
+    if (!userId) throw new Error(`Gagal membuat user: ${data.email}`)
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: data.emailVerified,
+        address: data.address,
+        phoneNumber: data.phoneNumber,
+        image: data.image,
+        createdAt: data.createdAt,
+        updatedAt: now,
+        ...(data.isBanned ? { isBanned: true } : {}),
+      },
+    })
+
+    userMap.set(data.email, userId)
+  }
+
+  const userId = (email: string): string => {
+    const id = userMap.get(email)
+    if (!id) throw new Error(`User not found: ${email}`)
+    return id
+  }
 
   // ─── 2. VERIFICATIONS ─────────────────────────────────────
   await prisma.verification.create({
@@ -193,80 +216,24 @@ async function main() {
     },
   })
 
-  // ─── 3. SESSIONS ─────────────────────────────────────────
-  await prisma.session.create({
-    data: {
-      id: 'sess-admin-001',
-      expiresAt: twoDaysLater,
-      token: 'sess-token-admin-abc123xyz',
-      createdAt: now,
-      updatedAt: now,
-      ipAddress: '192.168.1.10',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0',
-      userId: admin.id,
-    },
-  })
-
-  await prisma.session.create({
-    data: {
-      id: 'sess-warga1-001',
-      expiresAt: twoDaysLater,
-      token: 'sess-token-warga1-def456uvw',
-      createdAt: oneDayAgo,
-      updatedAt: oneDayAgo,
-      ipAddress: '192.168.1.20',
-      userAgent: 'Mozilla/5.0 (Linux; Android 14) Chrome/120.0',
-      userId: warga1.id,
-    },
-  })
-
-  // ─── 4. ACCOUNTS ─────────────────────────────────────────
-  await prisma.account.create({
-    data: {
-      id: 'acc-admin-001',
-      accountId: 'admin-001',
-      providerId: 'credential',
-      userId: admin.id,
-      accessToken: null,
-      refreshToken: null,
-      password: null,
-      createdAt: twoWeeksAgo,
-      updatedAt: now,
-    },
-  })
-
-  await prisma.account.create({
-    data: {
-      id: 'acc-warga1-001',
-      accountId: 'warga-001',
-      providerId: 'credential',
-      userId: warga1.id,
-      accessToken: null,
-      refreshToken: null,
-      password: null,
-      createdAt: oneWeekAgo,
-      updatedAt: now,
-    },
-  })
-
-  // ─── 5. BANNED REASONS ─────────────────────────────────
+  // ─── 3. BANNED REASONS ─────────────────────────────────
   await prisma.bannedReason.create({
     data: {
-      userId: bannedUser.id,
+      userId: userId('banned@wastelens.com'),
       alasan: 'Melanggar aturan: melaporkan konten palsu sebanyak 3 kali.',
     },
   })
 
-  // ─── 6. KOPDES ──────────────────────────────────────────
+  // ─── 4. KOPDES ──────────────────────────────────────────
   const kopdesRecord = await prisma.kopdes.create({
     data: {
-      user_id: kopdesUser.id,
+      user_id: userId('kopdes1@wastelens.com'),
       nama: 'Kopdes Sejahtera Bersama',
       alamat: 'Jl. Raya Desa No. 1, Kec. Tumpang, Kab. Malang, Jawa Timur',
     },
   })
 
-  // ─── 7. PRODUK ─────────────────────────────────────────
+  // ─── 5. PRODUK ─────────────────────────────────────────
   const produkBeras = await prisma.produk.create({
     data: {
       kopdes_id: kopdesRecord.id,
@@ -294,10 +261,10 @@ async function main() {
     },
   })
 
-  // ─── 8. DINAS ──────────────────────────────────────────
+  // ─── 6. DINAS ──────────────────────────────────────────
   const dinas1 = await prisma.dinas.create({
     data: {
-      user_id: dinasHead1.id,
+      user_id: userId('dinas1@wastelens.com'),
       nama_dinas: 'Dinas Kebersihan Kota Bandung',
       kontak: '022-1234567',
     },
@@ -305,13 +272,13 @@ async function main() {
 
   const dinas2 = await prisma.dinas.create({
     data: {
-      user_id: dinasHead2.id,
+      user_id: userId('dinas2@wastelens.com'),
       nama_dinas: 'Dinas Lingkungan Hidup Kota Surabaya',
       kontak: '031-7654321',
     },
   })
 
-  // ─── 9. AREA CAKUPAN ──────────────────────────────────
+  // ─── 7. AREA CAKUPAN ──────────────────────────────────
   await prisma.areaCakupan.create({
     data: { dinas_id: dinas1.id, nama_wilayah: 'Kecamatan Bandung Wetan' },
   })
@@ -328,11 +295,11 @@ async function main() {
     data: { dinas_id: dinas2.id, nama_wilayah: 'Kecamatan Surabaya Timur' },
   })
 
-  // ─── 10. PETUGAS ──────────────────────────────────────
+  // ─── 8. PETUGAS ──────────────────────────────────────
   const petugas1Record = await prisma.petugas.create({
     data: {
       dinas_id: dinas1.id,
-      user_id: petugas1.id,
+      user_id: userId('petugas1@wastelens.com'),
       nama: 'Ahmad Rizki',
       no_hp: '081234567893',
     },
@@ -341,13 +308,13 @@ async function main() {
   const petugas2Record = await prisma.petugas.create({
     data: {
       dinas_id: dinas2.id,
-      user_id: petugas2.id,
+      user_id: userId('petugas2@wastelens.com'),
       nama: 'Dewi Lestari',
       no_hp: '081234567894',
     },
   })
 
-  // ─── 11. KENDARAAN ────────────────────────────────────
+  // ─── 9. KENDARAAN ────────────────────────────────────
   const kendaraan1 = await prisma.kendaraan.create({
     data: {
       dinas_id: dinas1.id,
@@ -375,10 +342,10 @@ async function main() {
     },
   })
 
-  // ─── 12. LAPORAN ──────────────────────────────────────
+  // ─── 10. LAPORAN ──────────────────────────────────────
   const laporan1 = await prisma.laporan.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       dinas_id: dinas1.id,
       foto_url: 'https://res.cloudinary.com/wastelens/image/upload/laporan1.jpg',
       lokasi_lat: -6.9175,
@@ -395,7 +362,7 @@ async function main() {
 
   const laporan2 = await prisma.laporan.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       dinas_id: dinas1.id,
       petugas_id: petugas1Record.id,
       kendaraan_id: kendaraan1.id,
@@ -419,7 +386,7 @@ async function main() {
 
   const laporan3 = await prisma.laporan.create({
     data: {
-      user_id: warga2.id,
+      user_id: userId('warga2@wastelens.com'),
       dinas_id: dinas2.id,
       petugas_id: petugas2Record.id,
       kendaraan_id: kendaraan3.id,
@@ -440,7 +407,7 @@ async function main() {
 
   const laporan4 = await prisma.laporan.create({
     data: {
-      user_id: warga2.id,
+      user_id: userId('warga2@wastelens.com'),
       dinas_id: null,
       foto_url: 'https://res.cloudinary.com/wastelens/image/upload/laporan4.jpg',
       lokasi_lat: -7.2658,
@@ -460,7 +427,7 @@ async function main() {
 
   const laporan5 = await prisma.laporan.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       dinas_id: dinas1.id,
       petugas_id: petugas1Record.id,
       kendaraan_id: kendaraan2.id,
@@ -479,7 +446,7 @@ async function main() {
     },
   })
 
-  // ─── 13. FOTO ──────────────────────────────────────────
+  // ─── 11. FOTO ──────────────────────────────────────────
   await prisma.foto.create({
     data: {
       laporan_id: laporan1.id,
@@ -529,11 +496,10 @@ async function main() {
     },
   })
 
-  // ─── 14. TRANSAKSI KOIN ────────────────────────────────
-  // Unique constraint: [laporan_id, jenis] — only 1 entry per (laporan, jenis)
+  // ─── 12. TRANSAKSI KOIN ────────────────────────────────
   await prisma.transaksiKoin.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       laporan_id: laporan5.id,
       jumlah: 50,
       jenis: 'KREDIT',
@@ -542,7 +508,7 @@ async function main() {
 
   await prisma.transaksiKoin.create({
     data: {
-      user_id: warga2.id,
+      user_id: userId('warga2@wastelens.com'),
       laporan_id: laporan3.id,
       jumlah: 25,
       jenis: 'KREDIT',
@@ -551,14 +517,14 @@ async function main() {
 
   await prisma.transaksiKoin.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       laporan_id: laporan5.id,
       jumlah: 50,
       jenis: 'DEBIT',
     },
   })
 
-  // ─── 15. VERIFIKASI PICKUP ─────────────────────────────
+  // ─── 13. VERIFIKASI PICKUP ─────────────────────────────
   await prisma.verifikasiPickup.create({
     data: {
       laporan_id: laporan3.id,
@@ -575,10 +541,10 @@ async function main() {
     },
   })
 
-  // ─── 16. NOTIFIKASI ────────────────────────────────────
+  // ─── 14. NOTIFIKASI ────────────────────────────────────
   await prisma.notifikasi.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       laporan_id: laporan1.id,
       pesan: 'Laporan Anda telah diterima dan sedang dalam antrian.',
       status_baca: true,
@@ -587,7 +553,7 @@ async function main() {
 
   await prisma.notifikasi.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       laporan_id: laporan2.id,
       pesan: 'Laporan Anda sedang diproses oleh petugas.',
       status_baca: false,
@@ -596,7 +562,7 @@ async function main() {
 
   await prisma.notifikasi.create({
     data: {
-      user_id: warga2.id,
+      user_id: userId('warga2@wastelens.com'),
       laporan_id: laporan3.id,
       pesan: 'Laporan Anda telah selesai. Anda mendapat 25 koin!',
       status_baca: true,
@@ -605,38 +571,45 @@ async function main() {
 
   await prisma.notifikasi.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       laporan_id: laporan5.id,
       pesan: 'Laporan Anda telah selesai. Anda mendapat 50 koin!',
       status_baca: false,
     },
   })
 
-  // ─── 17. PENUKARAN ─────────────────────────────────────
+  // ─── 15. PENUKARAN ─────────────────────────────────────
   await prisma.penukaran.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       produk_id: produkMinyak.id,
-      jumlah_koin: 50,
-      status: 'SELESAI',
-      qr_token: 'QR-MGK-001-A1B2',
+      kopdes_id: kopdesRecord.id,
+      quantity: 1,
+      unit_coin_price: produkMinyak.harga_koin,
+      jumlah_koin: produkMinyak.harga_koin,
+      status: 'REDEEMED',
       redeemed_at: oneDayAgo,
+      expires_at: oneDayAgo,
     },
   })
 
   await prisma.penukaran.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       produk_id: produkSabun.id,
-      jumlah_koin: 25,
+      kopdes_id: kopdesRecord.id,
+      quantity: 1,
+      unit_coin_price: produkSabun.harga_koin,
+      jumlah_koin: produkSabun.harga_koin,
       status: 'PENDING',
+      expires_at: tomorrow,
     },
   })
 
-  // ─── 18. TEMPORARY UPLOAD ──────────────────────────────
+  // ─── 16. TEMPORARY UPLOAD ──────────────────────────────
   await prisma.temporaryUpload.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       provider: 'cloudinary',
       public_id: 'temp/warga1_upload1',
       secure_url: 'https://res.cloudinary.com/wastelens/image/upload/temp/warga1_upload1.jpg',
@@ -650,7 +623,7 @@ async function main() {
 
   await prisma.temporaryUpload.create({
     data: {
-      user_id: warga1.id,
+      user_id: userId('warga1@wastelens.com'),
       provider: 'cloudinary',
       public_id: 'temp/warga1_upload2',
       secure_url: 'https://res.cloudinary.com/wastelens/image/upload/temp/warga1_upload2.jpg',
@@ -666,7 +639,8 @@ async function main() {
   console.log('✅ Seed data berhasil dibuat!')
   console.log('📊 Ringkasan:')
   console.log('   - 9 User (admin, dinas, petugas, kopdes, warga, banned)')
-  console.log('   - 2 Verification, 2 Session, 2 Account')
+  console.log('   - 9 Account (via Better Auth signUpEmail, password: password123)')
+  console.log('   - 2 Verification')
   console.log('   - 1 BannedReason, 1 Kopdes, 3 Produk')
   console.log('   - 2 Dinas, 4 AreaCakupan, 2 Petugas, 3 Kendaraan')
   console.log('   - 5 Laporan, 5 Foto, 3 TransaksiKoin')
