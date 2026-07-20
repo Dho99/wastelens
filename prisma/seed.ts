@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../lib/generated/prisma/client'
+import { hashPassword } from 'better-auth/crypto'
 import { auth } from '../lib/auth'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
@@ -13,8 +14,8 @@ async function main() {
   const oneWeekAgo = new Date(now.getTime() - 7 * 86400000)
   const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000)
   const oneMonthAgo = new Date(now.getTime() - 30 * 86400000)
-  const tomorrow = new Date(now.getTime() + 86400000)
   const twoDaysLater = new Date(now.getTime() + 2 * 86400000)
+  const dinasPassword = await hashPassword('DinasWastelens2026!')
 
   // ─── 1. USERS ─────────────────────────────────────────────
   type UserSeed = {

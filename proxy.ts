@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 // Paths that don't require authentication
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth"];
+const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/dinas"];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p));
@@ -12,18 +12,11 @@ function isPublic(pathname: string): boolean {
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
-  // Allow the DLH UI to be reviewed locally without requiring a seeded
-  // database account. Production keeps the normal session protection.
-  if (
-    process.env.NODE_ENV === "development" &&
-    (pathname.startsWith("/dinas") || pathname.startsWith("/api/dinas"))
-  ) {
-    return NextResponse.next();
-  }
-
   // Logout — redirect to login (Better Auth handles cookie clearing client-side)
   if (searchParams.has("logout")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(
+      new URL(pathname.startsWith("/dinas") ? "/login/dinas" : "/login", request.url),
+    );
   }
 
   // Allow public paths through without auth
@@ -35,7 +28,7 @@ export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   if (!sessionCookie) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL(pathname.startsWith("/dinas") ? "/login/dinas" : "/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 

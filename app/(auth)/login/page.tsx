@@ -166,6 +166,15 @@ export default function LoginPage() {
                             Daftar
                         </Link>
                     </p>
+                    <p className="text-center text-sm text-neutral-500">
+                        Pengelola Dinas Lingkungan Hidup?{" "}
+                        <Link
+                            href="/login/dinas"
+                            className="font-semibold text-primary hover:text-primary/90"
+                        >
+                            Masuk ke Portal DLH
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>
