@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
         include: { user: { select: { email: true, status: true } }, _count: { select: { laporan: true } } },
         orderBy: { nama: "asc" },
       }),
-      prisma.user.findUnique({ where: { id: dinas.userId }, select: { image: true } }),
+      prisma.user.findUnique({ where: { id: dinas.userId }, select: { name: true, email: true, image: true } }),
     ]);
 
     const saved = (state?.data && typeof state.data === "object" ? state.data : {}) as Partial<DlhState>;
@@ -140,7 +140,13 @@ export async function GET(request: NextRequest) {
         ...(saved.accounts ?? []),
         ...dbAccounts.filter((account) => !(saved.accounts ?? []).some((savedAccount) => savedAccount.email.toLowerCase() === account.email.toLowerCase())),
       ],
-      admin: { ...saved.admin, photo: adminUser?.image ?? saved.admin?.photo },
+      admin: {
+        ...saved.admin,
+        name: saved.admin?.name ?? adminUser?.name ?? dinas.name,
+        email: saved.admin?.email ?? adminUser?.email ?? "",
+        passwordUpdatedAt: saved.admin?.passwordUpdatedAt ?? "Belum tersedia",
+        photo: adminUser?.image ?? saved.admin?.photo,
+      },
     };
 
     return NextResponse.json(
