@@ -22,7 +22,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { status: newStatus } = body;
+    const { status: newStatus, nama, email } = body;
 
     if (!newStatus || !["active", "nonaktif"].includes(newStatus)) {
       return NextResponse.json(
@@ -38,10 +38,14 @@ export async function PATCH(
 
     await prisma.user.update({
       where: { id },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        ...(nama !== undefined ? { nama } : {}),
+        ...(email !== undefined ? { email } : {}),
+      },
     });
 
-    return NextResponse.json({ message: "Status akun berhasil diubah" });
+    return NextResponse.json({ success: true, data: { message: "Status akun berhasil diubah" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message, code: "INTERNAL" }, { status: 500 });

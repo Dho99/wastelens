@@ -1,56 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-type CoinTx = {
-  id: string;
-  user: { id: string; nama: string; email?: string };
-  laporan: { id: string };
-  jumlah: number;
-  jenis: string;
-};
-
-type Pagination = { page: number; limit: number; total: number; totalPages: number };
+import type { CoinTx, Pagination } from "../../types/transactions";
+import { useCoinTransactions } from "../../hooks/useTransactions";
 
 export default function AdminCoinTransactionsPage() {
   const router = useRouter();
-  const [data, setData] = useState<CoinTx[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const fetchTxs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/transactions/coins?page=${page}&limit=10`);
-      const json = await res.json();
-      setData(json.data ?? []);
-      setPagination(json.pagination ?? null);
-    } catch {
-      toast.error("Gagal memuat riwayat transaksi");
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  const { data, isLoading } = useCoinTransactions(page);
+  const items = data?.items ?? [];
+  const pagination = data?.pagination as Pagination | undefined;
 
-  useEffect(() => {
-    let active = true;
-    Promise.resolve().then(() => {
-      if (active) {
-        fetchTxs();
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [fetchTxs]);
-
-  // Client-side search filters
-  const filteredTxs = data.filter((tx) => {
+  const filteredTxs = items.filter((tx) => {
     const term = searchQuery.toLowerCase();
     return (
       tx.user?.nama.toLowerCase().includes(term) ||
@@ -69,7 +35,7 @@ export default function AdminCoinTransactionsPage() {
       tx.laporan?.id || "-",
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -81,13 +47,12 @@ export default function AdminCoinTransactionsPage() {
     toast.success("Audit log transaksi diekspor!");
   };
 
-  const totalKoinKredit = data.filter(t => t.jenis === "kredit").reduce((acc, t) => acc + t.jumlah, 0);
-  const totalKoinDebit = data.filter(t => t.jenis === "debit").reduce((acc, t) => acc + t.jumlah, 0);
+  const totalKoinKredit = items.filter(t => t.jenis === "kredit").reduce((acc, t) => acc + t.jumlah, 0);
+  const totalKoinDebit = items.filter(t => t.jenis === "debit").reduce((acc, t) => acc + t.jumlah, 0);
 
   return (
     <div className="bg-[#FAF9F5] min-h-screen p-8 text-neutral-800 select-none pb-24">
-      
-      {/* 1. Header & Top bar dashboard console style */}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-5 mb-6">
         <div>
           <h1 className="text-2xl font-black text-[#1E7D38] tracking-tight">Riwayat Transaksi Koin</h1>
@@ -114,7 +79,6 @@ export default function AdminCoinTransactionsPage() {
         </div>
       </div>
 
-      {/* 2. Unified Navigation Tab Header */}
       <div className="flex border-b border-gray-200/80 mb-6">
         <button
           onClick={() => router.push("/admin/reports")}
@@ -136,9 +100,8 @@ export default function AdminCoinTransactionsPage() {
         </button>
       </div>
 
-      {/* 3. Stats Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
-        
+
         <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm space-y-1">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Total Koin Dialirkan</span>
           <div className="flex items-center gap-2 mt-1">
@@ -165,9 +128,8 @@ export default function AdminCoinTransactionsPage() {
 
       </div>
 
-      {/* 4. Ledger Table Card */}
       <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm min-h-[300px]">
-        
+
         <div className="flex items-center gap-2 mb-4">
           <h3 className="text-sm font-black text-gray-850">Jurnal Mutasi Koin</h3>
           <span className="bg-emerald-50 text-[#1E7D38] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
@@ -175,7 +137,7 @@ export default function AdminCoinTransactionsPage() {
           </span>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader2 className="w-8 h-8 text-[#1E7D38] animate-spin" />
             <p className="text-xs text-gray-400 font-bold">Memuat data mutasi koin...</p>
@@ -233,7 +195,6 @@ export default function AdminCoinTransactionsPage() {
               </table>
             </div>
 
-            {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
               <div className="flex justify-between items-center mt-5 pt-3 border-t border-gray-100">
                 <span className="text-[10px] font-bold text-gray-400">

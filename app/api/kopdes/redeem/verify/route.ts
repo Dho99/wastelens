@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
                             kopdes_id: true,
                         },
                     },
-                    user: { select: { id: true, nama: true } },
+                    user: { select: { id: true, name: true } },
                 },
             });
 
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
                     jumlah_koin: penukaran.jumlah_koin,
                 },
                 user: {
-                    nama: penukaran.user.nama,
+                    nama: penukaran.user.name,
                 },
             };
         });

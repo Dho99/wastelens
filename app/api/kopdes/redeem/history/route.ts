@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         },
         include: {
           produk: { select: { nama_barang: true } },
-          user: { select: { nama: true } },
+          user: { select: { name: true } },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       {
         data: penukaran.map((p) => ({
           id: p.id,
-          user_nama: p.user.nama,
+          user_nama: p.user.name,
           produk_nama: p.produk.nama_barang,
           jumlah_koin: p.jumlah_koin,
           status: p.status,

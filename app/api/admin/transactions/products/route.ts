@@ -46,8 +46,11 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({
-      data: mappedData,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      success: true,
+      data: {
+        items: mappedData,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";

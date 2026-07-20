@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       user_id: d.user_id,
     }));
 
-    return NextResponse.json(flattened);
+    return NextResponse.json({ success: true, data: flattened });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message, code: "INTERNAL" }, { status: 500 });
