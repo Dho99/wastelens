@@ -35,11 +35,11 @@ export async function GET(request: NextRequest) {
     const [penukaran, total] = await Promise.all([
       prisma.penukaran.findMany({
         where: {
-          produk: { kopdes_id: kopdes.id },
+          kopdes_id: kopdes.id,
         },
         include: {
           produk: { select: { nama_barang: true } },
-          user: { select: { nama: true } },
+          user: { select: { name: true } },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.penukaran.count({
         where: {
-          produk: { kopdes_id: kopdes.id },
+          kopdes_id: kopdes.id,
         },
       }),
     ]);
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       {
         data: penukaran.map((p) => ({
           id: p.id,
-          user_nama: p.user.nama,
+          user_nama: p.user.name,
           produk_nama: p.produk.nama_barang,
           jumlah_koin: p.jumlah_koin,
           status: p.status,
