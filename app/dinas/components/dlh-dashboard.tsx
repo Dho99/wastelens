@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DlhShell } from "./dlh-shell";
@@ -8,11 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardCheck,
-  Crosshair,
   Layers3,
-  MapPin,
-  Minus,
-  Plus,
   Sparkles,
   X,
 } from "lucide-react";
@@ -20,86 +17,10 @@ import { type DlhOfficer, type DlhReport, type DlhVehicle, updateDlhStore, useDl
 
 type Dropdown = "vehicle" | "officer" | null;
 
-function MapCanvas({ reports, reportOpen, onOpenReport }: { reports: DlhReport[]; reportOpen: boolean; onOpenReport: (id: string) => void }) {
-  const [view, setView] = useState<"heatmap" | "points">("heatmap");
-  const [zoom, setZoom] = useState(1);
-  const [located, setLocated] = useState(false);
-
-  return (
-    <section className="relative min-h-[420px] flex-1 overflow-hidden bg-[#64c5ed] lg:min-w-[430px]">
-      <Image
-        src="/images/dlh-dashboard-reference.png"
-        alt="Peta heatmap kepadatan laporan sampah wilayah Jakarta"
-        width={1444}
-        height={1028}
-        priority
-        className="pointer-events-none absolute left-[-41.95%] top-[-6.75%] h-auto w-[234.8%] max-w-none select-none transition-transform duration-300"
-        style={{ transform: `scale(${zoom})` }}
-      />
-      <div className="absolute left-5 top-5 flex h-12 gap-1 rounded-full bg-white/80 p-1 text-xs sm:left-6 sm:h-[52px] sm:text-sm">
-        <button
-          type="button"
-          onClick={() => setView("heatmap")}
-          className={`min-w-[94px] rounded-full px-4 font-extrabold transition-colors sm:min-w-[108px] ${view === "heatmap" ? "bg-[#087529] text-white shadow-[0_6px_12px_rgba(18,27,22,0.3)]" : "bg-transparent text-[#17231d] hover:bg-white/15"}`}
-        >
-          Heatmap
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("points")}
-          className={`min-w-[118px] rounded-full px-4 font-semibold transition-colors sm:min-w-[132px] ${view === "points" ? "bg-[#087529] text-white shadow-[0_6px_12px_rgba(18,27,22,0.3)]" : "bg-transparent text-[#17231d] hover:bg-white/15"}`}
-        >
-          Titik Laporan
-        </button>
-      </div>
-
-      <div className="absolute left-5 top-[84px] grid gap-3 sm:left-6 sm:top-[88px]">
-        <div className="grid gap-2 rounded-[26px] bg-white/80 p-2">
-          <button type="button" onClick={() => setZoom((value) => Math.min(1.35, value + 0.1))} aria-label="Perbesar peta" className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"><Plus className="size-6" strokeWidth={2.2} /></button>
-          <button type="button" onClick={() => setZoom((value) => Math.max(0.85, value - 0.1))} aria-label="Perkecil peta" className="grid size-11 place-items-center rounded-full bg-[#f4faff] text-[#12232c] shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition hover:bg-white sm:size-12"><Minus className="size-6" strokeWidth={2.2} /></button>
-        </div>
-        <div className="rounded-[26px] bg-white/80 p-2">
-          <button type="button" onClick={() => setLocated((value) => !value)} aria-pressed={located} aria-label="Lokasi saya" className={`grid size-11 place-items-center rounded-full shadow-[0_2px_5px_rgba(50,64,56,0.2)] transition sm:size-12 ${located ? "bg-[#087529] text-white" : "bg-[#f4faff] text-[#12232c] hover:bg-white"}`}>
-            <Crosshair className="size-6" strokeWidth={2.3} />
-          </button>
-        </div>
-      </div>
-
-      {located && <span className="absolute left-1/2 top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white bg-[#087529] shadow-xl"><span className="size-2 rounded-full bg-white" /></span>}
-
-      {view === "points" && (
-        <div className="pointer-events-none absolute inset-0">
-          {reports.map((report, index) => {
-            const positions = [[26, 36], [47, 48], [69, 31], [76, 67], [37, 72], [61, 59]];
-            const [left, top] = positions[index % positions.length];
-            return (
-            <button
-              type="button"
-              key={report.id}
-              onClick={() => onOpenReport(report.id)}
-              aria-label={`Buka laporan ${report.id}`}
-              className="pointer-events-auto absolute grid size-7 place-items-center rounded-full border-2 border-white bg-[#08752a] text-[10px] font-bold text-white shadow-lg transition hover:scale-110 hover:bg-[#065d21]"
-              style={{ left: `${left}%`, top: `${top}%` }}
-            >
-              {index + 1}
-            </button>
-          );})}
-        </div>
-      )}
-
-      {!reportOpen && (
-        <button
-          type="button"
-          onClick={() => reports[0] && onOpenReport(reports[0].id)}
-          disabled={!reports.length}
-          className="absolute bottom-5 right-5 flex items-center gap-2 rounded-full bg-[#087529] px-5 py-3 text-sm font-bold text-white shadow-lg"
-        >
-          <MapPin className="size-4" /> {reports.length ? `Buka ${reports.length} laporan aktif` : "Tidak ada laporan aktif"}
-        </button>
-      )}
-    </section>
-  );
-}
+const MapCanvas = dynamic(() => import("./dlh-operations-map"), {
+  ssr: false,
+  loading: () => <section className="min-h-[420px] flex-1 animate-pulse bg-[#dcecf2] lg:min-w-[430px]" aria-label="Memuat peta operasional" />,
+});
 
 function DropdownField({
   type,
