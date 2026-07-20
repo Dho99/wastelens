@@ -117,6 +117,21 @@ export function ReportsManagement() {
             <button type="button" onClick={exportCsv} aria-label="Unduh laporan" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-[#b8cbbd] bg-[#e8f5fc] text-[#3f5248] transition hover:bg-white"><Download className="size-5" /></button>
           </div>
 
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="flex items-center gap-4 rounded-[22px] border border-[#b7cbbd] bg-white p-5">
+              <span className="grid size-12 place-items-center rounded-2xl bg-[#d4ecec] text-[#087529]"><FileWarning className="size-5" /></span>
+              <div><p className="text-xs text-[#68756e]">Laporan Masuk</p><p className="text-2xl font-extrabold">{reports.length}</p></div>
+            </div>
+            <div className="flex items-center gap-4 rounded-[22px] border border-[#b7cbbd] bg-white p-5">
+              <span className="grid size-12 place-items-center rounded-2xl bg-[#bcebd1] text-[#47705b]"><RefreshCw className="size-5" /></span>
+              <div><p className="text-xs text-[#68756e]">Sedang Diproses</p><p className="text-2xl font-extrabold">{reports.filter((report) => report.status === "Diproses").length}</p></div>
+            </div>
+            <div className="flex items-center gap-4 rounded-[22px] border border-[#b7cbbd] bg-white p-5">
+              <span className="grid size-12 place-items-center rounded-2xl bg-[#258237] text-white"><CheckCircle2 className="size-5" /></span>
+              <div><p className="text-xs text-[#68756e]">Terselesaikan</p><p className="text-2xl font-extrabold">{reports.filter((report) => report.status === "Selesai").length}</p></div>
+            </div>
+          </div>
+
           <section className="mt-6 flex flex-col gap-4 rounded-[24px] border border-[#b7cbbd] bg-white/55 p-4 lg:flex-row lg:items-center">
             <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-[#e8f6fd] px-5"><Search className="size-5 shrink-0 text-[#46594f]" /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} className="w-full bg-transparent text-sm outline-none placeholder:text-[#7c8792]" placeholder="Cari ID Laporan, Lokasi, atau Petugas..." /></label>
             <div className="flex flex-wrap items-center gap-2"><span className="mr-1 text-xs font-bold text-[#46594f]">Filter Status:</span>{(["Semua", "Menunggu", "Diproses", "Selesai"] as const).map((item) => <button type="button" key={item} onClick={() => setFilter(item)} className={`rounded-full border px-4 py-2 text-xs font-bold transition ${status === item ? "border-[#b4e4cb] bg-[#bcebd1] text-[#47705b]" : "border-[#b7c7bb] bg-white/40 text-[#536159] hover:bg-white"}`}>{item}</button>)}</div>
@@ -140,7 +155,6 @@ export function ReportsManagement() {
             <footer className="flex flex-col gap-4 border-t border-[#becdbf] px-6 py-4 text-xs text-[#536159] sm:flex-row sm:items-center"><p>Menampilkan {filtered.length ? (page - 1) * perPage + 1 : 0}–{Math.min(page * perPage, filtered.length)} dari {filtered.length || 0} laporan</p><div className="ml-auto flex items-center gap-3"><label className="flex items-center gap-2">Baris per halaman:<select value={perPage} onChange={(event) => { setPerPage(Number(event.target.value)); setPage(1); }} className="rounded-full border border-[#b7c7bb] bg-[#edf7fb] px-3 py-1.5 outline-none"><option value="5">5</option><option value="10">10</option></select></label><button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded-full p-2 disabled:opacity-30"><ChevronLeft className="size-4" /></button>{Array.from({ length: totalPages }, (_, index) => index + 1).map((item) => <button type="button" key={item} onClick={() => setPage(item)} className={`grid size-8 place-items-center rounded-full font-bold ${page === item ? "bg-[#087529] text-white" : "hover:bg-[#e2f2ea]"}`}>{item}</button>)}<button type="button" disabled={page === totalPages} onClick={() => setPage((current) => current + 1)} className="rounded-full p-2 disabled:opacity-30"><ChevronRight className="size-4" /></button></div></footer>
           </section>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3"><div className="flex items-center gap-4 rounded-[22px] border border-[#b7cbbd] bg-[#e7f5fc] p-5"><span className="grid size-12 place-items-center rounded-2xl bg-[#d4ecec] text-[#087529]"><FileWarning className="size-5" /></span><div><p className="text-xs text-[#68756e]">Laporan Masuk</p><p className="text-2xl font-extrabold">{reports.length}</p></div></div><div className="flex items-center gap-4 rounded-[22px] border border-[#b7cbbd] bg-[#e7f5fc] p-5"><span className="grid size-12 place-items-center rounded-2xl bg-[#bcebd1] text-[#47705b]"><RefreshCw className="size-5" /></span><div><p className="text-xs text-[#68756e]">Sedang Diproses</p><p className="text-2xl font-extrabold">{reports.filter((report) => report.status === "Diproses").length}</p></div></div><div className="flex items-center gap-4 rounded-[22px] border border-[#b7cbbd] bg-[#e7f5fc] p-5"><span className="grid size-12 place-items-center rounded-2xl bg-[#258237] text-white"><CheckCircle2 className="size-5" /></span><div><p className="text-xs text-[#68756e]">Terselesaikan</p><p className="text-2xl font-extrabold">{reports.filter((report) => report.status === "Selesai").length}</p></div></div></div>
         </div>
       </main>
 

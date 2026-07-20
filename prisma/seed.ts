@@ -6,6 +6,174 @@ import { auth } from "../lib/auth";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
+type JakartaMapReportSeed = {
+    now: Date;
+    dinasId: string;
+    warga1Id: string;
+    warga2Id: string;
+};
+
+async function seedJakartaMapReports({
+    now,
+    dinasId,
+    warga1Id,
+    warga2Id,
+}: JakartaMapReportSeed) {
+    return prisma.laporan.createMany({
+        skipDuplicates: true,
+        data: [
+            {
+                client_request_id: "seed-map-jakarta-gambir-v1",
+                user_id: warga1Id,
+                dinas_id: dinasId,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.17539,
+                lokasi_lng: 106.82715,
+                kategori_ukuran: "BESAR",
+                status: "PENDING",
+                address_text: "Kawasan Monumen Nasional, Gambir",
+                road_name: "Jl. Medan Merdeka",
+                district: "Gambir",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["plastik", "kertas"],
+                priority_score: 8.8,
+                priority_level: "HIGH",
+                createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-tanah-abang-v1",
+                user_id: warga2Id,
+                dinas_id: dinasId,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1862,
+                lokasi_lng: 106.8148,
+                kategori_ukuran: "SEDANG",
+                status: "PENDING",
+                address_text: "Pasar Tanah Abang, Jakarta Pusat",
+                road_name: "Jl. K.H. Mas Mansyur",
+                district: "Tanah Abang",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["sisa_makanan", "plastik"],
+                drainage_risk: true,
+                priority_score: 7.4,
+                priority_level: "HIGH",
+                createdAt: new Date(now.getTime() - 4 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-senen-v1",
+                user_id: warga1Id,
+                dinas_id: dinasId,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1771,
+                lokasi_lng: 106.8427,
+                kategori_ukuran: "BESAR",
+                rekomendasi_kendaraan: "Dump Truck",
+                status: "DIPROSES",
+                address_text: "Kawasan Pasar Senen, Jakarta Pusat",
+                road_name: "Jl. Pasar Senen",
+                district: "Senen",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["kayu", "plastik", "logam"],
+                access_obstruction_risk: true,
+                priority_score: 9.2,
+                priority_level: "HIGH",
+                createdAt: new Date(now.getTime() - 6 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-menteng-v1",
+                user_id: warga2Id,
+                dinas_id: dinasId,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1944,
+                lokasi_lng: 106.8326,
+                kategori_ukuran: "KECIL",
+                status: "PENDING",
+                address_text: "Taman Menteng, Jakarta Pusat",
+                road_name: "Jl. HOS Cokroaminoto",
+                district: "Menteng",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["plastik"],
+                priority_score: 3.9,
+                priority_level: "LOW",
+                createdAt: new Date(now.getTime() - 8 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-kemayoran-v1",
+                user_id: warga1Id,
+                dinas_id: dinasId,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1633,
+                lokasi_lng: 106.8561,
+                kategori_ukuran: "SEDANG",
+                status: "PENDING",
+                address_text: "Kemayoran, Jakarta Pusat",
+                road_name: "Jl. Garuda",
+                district: "Kemayoran",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["kaca", "plastik"],
+                priority_score: 6.1,
+                priority_level: "MEDIUM",
+                createdAt: new Date(now.getTime() - 10 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-sawah-besar-v1",
+                user_id: warga2Id,
+                dinas_id: dinasId,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1607,
+                lokasi_lng: 106.8274,
+                kategori_ukuran: "SEDANG",
+                rekomendasi_kendaraan: "Pick Up",
+                status: "DIPROSES",
+                address_text: "Mangga Besar, Sawah Besar",
+                road_name: "Jl. Mangga Besar Raya",
+                district: "Sawah Besar",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["sisa_makanan", "kertas"],
+                priority_score: 5.7,
+                priority_level: "MEDIUM",
+                createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000),
+            },
+        ],
+    });
+}
+
+async function seedMapReportsIntoExistingDatabase(now: Date) {
+    const [dinasUser, warga1, warga2] = await Promise.all([
+        prisma.user.findUnique({ where: { email: "dinas1@wastelens.com" } }),
+        prisma.user.findUnique({ where: { email: "warga1@wastelens.com" } }),
+        prisma.user.findUnique({ where: { email: "warga2@wastelens.com" } }),
+    ]);
+
+    if (!dinasUser || !warga1 || !warga2) {
+        throw new Error("Data akun seed belum lengkap. Reset database lalu jalankan seed kembali.");
+    }
+
+    const dinas = await prisma.dinas.findFirst({ where: { user_id: dinasUser.id } });
+    if (!dinas) {
+        throw new Error("Data dinas seed tidak ditemukan. Reset database lalu jalankan seed kembali.");
+    }
+
+    return seedJakartaMapReports({
+        now,
+        dinasId: dinas.id,
+        warga1Id: warga1.id,
+        warga2Id: warga2.id,
+    });
+}
+
 async function main() {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 86400000);
@@ -15,6 +183,17 @@ async function main() {
     const oneMonthAgo = new Date(now.getTime() - 30 * 86400000);
     const twoDaysLater = new Date(now.getTime() + 2 * 86400000);
     const tomorrow = new Date(now.getTime() + 86400000);
+
+    const existingSeedUser = await prisma.user.findUnique({
+        where: { email: "admin@wastelens.com" },
+        select: { id: true },
+    });
+
+    if (existingSeedUser) {
+        const result = await seedMapReportsIntoExistingDatabase(now);
+        console.log(`✅ Seed database lama selesai: ${result.count} titik laporan Jakarta ditambahkan.`);
+        return;
+    }
 
     const userId = (email: string): string => {
         const id = userMap.get(email);
@@ -471,6 +650,143 @@ async function main() {
         },
     });
 
+    // Laporan aktif di sekitar viewport awal dashboard DLH (Jakarta Pusat).
+    // Data ini memastikan heatmap dan mode "Titik Laporan" langsung terlihat
+    // ketika akun dinas pertama membuka /dinas setelah database di-seed.
+    await prisma.laporan.createMany({
+        skipDuplicates: true,
+        data: [
+            {
+                client_request_id: "seed-map-jakarta-gambir-v1",
+                user_id: userId("warga1@wastelens.com"),
+                dinas_id: dinas1.id,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.17539,
+                lokasi_lng: 106.82715,
+                kategori_ukuran: "BESAR",
+                status: "PENDING",
+                address_text: "Kawasan Monumen Nasional, Gambir",
+                road_name: "Jl. Medan Merdeka",
+                district: "Gambir",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["plastik", "kertas"],
+                priority_score: 8.8,
+                priority_level: "HIGH",
+                createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-tanah-abang-v1",
+                user_id: userId("warga2@wastelens.com"),
+                dinas_id: dinas1.id,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1862,
+                lokasi_lng: 106.8148,
+                kategori_ukuran: "SEDANG",
+                status: "PENDING",
+                address_text: "Pasar Tanah Abang, Jakarta Pusat",
+                road_name: "Jl. K.H. Mas Mansyur",
+                district: "Tanah Abang",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["sisa_makanan", "plastik"],
+                drainage_risk: true,
+                priority_score: 7.4,
+                priority_level: "HIGH",
+                createdAt: new Date(now.getTime() - 4 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-senen-v1",
+                user_id: userId("warga1@wastelens.com"),
+                dinas_id: dinas1.id,
+                petugas_id: petugas1Record.id,
+                kendaraan_id: kendaraan1.id,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1771,
+                lokasi_lng: 106.8427,
+                kategori_ukuran: "BESAR",
+                rekomendasi_kendaraan: "Dump Truck",
+                status: "DIPROSES",
+                address_text: "Kawasan Pasar Senen, Jakarta Pusat",
+                road_name: "Jl. Pasar Senen",
+                district: "Senen",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["kayu", "plastik", "logam"],
+                access_obstruction_risk: true,
+                priority_score: 9.2,
+                priority_level: "HIGH",
+                createdAt: new Date(now.getTime() - 6 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-menteng-v1",
+                user_id: userId("warga2@wastelens.com"),
+                dinas_id: dinas1.id,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1944,
+                lokasi_lng: 106.8326,
+                kategori_ukuran: "KECIL",
+                status: "PENDING",
+                address_text: "Taman Menteng, Jakarta Pusat",
+                road_name: "Jl. HOS Cokroaminoto",
+                district: "Menteng",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["plastik"],
+                priority_score: 3.9,
+                priority_level: "LOW",
+                createdAt: new Date(now.getTime() - 8 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-kemayoran-v1",
+                user_id: userId("warga1@wastelens.com"),
+                dinas_id: dinas1.id,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1633,
+                lokasi_lng: 106.8561,
+                kategori_ukuran: "SEDANG",
+                status: "PENDING",
+                address_text: "Kemayoran, Jakarta Pusat",
+                road_name: "Jl. Garuda",
+                district: "Kemayoran",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["kaca", "plastik"],
+                priority_score: 6.1,
+                priority_level: "MEDIUM",
+                createdAt: new Date(now.getTime() - 10 * 60 * 60 * 1000),
+            },
+            {
+                client_request_id: "seed-map-jakarta-sawah-besar-v1",
+                user_id: userId("warga2@wastelens.com"),
+                dinas_id: dinas1.id,
+                petugas_id: petugas1Record.id,
+                kendaraan_id: kendaraan2.id,
+                foto_url: "/images/waste_bags_stack.png",
+                lokasi_lat: -6.1607,
+                lokasi_lng: 106.8274,
+                kategori_ukuran: "SEDANG",
+                rekomendasi_kendaraan: "Pick Up",
+                status: "DIPROSES",
+                address_text: "Mangga Besar, Sawah Besar",
+                road_name: "Jl. Mangga Besar Raya",
+                district: "Sawah Besar",
+                city: "Jakarta Pusat",
+                province: "DKI Jakarta",
+                country: "Indonesia",
+                waste_types: ["sisa_makanan", "kertas"],
+                priority_score: 5.7,
+                priority_level: "MEDIUM",
+                createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000),
+            },
+        ],
+    });
+
     // ─── 11. FOTO ──────────────────────────────────────────
     await prisma.foto.create({
         data: {
@@ -676,7 +992,7 @@ async function main() {
     console.log("   - 2 Verification");
     console.log("   - 1 BannedReason, 1 Kopdes, 3 Produk");
     console.log("   - 2 Dinas, 4 AreaCakupan, 2 Petugas, 3 Kendaraan");
-    console.log("   - 5 Laporan, 5 Foto, 3 TransaksiKoin");
+    console.log("   - 11 Laporan (6 titik peta Jakarta), 5 Foto, 3 TransaksiKoin");
     console.log("   - 2 VerifikasiPickup, 4 Notifikasi");
     console.log("   - 2 Penukaran, 2 TemporaryUpload");
 }

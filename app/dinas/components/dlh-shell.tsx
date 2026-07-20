@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "@/lib/auth-client";
-import { hydrateDlhStore, useDlhStore, useDlhSyncStatus } from "@/lib/dlh-store";
+import { hydrateDlhStore, useDlhStore } from "@/lib/dlh-store";
 import {
   Bell,
   ClipboardList,
@@ -23,7 +23,7 @@ const navItems = [
   { label: "Dashboard Peta", href: "/dinas", icon: Map },
   { label: "Kelola Laporan", href: "/dinas/reports", icon: ClipboardList },
   { label: "Kelola Logistik", href: "/dinas/logistics", icon: Warehouse },
-  { label: "Kelola Akun", href: "/dinas/accounts", icon: UserCog },
+  { label: "Profil Dinas", href: "/dinas/accounts", icon: UserCog },
 ];
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -36,7 +36,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const handleLogout = async () => {
     setLoggingOut(true);
     await signOut();
-    router.replace("/login/dinas");
+    router.replace("/login");
     router.refresh();
   };
 
@@ -114,19 +114,12 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 function DashboardHeader({ onMenu }: { onMenu: () => void }) {
   const store = useDlhStore();
-  const syncStatus = useDlhSyncStatus();
   const unreadCount = store.notifications.filter((item) => !item.read).length;
-  const statusLabel = syncStatus === "syncing" ? "Menyinkronkan" : syncStatus === "offline" ? "Offline" : "Online";
   return (
     <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
       <button type="button" onClick={onMenu} className="mr-3 rounded-lg p-2 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
         <Menu className="size-5" />
       </button>
-      <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">{store.settings.agency}</h1>
-      <div className="ml-5 hidden h-7 w-px bg-[#cedbd4] md:block" />
-      <div className="ml-5 hidden items-center gap-2 rounded-full bg-[#e2f2ea] px-3 py-1 text-xs font-bold text-[#176c31] md:flex">
-        <span className={`size-2 rounded-full ${syncStatus === "offline" ? "bg-red-500" : syncStatus === "syncing" ? "animate-pulse bg-amber-500" : "bg-[#08752a]"}`} /> System Status: {statusLabel}
-      </div>
       <div className="ml-auto flex items-center gap-2 sm:gap-5">
         <Link href="/dinas/notifications" aria-label={unreadCount ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"} className="relative rounded-full p-2 hover:bg-slate-100">
           <Bell className="size-5" strokeWidth={2.2} />

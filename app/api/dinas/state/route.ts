@@ -32,6 +32,14 @@ function databaseStatus(status: DlhState["reports"][number]["status"]) {
   return "PENDING";
 }
 
+function reportPhotoUrl(photoUrl: string | null | undefined) {
+  if (!photoUrl || photoUrl.startsWith("https://res.cloudinary.com/wastelens/")) {
+    return "/images/waste_bags_stack.png";
+  }
+
+  return photoUrl;
+}
+
 function mergeById<T extends { id: string }>(saved: T[] | undefined, database: T[]) {
   const databaseIds = new Set(database.map((item) => item.id));
   const savedMap = new Map((saved ?? []).map((item) => [item.id, item]));
@@ -77,11 +85,17 @@ export async function GET(request: NextRequest) {
       year: String(report.createdAt.getFullYear()),
       time: `${timeFormatter.format(report.createdAt).replace(".", ":")} WIB`,
       location: `${report.lokasi_lat.toFixed(5)}, ${report.lokasi_lng.toFixed(5)}`,
-      district: dinas.name,
-      category: report.kategori_ukuran.toLowerCase() === "large" ? "BAHAYA" : "AMAN",
+      district: report.district ?? dinas.name,
+      address: report.address_text ?? undefined,
+      latitude: report.lokasi_lat,
+      longitude: report.lokasi_lng,
+      wasteTypes: report.waste_types,
+      sizeCategory: report.kategori_ukuran,
+      priorityLevel: report.priority_level ?? undefined,
+      category: report.kategori_ukuran.toUpperCase() === "BESAR" ? "BAHAYA" : "AMAN",
       status: reportStatus(report.status),
       reporter: report.user.name,
-      photoUrl: report.foto[0]?.url ?? report.foto_url,
+      photoUrl: reportPhotoUrl(report.foto[0]?.url ?? report.foto_url),
       assignedOfficerId: report.petugas_id ?? undefined,
       assignedVehicleId: report.kendaraan_id ?? undefined,
     }));

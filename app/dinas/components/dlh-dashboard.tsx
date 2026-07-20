@@ -6,16 +6,32 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DlhShell } from "./dlh-shell";
 import {
+  Clock3,
   ChevronDown,
   ChevronUp,
   ClipboardCheck,
   Layers3,
+  MapPin,
+  Navigation,
+  Recycle,
   Sparkles,
+  UserRound,
   X,
 } from "lucide-react";
 import { type DlhOfficer, type DlhReport, type DlhVehicle, updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
 type Dropdown = "vehicle" | "officer" | null;
+
+function shortReportId(id: string) {
+  if (/^LPR-\d+$/i.test(id)) return id.toUpperCase();
+  return `WL-${id.replaceAll("-", "").slice(0, 8).toUpperCase()}`;
+}
+
+function wasteTypeLabel(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 const MapCanvas = dynamic(() => import("./dlh-operations-map"), {
   ssr: false,
@@ -105,6 +121,13 @@ function ReportPanel({ report, vehicles, officers, onClose }: { report: DlhRepor
   const [officer, setOfficer] = useState("");
   const vehicleOptions = vehicles.filter((item) => item.status === "Beroperasi").map((item) => ({ id: item.id, name: `${item.type} • ${item.plate}`, meta: `Kapasitas ${item.capacity} • ${item.area}` }));
   const officerOptions = officers.map((item) => ({ id: item.id, initials: item.initials, name: item.name, meta: `${item.role} • ${item.zone}` }));
+  const displayId = shortReportId(report.id);
+  const coordinates = report.latitude !== undefined && report.longitude !== undefined
+    ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`
+    : report.location;
+  const address = report.address ?? [report.location, report.district].filter(Boolean).join(", ");
+  const wasteTypes = report.wasteTypes?.length ? report.wasteTypes : ["Sampah campuran"];
+  const sizeLabel = report.sizeCategory ? wasteTypeLabel(report.sizeCategory) : report.category === "BAHAYA" ? "Besar" : "Sedang";
 
   const toggleDropdown = (next: Exclude<Dropdown, null>) => setDropdown((current) => (current === next ? null : next));
   const assignFleet = () => {
@@ -124,12 +147,19 @@ function ReportPanel({ report, vehicles, officers, onClose }: { report: DlhRepor
 
   return (
     <aside className="fixed inset-x-0 bottom-0 top-16 z-20 flex w-full flex-col border-l border-[#d8e2dd] bg-white lg:relative lg:inset-auto lg:w-[39%] lg:min-w-[480px] lg:max-w-[560px] lg:shrink-0">
-      <div className="flex h-[93px] shrink-0 items-center bg-[#e9f7fd] px-6">
-        <div>
-          <h2 className="text-xl font-extrabold tracking-[-0.02em] text-[#17231d]">Laporan #{report.id}</h2>
-          <p className="mt-0.5 text-xs text-[#758079]">{report.location} • {report.district}</p>
+      <div className="flex min-h-[112px] shrink-0 items-center gap-4 bg-[#e9f7fd] px-6 py-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#5d7569]">Detail laporan</p>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>{report.status}</span>
+          </div>
+          <h2 className="mt-1 truncate text-xl font-extrabold tracking-[-0.02em] text-[#17231d]" title={report.id}>Laporan {displayId}</h2>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#66776e]">
+            <span className="inline-flex items-center gap-1"><UserRound className="size-3.5" /> {report.reporter}</span>
+            <span className="inline-flex items-center gap-1"><Clock3 className="size-3.5" /> {report.date} {report.year}, {report.time}</span>
+          </p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Tutup laporan" className="ml-auto rounded-full p-2 hover:bg-white/70">
+        <button type="button" onClick={onClose} aria-label="Tutup laporan" className="shrink-0 rounded-full p-2 hover:bg-white/70">
           <X className="size-6" />
         </button>
       </div>
@@ -149,11 +179,33 @@ function ReportPanel({ report, vehicles, officers, onClose }: { report: DlhRepor
           </span>
         </div>
 
+        <section className="rounded-[22px] border border-[#c9d9d0] bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-extrabold text-[#24342b]">Informasi Laporan</h3>
+          <div className="mt-4 space-y-4">
+            <div className="flex items-start gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e4f4ec] text-[#087529]"><MapPin className="size-4" /></span>
+              <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">Alamat</p><p className="mt-1 text-sm font-semibold leading-5 text-[#35453c]">{address}</p>{report.district && <p className="mt-0.5 text-xs text-[#75827b]">{report.district}</p>}</div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e7f2f8] text-[#35687e]"><Navigation className="size-4" /></span>
+              <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">Koordinat</p><p className="mt-1 break-all font-mono text-xs font-bold text-[#35453c]">{coordinates}</p></div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#fff0dc] text-[#9a6200]"><Recycle className="size-4" /></span>
+              <div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">Jenis Sampah</p><div className="mt-2 flex flex-wrap gap-2">{wasteTypes.map((type) => <span key={type} className="rounded-full bg-[#edf6f1] px-3 py-1 text-[11px] font-bold text-[#47705b]">{wasteTypeLabel(type)}</span>)}</div></div>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[#e1e9e4] pt-4">
+            <div className="rounded-xl bg-[#f4f8f6] px-3 py-2"><p className="text-[10px] text-[#7b8981]">Ukuran</p><p className="mt-0.5 text-sm font-extrabold">{sizeLabel}</p></div>
+            <div className="rounded-xl bg-[#f4f8f6] px-3 py-2"><p className="text-[10px] text-[#7b8981]">Prioritas</p><p className="mt-0.5 text-sm font-extrabold">{report.priorityLevel ? wasteTypeLabel(report.priorityLevel) : report.category === "BAHAYA" ? "Tinggi" : "Normal"}</p></div>
+          </div>
+        </section>
+
         <div className="flex gap-4 rounded-[20px] border border-[#ade6c7] bg-[#edfbf4] px-5 py-6 text-[#48715f]">
           <Sparkles className="mt-1 size-7 shrink-0" />
           <div>
-            <p className="text-sm font-bold">AI Analysis: Large Trash Pile</p>
-            <p className="mt-1 text-sm leading-5 text-[#6c8c7d]">Deteksi penumpukan sampah anorganik masif berukuran ~15m³. Membutuhkan truk kapasitas besar (Armada Tipe C).</p>
+            <p className="text-sm font-bold">Analisis AI: Tumpukan Sampah {sizeLabel}</p>
+            <p className="mt-1 text-sm leading-5 text-[#6c8c7d]">Terdeteksi {wasteTypes.map(wasteTypeLabel).join(", ").toLowerCase()} di lokasi laporan. Sesuaikan armada dengan ukuran dan tingkat prioritas penanganan.</p>
           </div>
         </div>
 
@@ -211,15 +263,19 @@ function ReportPanel({ report, vehicles, officers, onClose }: { report: DlhRepor
 
 export function DlhDashboard() {
   const store = useDlhStore();
-  const activeReports = store.reports.filter((report) => report.status !== "Selesai");
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(activeReports[0]?.id ?? null);
+  const activeReports = store.reports.filter((report) =>
+    report.status === "Menunggu"
+    && !report.assignedOfficerId
+    && !report.assignedVehicleId
+  );
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const selectedReport = activeReports.find((report) => report.id === selectedReportId) ?? activeReports[0];
   const reportOpen = Boolean(selectedReportId && selectedReport);
 
   return (
     <DlhShell>
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <MapCanvas reports={activeReports} reportOpen={reportOpen} onOpenReport={setSelectedReportId} />
+        <MapCanvas reports={activeReports} reportOpen={reportOpen} selectedReportId={selectedReportId} onOpenReport={setSelectedReportId} />
         {reportOpen && selectedReport && <ReportPanel report={selectedReport} vehicles={store.vehicles} officers={store.officers} onClose={() => setSelectedReportId(null)} />}
       </main>
     </DlhShell>

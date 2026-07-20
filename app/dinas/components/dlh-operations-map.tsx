@@ -1,9 +1,9 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
-import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
-import { Crosshair, MapPin, Minus, Plus } from "lucide-react";
+import { Circle, CircleMarker, MapContainer, Popup, TileLayer, Tooltip } from "react-leaflet";
+import { Crosshair, MapPin, Minus, Navigation, Plus, Recycle } from "lucide-react";
 import type { DlhReport } from "@/lib/dlh-store";
 
 const fallbackPositions: [number, number][] = [
@@ -21,18 +21,60 @@ function reportPosition(report: DlhReport, index: number): [number, number] {
   return fallbackPositions[index % fallbackPositions.length];
 }
 
+function shortReportId(id: string) {
+  if (/^LPR-\d+$/i.test(id)) return id.toUpperCase();
+  return `WL-${id.replaceAll("-", "").slice(0, 8).toUpperCase()}`;
+}
+
+function wasteTypeLabel(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export default function DlhOperationsMap({
   reports,
   reportOpen,
+  selectedReportId,
   onOpenReport,
 }: {
   reports: DlhReport[];
   reportOpen: boolean;
+  selectedReportId: string | null;
   onOpenReport: (id: string) => void;
 }) {
   const [view, setView] = useState<"heatmap" | "points">("heatmap");
   const [map, setMap] = useState<LeafletMap | null>(null);
   const [located, setLocated] = useState(false);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const frame = window.requestAnimationFrame(() => map.invalidateSize({ animate: false }));
+    const timeout = window.setTimeout(() => map.invalidateSize({ animate: false }), 200);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [map, reportOpen]);
+
+  useEffect(() => {
+    if (!map || !reportOpen || !selectedReportId) return;
+    const selectedIndex = reports.findIndex((report) => report.id === selectedReportId);
+    if (selectedIndex < 0) return;
+
+    const timeout = window.setTimeout(() => {
+      map.flyTo(reportPosition(reports[selectedIndex], selectedIndex), Math.max(map.getZoom(), 13), { animate: true, duration: 0.5 });
+    }, 80);
+
+    return () => window.clearTimeout(timeout);
+  }, [map, reportOpen, reports, selectedReportId]);
+
+  const selectedReportIndex = selectedReportId
+    ? reports.findIndex((report) => report.id === selectedReportId)
+    : -1;
+  const selectedReport = selectedReportIndex >= 0 ? reports[selectedReportIndex] : undefined;
 
   const focusOperationalArea = () => {
     setLocated(true);
@@ -61,21 +103,21 @@ export default function DlhOperationsMap({
             <Fragment key={report.id}>
               <Circle
                 center={center}
-                radius={2600 * weight}
+                radius={900 * weight}
                 interactive={false}
-                pathOptions={{ stroke: false, fillColor: "#fde047", fillOpacity: 0.2 }}
+                pathOptions={{ stroke: false, fillColor: "#facc15", fillOpacity: 0.3 }}
               />
               <Circle
                 center={center}
-                radius={1700 * weight}
+                radius={550 * weight}
                 interactive={false}
-                pathOptions={{ stroke: false, fillColor: "#f97316", fillOpacity: 0.28 }}
+                pathOptions={{ stroke: false, fillColor: "#f97316", fillOpacity: 0.48 }}
               />
               <Circle
                 center={center}
-                radius={750 * weight}
+                radius={260 * weight}
                 interactive={false}
-                pathOptions={{ stroke: false, fillColor: "#dc2626", fillOpacity: 0.52 }}
+                pathOptions={{ stroke: false, fillColor: "#dc2626", fillOpacity: 0.78 }}
               />
             </Fragment>
           );
@@ -92,17 +134,65 @@ export default function DlhOperationsMap({
               fillOpacity: 1,
             }}
           >
-            <Popup>
-              <div className="min-w-40">
-                <p className="font-bold">Laporan #{report.id}</p>
-                <p className="mt-1 text-xs">{report.location}</p>
-                <button type="button" onClick={() => onOpenReport(report.id)} className="mt-2 font-bold text-[#087529]">
-                  Buka laporan
-                </button>
+            <Popup className="dlh-report-popup" minWidth={260} maxWidth={280}>
+              <div className="w-[260px] rounded-[24px] bg-white p-2.5 text-[#26362d]">
+                <div className="rounded-[18px] bg-gradient-to-br from-[#087529] to-[#159447] px-3.5 py-3 pr-8 text-white shadow-[0_8px_18px_rgba(8,117,41,0.2)]">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">Titik Pickup</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-sm font-extrabold" title={report.id}>Laporan {shortReportId(report.id)}</p>
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-300 text-amber-950" : "bg-white/20 text-white"}`}>{report.status}</span>
+                  </div>
+                </div>
+                <div className="space-y-2 px-1 pb-0.5 pt-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e2f5ea] text-[#087529]"><MapPin className="size-3.5" /></span>
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-[#729080]">Alamat</p>
+                      <p className="mt-0.5 text-[11px] font-semibold leading-4">{report.address ?? report.district ?? "Alamat belum tersedia"}</p>
+                      {report.address && report.district && <p className="mt-0.5 text-[9px] text-[#688075]">{report.district}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 border-t border-[#e7eee9] pt-2">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e8f3f9] text-[#356d87]"><Navigation className="size-3.5" /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-[#718995]">Koordinat</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] font-bold text-[#31576a]">{report.latitude !== undefined && report.longitude !== undefined ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}` : report.location}</p>
+                    </div>
+                  </div>
+                  {Boolean(report.wasteTypes?.length) && <div className="flex items-start gap-2.5 border-t border-[#e7eee9] pt-2"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#fff0d9] text-[#9a6200]"><Recycle className="size-3.5" /></span><div className="flex flex-wrap gap-1.5 pt-1">{report.wasteTypes?.map((type) => <span key={type} className="rounded-full bg-[#fff0d9] px-2 py-1 text-[9px] font-bold text-[#8a5900]">{wasteTypeLabel(type)}</span>)}</div></div>}
+                  <button type="button" onClick={() => onOpenReport(report.id)} className="mt-1 w-full rounded-full bg-[#087529] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_6px_14px_rgba(8,117,41,0.18)] transition hover:bg-[#066421]">
+                    Buka Detail Laporan
+                  </button>
+                </div>
               </div>
             </Popup>
           </CircleMarker>
         ))}
+        {selectedReport && (
+          <>
+            <Circle
+              center={reportPosition(selectedReport, selectedReportIndex)}
+              radius={420}
+              interactive={false}
+              pathOptions={{ color: "#087529", weight: 3, dashArray: "8 7", fillColor: "#bcebd1", fillOpacity: 0.2 }}
+            />
+            <CircleMarker
+              center={reportPosition(selectedReport, selectedReportIndex)}
+              radius={14}
+              interactive={false}
+              pathOptions={{
+                color: "#ffffff",
+                weight: 5,
+                fillColor: "#087529",
+                fillOpacity: 1,
+              }}
+            >
+              <Tooltip permanent direction="top" offset={[0, -14]} className="dlh-selected-report-label">
+                Laporan dipilih • {shortReportId(selectedReport.id)}
+              </Tooltip>
+            </CircleMarker>
+          </>
+        )}
       </MapContainer>
 
       <div className="absolute left-5 top-5 z-[500] flex h-12 gap-1 rounded-full bg-white/90 p-1 text-xs shadow-md backdrop-blur sm:left-6 sm:h-[52px] sm:text-sm">
@@ -141,7 +231,7 @@ export default function DlhOperationsMap({
           disabled={!reports.length}
           className="absolute bottom-5 right-5 z-[500] flex items-center gap-2 rounded-full bg-[#087529] px-5 py-3 text-sm font-bold text-white shadow-lg"
         >
-          <MapPin className="size-4" /> {reports.length ? `Buka ${reports.length} laporan aktif` : "Tidak ada laporan aktif"}
+          <MapPin className="size-4" /> {reports.length ? `Buka ${reports.length} laporan menunggu` : "Tidak ada laporan menunggu"}
         </button>
       )}
     </section>
