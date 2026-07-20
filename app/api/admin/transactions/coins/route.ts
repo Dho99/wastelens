@@ -33,15 +33,23 @@ export async function GET(request: NextRequest) {
         take: limit,
         orderBy: { id: "desc" },
         include: {
-          user: { select: { id: true, nama: true } },
+          user: { select: { id: true, name: true } },
           laporan: { select: { id: true } },
         },
       }),
       prisma.transaksiKoin.count({ where }),
     ]);
 
+    const mappedData = data.map((tx) => ({
+      ...tx,
+      user: {
+        id: tx.user.id,
+        nama: tx.user.name,
+      }
+    }));
+
     return NextResponse.json({
-      data,
+      data: mappedData,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {

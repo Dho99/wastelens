@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden", code: "FORBIDDEN" }, { status: 403 });
     }
 
-    const dinasList = await prisma.dinas.findMany({
+    const kopdesList = await prisma.kopdes.findMany({
       include: {
         user: {
           select: {
@@ -26,17 +26,17 @@ export async function GET(request: NextRequest) {
           }
         }
       },
-      orderBy: { nama_dinas: "asc" },
+      orderBy: { nama: "asc" },
     });
 
-    // Flatten presentation
-    const flattened = dinasList.map((d) => ({
-      id: d.id,
-      nama_dinas: d.nama_dinas,
-      kontak: d.kontak,
-      email: d.user?.email ?? "-",
-      status: d.user?.status ?? "active",
-      user_id: d.user_id,
+    // Flatten representation
+    const flattened = kopdesList.map((k) => ({
+      id: k.id,
+      nama: k.nama,
+      alamat: k.alamat,
+      email: k.user.email,
+      status: k.user.status,
+      user_id: k.user_id,
     }));
 
     return NextResponse.json(flattened);
@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { nama_dinas, kontak, email } = body;
+    const { nama, alamat, email } = body;
 
-    if (!nama_dinas || !kontak || !email) {
-      return NextResponse.json({ error: "Nama dinas, kontak, dan email wajib diisi" }, { status: 400 });
+    if (!nama || !alamat || !email) {
+      return NextResponse.json({ error: "Nama, alamat, dan email wajib diisi" }, { status: 400 });
     }
 
     // Check unique email
@@ -70,13 +70,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
     }
 
-    // Auto-create associated user account
+    // Auto-create a linked user account
     const signUpBody = {
-      name: nama_dinas,
+      name: nama,
       email: email,
-      password: "defaultpassword123",
-      nama: nama_dinas,
-      role: "dinas",
+      password: "defaultpassword123", // secure fallback
+      nama: nama,
+      role: "kopdes",
     };
 
     const signUpResult = await auth.api.signUpEmail({
@@ -87,19 +87,19 @@ export async function POST(request: NextRequest) {
 
     const userId = (signUpResult as { user?: { id: string } })?.user?.id;
     if (!userId) {
-      return NextResponse.json({ error: "Gagal membuat akun user Dinas" }, { status: 500 });
+      return NextResponse.json({ error: "Gagal membuat akun user Koperasi" }, { status: 500 });
     }
 
-    // Create Dinas
-    const newDinas = await prisma.dinas.create({
+    // Create Kopdes
+    const newKopdes = await prisma.kopdes.create({
       data: {
         user_id: userId,
-        nama_dinas: nama_dinas.trim(),
-        kontak: kontak.trim(),
+        nama: nama.trim(),
+        alamat: alamat.trim(),
       }
     });
 
-    return NextResponse.json({ success: true, data: newDinas }, { status: 201 });
+    return NextResponse.json({ success: true, data: newKopdes }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -118,29 +118,30 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, nama_dinas, kontak } = body;
+    const { id, nama, alamat } = body;
 
-    if (!id || !nama_dinas || !kontak) {
-      return NextResponse.json({ error: "ID, nama dinas, dan kontak wajib diisi" }, { status: 400 });
+    if (!id || !nama || !alamat) {
+      return NextResponse.json({ error: "ID, nama, dan alamat wajib diisi" }, { status: 400 });
     }
 
-    const dinas = await prisma.dinas.findUnique({ where: { id } });
-    if (!dinas) {
-      return NextResponse.json({ error: "Dinas tidak ditemukan" }, { status: 404 });
+    const kopdes = await prisma.kopdes.findUnique({ where: { id } });
+    if (!kopdes) {
+      return NextResponse.json({ error: "Koperasi tidak ditemukan" }, { status: 404 });
     }
 
-    const updated = await prisma.dinas.update({
+    // Update Kopdes name and address
+    const updated = await prisma.kopdes.update({
       where: { id },
       data: {
-        nama_dinas: nama_dinas.trim(),
-        kontak: kontak.trim(),
+        nama: nama.trim(),
+        alamat: alamat.trim(),
       }
     });
 
     // Also update associated user name
     await prisma.user.update({
-      where: { id: dinas.user_id },
-      data: { name: nama_dinas.trim() }
+      where: { id: kopdes.user_id },
+      data: { name: nama.trim() }
     });
 
     return NextResponse.json({ success: true, data: updated });
@@ -168,17 +169,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID wajib disertakan" }, { status: 400 });
     }
 
-    const dinas = await prisma.dinas.findUnique({ where: { id } });
-    if (!dinas) {
-      return NextResponse.json({ error: "Dinas tidak ditemukan" }, { status: 404 });
+    const kopdes = await prisma.kopdes.findUnique({ where: { id } });
+    if (!kopdes) {
+      return NextResponse.json({ error: "Koperasi tidak ditemukan" }, { status: 404 });
     }
 
-    // Delete Dinas (linked user will cascade delete due to prisma schema Cascade)
+    // Delete Kopdes (linked user will cascade delete due to prisma schema Cascade)
     await prisma.user.delete({
-      where: { id: dinas.user_id }
+      where: { id: kopdes.user_id }
     });
 
-    return NextResponse.json({ success: true, message: "Dinas berhasil dihapus" });
+    return NextResponse.json({ success: true, message: "Koperasi berhasil dihapus" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });

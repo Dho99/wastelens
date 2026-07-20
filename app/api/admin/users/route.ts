@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
-          nama: true,
+          name: true,
           email: true,
           role: true,
           status: true,
@@ -46,8 +46,18 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
+    const mappedData = data.map((u) => ({
+      id: u.id,
+      nama: u.name,
+      email: u.email,
+      role: u.role,
+      status: u.status,
+      saldo_koin: u.saldo_koin,
+      createdAt: u.createdAt,
+    }));
+
     return NextResponse.json({
-      data,
+      data: mappedData,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
