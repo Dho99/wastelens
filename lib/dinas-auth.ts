@@ -23,14 +23,5 @@ export async function getRequestDinas(request: NextRequest): Promise<DinasAccess
     return dinas ? { id: dinas.id, userId: dinas.user_id, name: dinas.nama_dinas } : null;
   }
 
-  // Local DLH preview follows the same database path when a seeded agency exists.
-  if (process.env.NODE_ENV === "development") {
-    const dinas = await prisma.dinas.findFirst({
-      orderBy: { nama_dinas: "asc" },
-      select: { id: true, user_id: true, nama_dinas: true },
-    });
-    return dinas ? { id: dinas.id, userId: dinas.user_id, name: dinas.nama_dinas } : null;
-  }
-
   return null;
 }

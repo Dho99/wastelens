@@ -20,7 +20,7 @@ export default async function DinasLayout({
     headers: await headers(),
   });
 
-  if (!session) redirect("/login");
+  if (!session) redirect("/login/dinas");
 
   const role = (session.user as { role?: string }).role;
   if (role !== "dinas") redirect(`/${role ?? "user"}`);

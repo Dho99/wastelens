@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../lib/generated/prisma/client'
+import { hashPassword } from 'better-auth/crypto'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
@@ -12,8 +13,8 @@ async function main() {
   const oneWeekAgo = new Date(now.getTime() - 7 * 86400000)
   const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000)
   const oneMonthAgo = new Date(now.getTime() - 30 * 86400000)
-  const tomorrow = new Date(now.getTime() + 86400000)
   const twoDaysLater = new Date(now.getTime() + 2 * 86400000)
+  const dinasPassword = await hashPassword('DinasWastelens2026!')
 
   // ─── 1. USERS ─────────────────────────────────────────────
   const admin = await prisma.user.create({
@@ -237,6 +238,30 @@ async function main() {
 
   await prisma.account.create({
     data: {
+      id: 'acc-dinas-head-001',
+      accountId: dinasHead1.id,
+      providerId: 'credential',
+      userId: dinasHead1.id,
+      password: dinasPassword,
+      createdAt: twoWeeksAgo,
+      updatedAt: now,
+    },
+  })
+
+  await prisma.account.create({
+    data: {
+      id: 'acc-dinas-head-002',
+      accountId: dinasHead2.id,
+      providerId: 'credential',
+      userId: dinasHead2.id,
+      password: dinasPassword,
+      createdAt: twoWeeksAgo,
+      updatedAt: now,
+    },
+  })
+
+  await prisma.account.create({
+    data: {
       id: 'acc-warga1-001',
       accountId: 'warga-001',
       providerId: 'credential',
@@ -267,7 +292,7 @@ async function main() {
   })
 
   // ─── 7. PRODUK ─────────────────────────────────────────
-  const produkBeras = await prisma.produk.create({
+  await prisma.produk.create({
     data: {
       kopdes_id: kopdesRecord.id,
       nama_barang: 'Beras 5kg',
@@ -666,7 +691,8 @@ async function main() {
   console.log('✅ Seed data berhasil dibuat!')
   console.log('📊 Ringkasan:')
   console.log('   - 9 User (admin, dinas, petugas, kopdes, warga, banned)')
-  console.log('   - 2 Verification, 2 Session, 2 Account')
+  console.log('   - 2 Verification, 2 Session, 4 Account')
+  console.log('   - Login DLH: dinas1@wastelens.com / DinasWastelens2026!')
   console.log('   - 1 BannedReason, 1 Kopdes, 3 Produk')
   console.log('   - 2 Dinas, 4 AreaCakupan, 2 Petugas, 3 Kendaraan')
   console.log('   - 5 Laporan, 5 Foto, 3 TransaksiKoin')

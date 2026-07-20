@@ -36,7 +36,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const handleLogout = async () => {
     setLoggingOut(true);
     await signOut();
-    router.replace("/login");
+    router.replace("/login/dinas");
     router.refresh();
   };
 
