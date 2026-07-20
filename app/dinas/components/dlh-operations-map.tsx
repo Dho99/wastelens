@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
-import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
+import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
 import { Crosshair, MapPin, Minus, Plus } from "lucide-react";
 import type { DlhReport } from "@/lib/dlh-store";
 
@@ -53,6 +53,33 @@ export default function DlhOperationsMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {view === "heatmap" && reports.map((report, index) => {
+          const center = reportPosition(report, index);
+          const weight = report.category === "BAHAYA" ? 1.25 : 1;
+
+          return (
+            <Fragment key={report.id}>
+              <Circle
+                center={center}
+                radius={2600 * weight}
+                interactive={false}
+                pathOptions={{ stroke: false, fillColor: "#fde047", fillOpacity: 0.2 }}
+              />
+              <Circle
+                center={center}
+                radius={1700 * weight}
+                interactive={false}
+                pathOptions={{ stroke: false, fillColor: "#f97316", fillOpacity: 0.28 }}
+              />
+              <Circle
+                center={center}
+                radius={750 * weight}
+                interactive={false}
+                pathOptions={{ stroke: false, fillColor: "#dc2626", fillOpacity: 0.52 }}
+              />
+            </Fragment>
+          );
+        })}
         {view === "points" && reports.map((report, index) => (
           <CircleMarker
             key={report.id}
@@ -77,17 +104,6 @@ export default function DlhOperationsMap({
           </CircleMarker>
         ))}
       </MapContainer>
-
-      {view === "heatmap" && (
-        <div
-          aria-label="Visualisasi heatmap kepadatan laporan"
-          className="pointer-events-none absolute inset-0 z-[400] opacity-65 mix-blend-multiply"
-          style={{
-            background:
-              "radial-gradient(circle at 31% 44%, rgba(220,38,38,.88) 0 3%, rgba(249,115,22,.72) 9%, transparent 20%), radial-gradient(circle at 64% 56%, rgba(234,179,8,.7) 0 5%, rgba(132,204,22,.42) 13%, transparent 25%), radial-gradient(circle at 48% 25%, rgba(249,115,22,.7) 0 4%, rgba(250,204,21,.38) 12%, transparent 23%), radial-gradient(circle at 76% 32%, rgba(220,38,38,.65) 0 3%, rgba(249,115,22,.42) 10%, transparent 19%)",
-          }}
-        />
-      )}
 
       <div className="absolute left-5 top-5 z-[500] flex h-12 gap-1 rounded-full bg-white/90 p-1 text-xs shadow-md backdrop-blur sm:left-6 sm:h-[52px] sm:text-sm">
         <button
