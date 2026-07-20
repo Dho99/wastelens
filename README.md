@@ -2,6 +2,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Create the environment file and apply the database migrations first:
+
+```bash
+cp .env.example .env
+npx prisma migrate deploy
+```
+
+The DLH portal stores its shared operational state in PostgreSQL. Without a valid
+`DATABASE_URL`, the portal remains usable from its browser cache and displays an
+offline synchronization status.
+
 First, run the development server:
 
 ```bash

@@ -3,9 +3,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut } from "@/lib/auth-client";
-import { useDlhStore } from "@/lib/dlh-store";
+import { hydrateDlhStore, useDlhStore, useDlhSyncStatus } from "@/lib/dlh-store";
 import {
   Bell,
   ClipboardList,
@@ -114,6 +114,9 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 function DashboardHeader({ onMenu }: { onMenu: () => void }) {
   const store = useDlhStore();
+  const syncStatus = useDlhSyncStatus();
+  const unreadCount = store.notifications.filter((item) => !item.read).length;
+  const statusLabel = syncStatus === "syncing" ? "Menyinkronkan" : syncStatus === "offline" ? "Offline" : "Online";
   return (
     <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
       <button type="button" onClick={onMenu} className="mr-3 rounded-lg p-2 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
@@ -122,12 +125,12 @@ function DashboardHeader({ onMenu }: { onMenu: () => void }) {
       <h1 className="truncate text-lg font-extrabold tracking-[-0.025em] text-[#096a28] sm:text-[23px]">{store.settings.agency}</h1>
       <div className="ml-5 hidden h-7 w-px bg-[#cedbd4] md:block" />
       <div className="ml-5 hidden items-center gap-2 rounded-full bg-[#e2f2ea] px-3 py-1 text-xs font-bold text-[#176c31] md:flex">
-        <span className="size-2 rounded-full bg-[#08752a]" /> System Status: Online
+        <span className={`size-2 rounded-full ${syncStatus === "offline" ? "bg-red-500" : syncStatus === "syncing" ? "animate-pulse bg-amber-500" : "bg-[#08752a]"}`} /> System Status: {statusLabel}
       </div>
       <div className="ml-auto flex items-center gap-2 sm:gap-5">
-        <Link href="/dinas/notifications" aria-label="Notifikasi" className="relative rounded-full p-2 hover:bg-slate-100">
+        <Link href="/dinas/notifications" aria-label={unreadCount ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"} className="relative rounded-full p-2 hover:bg-slate-100">
           <Bell className="size-5" strokeWidth={2.2} />
-          <span className="absolute right-1 top-1 size-2 rounded-full border border-white bg-red-500" />
+          {unreadCount > 0 && <span className="absolute right-1 top-1 size-2 rounded-full border border-white bg-red-500" aria-hidden="true" />}
         </Link>
         <Link href="/dinas/settings" aria-label="Pengaturan" className="hidden rounded-full p-2 hover:bg-slate-100 sm:block">
           <Settings className="size-5" strokeWidth={2.2} />
@@ -140,6 +143,10 @@ function DashboardHeader({ onMenu }: { onMenu: () => void }) {
 
 export function DlhShell({ children, hideHeader = false }: { children: ReactNode; hideHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    void hydrateDlhStore();
+  }, []);
 
   return (
     <div className="flex h-dvh min-h-[680px] overflow-hidden bg-[#f4fbff] text-[#17231d]">

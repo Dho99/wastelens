@@ -10,6 +10,8 @@ import {
   Clock3,
   MapPin,
   Save,
+  Truck,
+  UserRound,
   X,
 } from "lucide-react";
 import { DlhShell } from "./dlh-shell";
@@ -47,6 +49,8 @@ export function ReportDetail({ reportId }: { reportId: string }) {
   const store = useDlhStore();
   const report = store.reports.find((item) => item.id === reportId) ?? store.reports[0];
   const detail = { reporter: report.reporter, time: report.time, address: report.location, district: report.district };
+  const assignedOfficer = store.officers.find((item) => item.id === report.assignedOfficerId);
+  const assignedVehicle = store.vehicles.find((item) => item.id === report.assignedVehicleId);
   const [updateOpen, setUpdateOpen] = useState(false);
   const [status, setStatus] = useState(report.status);
   const [notes, setNotes] = useState(report.notes ?? "");
@@ -83,14 +87,44 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             <div><p className="text-xs font-semibold text-[#7a877f]">Alamat</p><p className="mt-1 text-base font-extrabold leading-6">{detail.address}</p></div>
           </section>
 
+          <section className="mt-5 overflow-hidden rounded-[20px] border border-[#bdcdbf] bg-white shadow-sm">
+            <div className="border-b border-[#d5e0d8] bg-[#e7f6fd] px-6 py-4">
+              <h2 className="text-lg font-extrabold">Petugas dan Kendaraan Penanganan</h2>
+              <p className="mt-0.5 text-xs text-[#667169]">Data operasional yang ditugaskan untuk laporan ini.</p>
+            </div>
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              <div className="flex items-center gap-4 rounded-[18px] border border-[#d5e0d8] bg-[#f8fcfa] p-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#d8f1e3] text-[#087529]">
+                  {assignedOfficer ? <span className="text-xs font-extrabold">{assignedOfficer.initials}</span> : <UserRound className="size-5" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#77837b]">Petugas</p>
+                  <p className="truncate font-extrabold">{assignedOfficer?.name ?? "Belum ditugaskan"}</p>
+                  <p className="truncate text-xs text-[#667169]">{assignedOfficer ? `${assignedOfficer.id} • ${assignedOfficer.phone}` : "Pilih petugas melalui dashboard peta"}</p>
+                </div>
+                {assignedOfficer && <button type="button" onClick={() => router.push(`/dinas/logistics/officers/${assignedOfficer.id}`)} className="rounded-full border border-[#b8cabc] px-3 py-1.5 text-xs font-bold text-[#087529] hover:bg-white">Detail</button>}
+              </div>
+
+              <div className="flex items-center gap-4 rounded-[18px] border border-[#d5e0d8] bg-[#f8fcfa] p-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#e2eff6] text-[#087529]"><Truck className="size-6" /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#77837b]">Kendaraan</p>
+                  <p className="truncate font-extrabold">{assignedVehicle ? `${assignedVehicle.type} • ${assignedVehicle.plate}` : "Belum ditugaskan"}</p>
+                  <p className="truncate text-xs text-[#667169]">{assignedVehicle ? `${assignedVehicle.id} • Kapasitas ${assignedVehicle.capacity}` : "Pilih kendaraan melalui dashboard peta"}</p>
+                </div>
+                {assignedVehicle && <button type="button" onClick={() => router.push(`/dinas/logistics/vehicles/${assignedVehicle.id}`)} className="rounded-full border border-[#b8cabc] px-3 py-1.5 text-xs font-bold text-[#087529] hover:bg-white">Detail</button>}
+              </div>
+            </div>
+          </section>
+
           <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2.1fr)_minmax(280px,0.95fr)]">
             <section className="overflow-hidden rounded-[22px] border border-[#bdcdbf] bg-white shadow-sm">
               <div className="flex h-14 items-center gap-2 bg-[#e7f6fd] px-5"><Camera className="size-5" /><h2 className="text-lg font-extrabold">Foto Laporan Warga</h2></div>
               <div className="relative aspect-[1.55/1] min-h-[330px] overflow-hidden bg-slate-200 sm:aspect-[1.65/1]">
-                <Image src="/images/dlh-dashboard-reference.png" alt="Tumpukan sampah dari laporan warga" width={1444} height={1028} priority className="absolute left-[-173%] top-[-58.3%] h-auto w-[278.2%] max-w-none" />
+                <Image src={report.photoUrl ?? "/images/dlh-dashboard-reference.png"} alt="Tumpukan sampah dari laporan warga" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 65vw" unoptimized={Boolean(report.photoUrl?.startsWith("data:"))} />
                 <div className="absolute bottom-6 left-6 rounded-2xl bg-white/80 px-5 py-3 shadow-lg backdrop-blur-sm">
                   <p className="text-[11px] font-extrabold tracking-wide text-[#647169]">TIMESTAMP</p>
-                  <p className="mt-1 text-sm font-semibold sm:text-base">24 Mei 2024, 09:12:44 GMT+7</p>
+                  <p className="mt-1 text-sm font-semibold sm:text-base">{report.date} {report.year}, {report.time}</p>
                 </div>
               </div>
             </section>

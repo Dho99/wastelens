@@ -13,7 +13,10 @@ export type DlhReport = {
   category: "BAHAYA" | "AMAN";
   status: "Menunggu" | "Diproses" | "Selesai";
   reporter: string;
+  photoUrl?: string;
   notes?: string;
+  assignedOfficerId?: string;
+  assignedVehicleId?: string;
 };
 
 export type DlhVehicle = {
@@ -48,6 +51,8 @@ export type DlhOfficer = {
 };
 
 export type DlhState = {
+  schemaVersion: 2;
+  updatedAt: string;
   reports: DlhReport[];
   vehicles: DlhVehicle[];
   officers: DlhOfficer[];
@@ -62,6 +67,7 @@ export type DlhState = {
   };
   settings: { agency: string; region: string; email: string; phone: string; autoDispatch: boolean; emailAlert: boolean; soundAlert: boolean };
   notifications: { id: number; title: string; message: string; time: string; type: string; read: boolean }[];
+  accounts: { id: number; name: string; initials: string; email: string; phone: string; role: "Petugas Lapangan" | "Operator DLH"; active: boolean }[];
 };
 
 const reportSeed: DlhReport[] = [
@@ -73,7 +79,20 @@ const reportSeed: DlhReport[] = [
   ["LPR-2024006", "22 Mei", "2024-05-22", "2024", "10:15 WIB", "Jl. Kramat Raya", "Kec. Senen, Jakarta Pusat", "BAHAYA", "Menunggu", "Ibu Maya"],
   ["LPR-2024007", "21 Mei", "2024-05-21", "2024", "16:40 WIB", "Lapangan Banteng", "Kec. Sawah Besar, Jakarta Pusat", "AMAN", "Diproses", "Bpk. Andi"],
   ["LPR-2024008", "21 Mei", "2024-05-21", "2024", "07:50 WIB", "Jl. Cempaka Putih Raya", "Kec. Cempaka Putih, Jakarta Pusat", "AMAN", "Selesai", "Ibu Nita"],
-].map(([id, date, isoDate, year, time, location, district, category, status, reporter]) => ({ id, date, isoDate, year, time, location, district, category: category as DlhReport["category"], status: status as DlhReport["status"], reporter }));
+].map(([id, date, isoDate, year, time, location, district, category, status, reporter], index) => ({
+  id,
+  date,
+  isoDate,
+  year,
+  time,
+  location,
+  district,
+  category: category as DlhReport["category"],
+  status: status as DlhReport["status"],
+  reporter,
+  assignedVehicleId: status === "Menunggu" ? undefined : `ARM-${String((index % 10) + 1).padStart(3, "0")}`,
+  assignedOfficerId: status === "Menunggu" ? undefined : `FLD-${9921 + (index % 10)}`,
+}));
 
 const vehicleSeed: DlhVehicle[] = Array.from({ length: 10 }, (_, index) => {
   const number = index + 1;
@@ -112,6 +131,8 @@ const officerSeed: DlhOfficer[] = officerNames.map((name, index) => ({
 }));
 
 export const defaultDlhState: DlhState = {
+  schemaVersion: 2,
+  updatedAt: "2024-05-24T10:45:00+07:00",
   reports: reportSeed,
   vehicles: vehicleSeed,
   officers: officerSeed,
@@ -129,19 +150,84 @@ export const defaultDlhState: DlhState = {
     { id: 2, title: "Armada tiba di lokasi", message: "Truk Sampah 02 telah tiba untuk laporan #WL-098.", time: "18 menit lalu", type: "truck", read: false },
     { id: 3, title: "Laporan selesai", message: "Petugas menyelesaikan laporan #WL-096.", time: "1 jam lalu", type: "done", read: true },
   ],
+  accounts: [
+    { id: 1, name: "Budi Santoso", initials: "BS", email: "budi@dlh.go.id", phone: "0812 3344 8877", role: "Petugas Lapangan", active: true },
+    { id: 2, name: "Siti Aminah", initials: "SA", email: "siti@dlh.go.id", phone: "0812 1177 3409", role: "Petugas Lapangan", active: true },
+    { id: 3, name: "Dedi Kurniawan", initials: "DK", email: "dedi@dlh.go.id", phone: "0813 2209 1411", role: "Petugas Lapangan", active: false },
+    { id: 4, name: "Rina Maharani", initials: "RM", email: "rina@dlh.go.id", phone: "0811 9765 3001", role: "Operator DLH", active: true },
+  ],
 };
 
 const storageKey = "wastelens-dlh-store-v1";
 let currentSnapshot: DlhState = defaultDlhState;
 let initialized = false;
 const listeners = new Set<() => void>();
+export type DlhSyncStatus = "idle" | "syncing" | "online" | "offline";
+let syncStatus: DlhSyncStatus = "idle";
+const syncListeners = new Set<() => void>();
+let hydrationPromise: Promise<void> | null = null;
+let persistTimer: number | null = null;
+let persistenceChain: Promise<void> = Promise.resolve();
+
+function setSyncStatus(status: DlhSyncStatus) {
+  syncStatus = status;
+  syncListeners.forEach((listener) => listener());
+}
+
+function normalizeState(value: Partial<DlhState>): DlhState {
+  return {
+    ...defaultDlhState,
+    ...value,
+    schemaVersion: 2,
+    reports: Array.isArray(value.reports) ? value.reports : defaultDlhState.reports,
+    vehicles: Array.isArray(value.vehicles) ? value.vehicles : defaultDlhState.vehicles,
+    officers: Array.isArray(value.officers) ? value.officers : defaultDlhState.officers,
+    accounts: Array.isArray(value.accounts) ? value.accounts : defaultDlhState.accounts,
+    notifications: Array.isArray(value.notifications) ? value.notifications : defaultDlhState.notifications,
+  };
+}
+
+async function persistToBackend() {
+  const snapshot = structuredClone(currentSnapshot);
+  setSyncStatus("syncing");
+  try {
+    const response = await fetch("/api/dinas/state", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ data: snapshot }),
+    });
+    if (!response.ok) throw new Error("Sinkronisasi backend gagal");
+    setSyncStatus("online");
+  } catch {
+    setSyncStatus("offline");
+  }
+}
+
+function scheduleBackendPersist() {
+  if (typeof window === "undefined") return;
+  if (persistTimer) window.clearTimeout(persistTimer);
+  persistTimer = window.setTimeout(() => {
+    persistTimer = null;
+    persistenceChain = persistenceChain.then(persistToBackend, persistToBackend);
+  }, 300);
+}
 
 function clientSnapshot() {
   if (!initialized && typeof window !== "undefined") {
     initialized = true;
     try {
       const stored = window.localStorage.getItem(storageKey);
-      if (stored) currentSnapshot = { ...defaultDlhState, ...JSON.parse(stored) };
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<DlhState> & { schemaVersion?: number };
+        const reports = parsed.reports?.map((report, index) => parsed.schemaVersion === 2 || report.status === "Menunggu" ? report : {
+          ...report,
+          assignedVehicleId: `ARM-${String((index % 10) + 1).padStart(3, "0")}`,
+          assignedOfficerId: `FLD-${9921 + (index % 10)}`,
+        });
+        currentSnapshot = normalizeState({ ...parsed, reports: reports ?? defaultDlhState.reports });
+        window.localStorage.setItem(storageKey, JSON.stringify(currentSnapshot));
+      }
     } catch {
       currentSnapshot = defaultDlhState;
     }
@@ -153,7 +239,7 @@ function subscribe(listener: () => void) {
   listeners.add(listener);
   const handleStorage = (event: StorageEvent) => {
     if (event.key !== storageKey || !event.newValue) return;
-    currentSnapshot = { ...defaultDlhState, ...JSON.parse(event.newValue) };
+    currentSnapshot = normalizeState(JSON.parse(event.newValue));
     listener();
   };
   window.addEventListener("storage", handleStorage);
@@ -167,9 +253,42 @@ export function useDlhStore() {
   return useSyncExternalStore(subscribe, clientSnapshot, () => defaultDlhState);
 }
 
+export function useDlhSyncStatus() {
+  return useSyncExternalStore(
+    (listener) => { syncListeners.add(listener); return () => syncListeners.delete(listener); },
+    () => syncStatus,
+    () => "idle" as const,
+  );
+}
+
+export function hydrateDlhStore() {
+  if (hydrationPromise) return hydrationPromise;
+  hydrationPromise = (async () => {
+    clientSnapshot();
+    setSyncStatus("syncing");
+    try {
+      const response = await fetch("/api/dinas/state", { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) throw new Error("Backend DLH tidak tersedia");
+      const result = await response.json() as { data?: Partial<DlhState> | null };
+      if (result.data) {
+        currentSnapshot = normalizeState(result.data);
+        window.localStorage.setItem(storageKey, JSON.stringify(currentSnapshot));
+        listeners.forEach((listener) => listener());
+        setSyncStatus("online");
+      } else {
+        await persistToBackend();
+      }
+    } catch {
+      setSyncStatus("offline");
+    }
+  })();
+  return hydrationPromise;
+}
+
 export function updateDlhStore(update: (draft: DlhState) => void) {
   const draft = structuredClone(clientSnapshot());
   update(draft);
+  draft.updatedAt = new Date().toISOString();
   currentSnapshot = draft;
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(draft));
@@ -177,10 +296,12 @@ export function updateDlhStore(update: (draft: DlhState) => void) {
     throw new Error("Penyimpanan lokal penuh. Gunakan foto yang lebih kecil.");
   }
   listeners.forEach((listener) => listener());
+  scheduleBackendPersist();
 }
 
 export function resetDlhStore() {
   currentSnapshot = structuredClone(defaultDlhState);
   window.localStorage.removeItem(storageKey);
   listeners.forEach((listener) => listener());
+  scheduleBackendPersist();
 }

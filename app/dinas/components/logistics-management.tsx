@@ -122,7 +122,7 @@ export function LogisticsManagement() {
           <div className="mx-auto mt-5 grid max-w-[1080px] gap-3 sm:grid-cols-3">
             <SummaryCard icon={<Truck />} color="bg-[#258237] text-[#075d20]" label="Total Armada" value={`${vehicles.length} Unit`} />
             <SummaryCard icon={<UserCog />} color="bg-[#bcebd1] text-[#47705b]" label="Petugas Aktif" value={`${officers.length} Orang`} />
-            <SummaryCard icon={<History />} color="bg-[#ffd9ae] text-[#956100]" label="Update Terakhir" value="10:45 WIB" />
+            <SummaryCard icon={<History />} color="bg-[#ffd9ae] text-[#956100]" label="Update Terakhir" value={`${new Date(store.updatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`} />
           </div>
         </div>
       </main>

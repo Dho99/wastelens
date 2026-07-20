@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -40,6 +40,7 @@ export function ReportsManagement() {
   const [perPage, setPerPage] = useState(5);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deletedReportId, setDeletedReportId] = useState<string | null>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const setReports = (update: (current: Report[]) => Report[]) => updateDlhStore((draft) => { draft.reports = update(draft.reports); });
 
   const filtered = useMemo(() => reports.filter((report) => {
@@ -58,6 +59,20 @@ export function ReportsManagement() {
     setStatus(next);
     setPage(1);
   };
+
+  const openDatePicker = () => {
+    const input = dateInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") input.showPicker();
+    else {
+      input.focus();
+      input.click();
+    }
+  };
+
+  const formattedDate = date
+    ? new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`))
+    : "Pilih Tanggal";
 
   const toggleAll = () => {
     const visibleIds = visibleReports.map((report) => report.id);
@@ -106,7 +121,11 @@ export function ReportsManagement() {
             <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full bg-[#e8f6fd] px-5"><Search className="size-5 shrink-0 text-[#46594f]" /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} className="w-full bg-transparent text-sm outline-none placeholder:text-[#7c8792]" placeholder="Cari ID Laporan, Lokasi, atau Petugas..." /></label>
             <div className="flex flex-wrap items-center gap-2"><span className="mr-1 text-xs font-bold text-[#46594f]">Filter Status:</span>{(["Semua", "Menunggu", "Diproses", "Selesai"] as const).map((item) => <button type="button" key={item} onClick={() => setFilter(item)} className={`rounded-full border px-4 py-2 text-xs font-bold transition ${status === item ? "border-[#b4e4cb] bg-[#bcebd1] text-[#47705b]" : "border-[#b7c7bb] bg-white/40 text-[#536159] hover:bg-white"}`}>{item}</button>)}</div>
             <div className="hidden h-12 w-px bg-[#c5d1c8] lg:block" />
-            <label className="relative flex h-11 items-center gap-2 rounded-full bg-[#e8f6fd] px-4 text-xs font-bold text-[#536159]"><CalendarDays className="size-5" /><span>{date || "Pilih Tanggal"}</span><ChevronDown className="size-4" /><input type="date" value={date} onChange={(event) => { setDate(event.target.value); setPage(1); }} className="absolute inset-0 cursor-pointer opacity-0" /></label>
+            <div className="relative flex items-center">
+              <button type="button" onClick={openDatePicker} aria-label="Pilih tanggal laporan" className="flex h-11 items-center gap-2 rounded-full bg-[#e8f6fd] px-4 text-xs font-bold text-[#536159] transition hover:bg-[#dceff8]"><CalendarDays className="size-5" /><span>{formattedDate}</span><ChevronDown className="size-4" /></button>
+              <input ref={dateInputRef} type="date" value={date} onChange={(event) => { setDate(event.target.value); setPage(1); }} className="pointer-events-none absolute bottom-0 left-1/2 size-px opacity-0" tabIndex={-1} aria-hidden="true" />
+              {date && <button type="button" onClick={() => { setDate(""); setPage(1); }} aria-label="Hapus filter tanggal" className="ml-1 grid size-8 place-items-center rounded-full text-[#667169] hover:bg-white"><X className="size-4" /></button>}
+            </div>
           </section>
 
           <section className="mt-6 overflow-hidden rounded-[24px] border border-[#b7cbbd] bg-white/35">

@@ -15,22 +15,15 @@ import {
   SprayCan,
   Truck,
 } from "lucide-react";
-
-const vehicleNames: Record<string, { name: string; capacity: string }> = {
-  "truck-01": { name: "Truk Sampah 01", capacity: "10 Ton" },
-  "truck-05": { name: "Truk Sampah 05", capacity: "5 Ton" },
-};
-
-const officerNames: Record<string, { name: string; role: string; initials: string }> = {
-  budi: { name: "Budi Santoso", role: "Senior Operasional", initials: "BS" },
-  siti: { name: "Siti Aminah", role: "Petugas Lapangan", initials: "SA" },
-};
+import { useDlhStore } from "@/lib/dlh-store";
 
 export function AssignmentMonitoring({ reportId }: { reportId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const vehicle = vehicleNames[searchParams.get("vehicle") ?? ""] ?? vehicleNames["truck-01"];
-  const officer = officerNames[searchParams.get("officer") ?? ""] ?? officerNames.budi;
+  const store = useDlhStore();
+  const vehicle = store.vehicles.find((item) => item.id === searchParams.get("vehicle")) ?? store.vehicles[0];
+  const officer = store.officers.find((item) => item.id === searchParams.get("officer")) ?? store.officers[0];
+  const report = store.reports.find((item) => item.id === reportId);
 
   return (
     <main className="min-h-dvh bg-[#f2f9fe] text-[#17231d]">
@@ -74,8 +67,8 @@ export function AssignmentMonitoring({ reportId }: { reportId: string }) {
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <section className="rounded-[22px] border border-[#aebfae] bg-white p-5 shadow-sm">
-            <span className="rounded-full bg-[#bfeecf] px-3 py-1 text-xs font-semibold text-[#55816a]">Sedang Diproses</span>
-            <div className="mt-4 flex gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e5f1e9] text-[#087529]"><MapPin className="size-5" /></span><div><h3 className="text-sm text-[#5e6963]">Daftar Lokasi Penjemputan</h3><ul className="mt-2 space-y-1.5 text-xs"><li><b className="text-[#087529]">●</b> &nbsp;Jl. KHZ Mustofa <span className="text-[10px] text-slate-500">(08:00 WIB)</span></li><li><b className="text-[#087529]">●</b> &nbsp;Pasar Pancasila <span className="text-[10px] text-slate-500">(13:00 WIB)</span></li><li><b className="text-[#087529]">●</b> &nbsp;Jl. BKR <span className="text-[10px] text-slate-500">(16:30 WIB)</span></li></ul></div></div>
+            <span className="rounded-full bg-[#bfeecf] px-3 py-1 text-xs font-semibold text-[#55816a]">{report?.status ?? "Sedang Diproses"}</span>
+            <div className="mt-4 flex gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e5f1e9] text-[#087529]"><MapPin className="size-5" /></span><div><h3 className="text-sm text-[#5e6963]">Lokasi Penjemputan</h3><p className="mt-2 text-xs font-bold">{report?.location ?? "Lokasi laporan"}</p><p className="mt-1 text-[10px] text-slate-500">{report?.district}</p></div></div>
             <p className="mt-5 flex items-center gap-2 text-xs font-bold text-[#087529]"><Clock3 className="size-3.5" /> Estimasi Tiba: 14 Menit</p>
           </section>
 
@@ -91,9 +84,9 @@ export function AssignmentMonitoring({ reportId }: { reportId: string }) {
           <div className="grid gap-5 p-5 sm:grid-cols-2">
             <div className="flex items-center gap-4 sm:border-r sm:border-[#b8c8bb]">
               <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#d9efe2] text-xs font-extrabold text-[#087529]">{officer.initials}</span>
-              <div><p className="text-[9px] font-bold text-[#7b847f]">PETUGAS TERPILIH</p><h3 className="text-base font-extrabold">{officer.name}</h3><p className="text-xs text-[#188036]">{officer.role}</p></div>
+              <div><p className="text-[9px] font-bold text-[#7b847f]">PETUGAS TERPILIH</p><h3 className="text-base font-extrabold">{officer?.name ?? "Petugas tidak ditemukan"}</h3><p className="text-xs text-[#188036]">{officer?.role}</p></div>
             </div>
-            <div className="flex items-center gap-4"><span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#e4f3e8] text-[#087529]"><Truck className="size-6" /></span><div><p className="text-[9px] font-bold text-[#7b847f]">ARMADA</p><h3 className="text-base font-extrabold">{vehicle.name}</h3><p className="text-xs text-[#6f7873]">Kapasitas: {vehicle.capacity}</p></div></div>
+            <div className="flex items-center gap-4"><span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#e4f3e8] text-[#087529]"><Truck className="size-6" /></span><div><p className="text-[9px] font-bold text-[#7b847f]">ARMADA</p><h3 className="text-base font-extrabold">{vehicle ? `${vehicle.type} • ${vehicle.plate}` : "Armada tidak ditemukan"}</h3><p className="text-xs text-[#6f7873]">Kapasitas: {vehicle?.capacity ?? "—"}</p></div></div>
           </div>
         </section>
 
