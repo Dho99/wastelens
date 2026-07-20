@@ -115,6 +115,7 @@ model Dinas {
   kendaraan    Kendaraan[]
   laporan      Laporan[]
   portal_state DlhPortalState?
+  media        DlhMedia[]
 
   @@map("DINAS")
 }
@@ -129,6 +130,22 @@ model DlhPortalState {
   dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
 
   @@map("DLH_PORTAL_STATE")
+}
+
+model DlhMedia {
+  id          String   @id @default(uuid()) @db.Uuid
+  dinas_id    String   @db.Uuid
+  uploaded_by String
+  kind        String   @default("profile")
+  mime_type   String
+  size_bytes  Int
+  data        Bytes
+  createdAt   DateTime @default(now())
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@index([dinas_id, kind])
+  @@map("DLH_MEDIA")
 }
 
 model Petugas {

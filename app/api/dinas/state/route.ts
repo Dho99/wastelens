@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Akses DLH tidak ditemukan", code: "AUTH" }, { status: 401 });
     }
 
-    const [state, reports, vehicles, officers] = await Promise.all([
+    const [state, reports, vehicles, officers, adminUser] = await Promise.all([
       prisma.dlhPortalState.findUnique({
         where: { dinas_id: dinas.id },
         select: { data: true, updatedAt: true },
@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
         include: { user: { select: { email: true, status: true } }, _count: { select: { laporan: true } } },
         orderBy: { nama: "asc" },
       }),
+      prisma.user.findUnique({ where: { id: dinas.userId }, select: { image: true } }),
     ]);
 
     const saved = (state?.data && typeof state.data === "object" ? state.data : {}) as Partial<DlhState>;
@@ -139,6 +140,7 @@ export async function GET(request: NextRequest) {
         ...(saved.accounts ?? []),
         ...dbAccounts.filter((account) => !(saved.accounts ?? []).some((savedAccount) => savedAccount.email.toLowerCase() === account.email.toLowerCase())),
       ],
+      admin: { ...saved.admin, photo: adminUser?.image ?? saved.admin?.photo },
     };
 
     return NextResponse.json(

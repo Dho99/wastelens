@@ -49,6 +49,7 @@ export function AdminProfile() {
               fill
               className="object-cover object-top"
               sizes="36px"
+              unoptimized={Boolean(store.admin.photo?.startsWith("data:") || store.admin.photo?.startsWith("/api/dinas/media/"))}
             />
           </span>
         </header>
@@ -83,6 +84,7 @@ export function AdminProfile() {
                       priority
                       className="object-cover object-top"
                       sizes="128px"
+                      unoptimized={Boolean(store.admin.photo?.startsWith("data:") || store.admin.photo?.startsWith("/api/dinas/media/"))}
                     />
                   </div>
                   <div>
