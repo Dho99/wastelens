@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
+
+const PLACEHOLDER =
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
 
 interface ProfileAvatarProps {
   name: string;
   ecoRole: string;
-  avatarUrl: string;
+  avatarUrl: string | null | undefined;
   onEditAvatar?: () => void;
 }
 
@@ -13,6 +16,8 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   avatarUrl,
   onEditAvatar,
 }) => {
+  const [imgSrc, setImgSrc] = useState(avatarUrl || PLACEHOLDER);
+
   return (
     <div className="flex flex-col items-center text-center px-6 pt-4 pb-6 select-none">
       
@@ -21,9 +26,10 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
         <div className="w-full h-full rounded-full border border-gray-150 p-1 flex items-center justify-center bg-gray-50 shadow-inner overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={avatarUrl}
+            src={imgSrc}
             alt={name}
             className="w-full h-full rounded-full object-cover"
+            onError={() => setImgSrc(PLACEHOLDER)}
           />
         </div>
 

@@ -14,7 +14,10 @@ export function proxy(request: NextRequest) {
 
   // Allow the DLH UI to be reviewed locally without requiring a seeded
   // database account. Production keeps the normal session protection.
-  if (process.env.NODE_ENV === "development" && (pathname.startsWith("/dinas") || pathname.startsWith("/api/dinas"))) {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (pathname.startsWith("/dinas") || pathname.startsWith("/api/dinas"))
+  ) {
     return NextResponse.next();
   }
 

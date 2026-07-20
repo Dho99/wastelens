@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
+
+const PLACEHOLDER =
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
 
 interface PhotoUploaderProps {
-  imageUrl: string;
+  imageUrl: string | null | undefined;
   onUploadClick?: () => void;
 }
 
@@ -9,6 +12,8 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   imageUrl,
   onUploadClick,
 }) => {
+  const [imgSrc, setImgSrc] = useState(imageUrl || PLACEHOLDER);
+
   return (
     <div className="flex flex-col items-center text-center px-6 pt-2 pb-6 select-none">
       
@@ -17,9 +22,10 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
         <div className="w-full h-full rounded-full border border-gray-150 p-1 flex items-center justify-center bg-gray-50 shadow-inner overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl}
+            src={imgSrc}
             alt="Profile Avatar Uploader"
             className="w-full h-full rounded-full object-cover"
+            onError={() => setImgSrc(PLACEHOLDER)}
           />
         </div>
 

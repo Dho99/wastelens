@@ -57,7 +57,7 @@ export default function UserDashboardPage() {
 
             <EnvironmentHeroes
                 heroes={data.heroes}
-                onViewFullLeaderboard={() => router.push("/user/history")}
+                onViewFullLeaderboard={() => router.push("/user/community")}
             />
 
             <NearestPartners

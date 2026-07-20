@@ -2,13 +2,12 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { SidebarLayout } from "@/components/nav/sidebar";
-import { ArrowLeftRight, LayoutDashboard, Package, ScanLine } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/kopdes", icon: <LayoutDashboard /> },
-  { label: "Scan Kode", href: "/kopdes/scan", icon: <ScanLine /> },
   { label: "Kelola Produk", href: "/kopdes/products", icon: <Package /> },
-  { label: "Riwayat", href: "/kopdes/history", icon: <ArrowLeftRight /> },
+  { label: "Scan Kode", href: "/kopdes/scan", icon: <ScanLine /> },
 ];
 
 export default async function KopdesLayout({

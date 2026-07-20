@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useTabBar } from "@/components/nav/tab-bar-context";
-
-// Services
-import { getSafetyDummyData, SafetyDetails } from "./services/safetyService";
+import { useSafety } from "./hooks/useSafety";
 
 // Slices
 import { SafetyHeader } from "./components/SafetyHeader";
@@ -16,23 +14,15 @@ import { EncryptionNotice } from "./components/EncryptionNotice";
 
 function AccountSafetyContent() {
   const router = useRouter();
-  const [data, setData] = useState<SafetyDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useSafety();
   const { setHideTabBar } = useTabBar();
-
-  useEffect(() => {
-    // Fetch mock account safety data from service layer
-    const safetyData = getSafetyDummyData();
-    setData(safetyData);
-    setLoading(false);
-  }, []);
 
   useEffect(() => {
     setHideTabBar(true);
     return () => setHideTabBar(false);
   }, [setHideTabBar]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4 p-4 animate-pulse">
         <div className="flex justify-between items-center h-10" />
@@ -52,13 +42,8 @@ function AccountSafetyContent() {
 
   return (
     <div className="bg-[#FAF9F5] min-h-screen pb-12">
-      {/* 1. Header (Keamanan Akun title & back arrow) */}
       <SafetyHeader onBackClick={() => router.back()} />
-
-      {/* 2. Top Protect/Shield display banner */}
       <ProtectCard />
-
-      {/* 3. Grouped settings options (Akses Akun, Perangkat, Manajemen) */}
       <SafetyOptionsList
         lastPasswordChangeText={data.lastPasswordChangeText}
         twoFactorEnabled={data.twoFactorEnabled}
@@ -67,8 +52,6 @@ function AccountSafetyContent() {
         onManageDevicesClick={() => console.log("Navigate to Manage Devices...")}
         onDeleteAccountClick={() => console.log("Confirm Account Deletion...")}
       />
-
-      {/* 4. Bottom Encryption security warning alert */}
       <EncryptionNotice />
     </div>
   );

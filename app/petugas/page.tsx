@@ -1,100 +1,136 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { Clipboard, MapPin, CheckCircle } from "lucide-react";
+import Icon from '@mdi/react';
+import {
+  mdiMapMarkerPath,
+  mdiTimerOutline,
+  mdiFilterVariant,
+  mdiClockOutline,
+  mdiChevronRight,
+  mdiAlertOutline,
+  mdiClipboardText
+} from '@mdi/js';
+import Image from 'next/image';
 
-interface DashboardStats {
-  total_tasks: number;
-  completed_today: number;
-  total_completed: number;
-}
-
-function PetugasDashboardContent() {
-  const router = useRouter();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/petugas/tasks?limit=1");
-        if (res.ok) {
-          const data = await res.json();
-          setStats({
-            total_tasks: data.pagination?.total ?? 0,
-            completed_today: 0,
-            total_completed: 0,
-          });
-        }
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-4 p-6">
-        <div className="h-24 animate-pulse rounded-xl bg-neutral-100" />
-        <div className="h-32 animate-pulse rounded-xl bg-neutral-100" />
-      </div>
-    );
+const tasks = [
+  {
+    address: "Jl. Kebon Jeruk No. 42",
+    status: "Menunggu Diproses",
+    type: "Organik",
+    distance: "450m",
+    time_reported: "10 menit",
+    high_priority: true,
+    image: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=200&h=200&fit=crop"
+  },
+  {
+    address: "Jl. Thamrin Kav. 12",
+    status: "Menunggu Diproses",
+    type: "Plastik",
+    distance: "1.2 km",
+    time_reported: "1 jam",
+    high_priority: false,
+    image: "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=200&h=200&fit=crop"
+  },
+  {
+    address: "Pasar Baru Blok A",
+    status: "Menunggu Diproses",
+    type: "Campuran",
+    distance: "2.8 km",
+    time_reported: "2 jam",
+    high_priority: false,
+    image: "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=200&h=200&fit=crop"
   }
-
-  return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-xl font-bold">Petugas Lapangan</h1>
-        <p className="text-sm text-neutral-500">Panel tugas dan verifikasi</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-amber-50 p-4 text-center">
-          <MapPin className="mx-auto mb-1 size-5 text-amber-600" />
-          <p className="text-2xl font-bold text-amber-700">{stats?.total_tasks ?? 0}</p>
-          <p className="mt-1 text-xs text-neutral-500">Tugas Aktif</p>
-        </div>
-        <div className="rounded-xl bg-green-50 p-4 text-center">
-          <CheckCircle className="mx-auto mb-1 size-5 text-green-600" />
-          <p className="text-2xl font-bold text-green-700">{stats?.completed_today ?? 0}</p>
-          <p className="mt-1 text-xs text-neutral-500">Selesai Hari Ini</p>
-        </div>
-        <div className="rounded-xl bg-blue-50 p-4 text-center">
-          <Clipboard className="mx-auto mb-1 size-5 text-blue-600" />
-          <p className="text-2xl font-bold text-blue-700">{stats?.total_completed ?? 0}</p>
-          <p className="mt-1 text-xs text-neutral-500">Total Selesai</p>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-neutral-700">Aksi Cepat</h2>
-        <button
-          onClick={() => router.push("/petugas/tasks")}
-          className="flex w-full items-center gap-4 rounded-xl bg-emerald-600 p-5 text-left text-white hover:bg-emerald-700 transition-colors"
-        >
-          <div className="flex size-14 items-center justify-center rounded-lg bg-black/10">
-            <Clipboard className="size-7" />
-          </div>
-          <div>
-            <p className="font-semibold">Lihat Daftar Tugas</p>
-            <p className="mt-0.5 text-sm opacity-80">
-              {stats?.total_tasks ?? 0} tugas menunggu
-            </p>
-          </div>
-        </button>
-      </div>
-    </div>
-  );
-}
+]
 
 export default function PetugasDashboardPage() {
   return (
-    <ErrorBoundary>
-      <PetugasDashboardContent />
-    </ErrorBoundary>
+    <div className="min-h-screen pb-8 font-sans">
+
+      {/* Main Content */}
+      <div className="py-4 space-y-6">
+
+        {/* Summary section */}
+        <section className="space-y-3">
+          {/* Main Card */}
+          <div className="bg-primary rounded-xl p-5 text-white relative overflow-hidden shadow-sm">
+            <div className="relative z-10">
+              <p className="text-[11px] font-semibold text-emerald-50 tracking-wider mb-1 uppercase">Tugas Hari Ini</p>
+              <h2 className="text-3xl font-bold mb-1 leading-tight">12 Lokasi</h2>
+              <p className="text-[13px] text-emerald-50 font-medium">4 Selesai &bull; 8 Tersisa</p>
+            </div>
+            {/* Background Icon/Shape */}
+            <Icon path={mdiClipboardText} size={4} className="absolute -right-8 -bottom-10 opacity-30" />
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-primary/10 rounded-xl p-4 border border-neutral-300 flex flex-col justify-center">
+              <Icon path={mdiMapMarkerPath} className="w-5 h-5 text-neutral-500 mb-2" />
+              <p className="text-[11px] text-neutral-500 font-medium mb-0.5">Total Jarak</p>
+              <p className="text-[17px] font-bold text-[#205c48]">4.2 km</p>
+            </div>
+            <div className="bg-primary/10 rounded-xl p-4 border border-neutral-300 flex flex-col justify-center">
+              <Icon path={mdiTimerOutline} className="w-5 h-5 text-accent mb-2" />
+              <p className="text-[11px] text-neutral-500 font-medium mb-0.5">Estimasi</p>
+              <p className="text-[17px] font-bold text-accent">3j 15m</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Task List Section */}
+        <section>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h3 className="text-[17px] font-bold text-neutral-800">Antrean Tugas</h3>
+            <button className="flex items-center gap-1 text-[13px] font-semibold text-[#388e3c]">
+              Urutkan <Icon path={mdiFilterVariant} className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {tasks.map((task, i) =>
+              <div key={i}
+                className={`bg-white rounded-2xl overflow-hidden ${i == 0 && "border border-accent"}`}>
+                <div className="flex p-3 gap-3">
+                  {/* Image */}
+                  <div className="w-25 h-25 relative rounded-xl overflow-hidden shrink-0">
+                    {task.high_priority &&
+                      <span className="absolute top-0 left-0 bg-[#d32f2f] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg z-10 flex items-center gap-1">
+                        <Icon path={mdiAlertOutline} className="w-2.5 h-2.5" /> Prioritas Tinggi
+                      </span>
+                    }
+                    <Image
+                      src={task.image}
+                      alt="Trash"
+                      className="w-full h-full object-cover"
+                      width={200}
+                      height={200}
+                    />
+                  </div>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 py-0.5 flex flex-col">
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <h4 className="font-bold text-neutral-800 text-[15px] leading-tight line-clamp-2">{task.address}</h4>
+                      <span className="text-[11px] font-semibold text-neutral-500 mt-0.5">{task.distance}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-auto">
+                      <span className="bg-[#c8e6c9] text-[#2e7d32] text-[10px] font-bold px-2 py-0.5 rounded-full">{task.status}</span>
+                      <span className="bg-[#e2e8f0] text-neutral-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{task.type}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 mt-2 font-medium">
+                      <Icon path={mdiClockOutline} className="w-3.5 h-3.5" /> {task.time_reported}
+                    </div>
+                  </div>
+                </div>
+                <div className="px-3 pb-3 pt-1">
+                  <button className="w-full bg-primary text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
+                    Mulai Tugas <Icon path={mdiChevronRight} className="w-4 h-4" />
+                  </button> :
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

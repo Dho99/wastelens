@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.laporan.findMany({
         where: { dinas_id: dinas.id },
-        include: { user: { select: { nama: true } }, foto: { select: { url: true }, take: 1 } },
+        include: { user: { select: { name: true } }, foto: { select: { url: true }, take: 1 } },
         orderBy: { createdAt: "desc" },
       }),
       prisma.kendaraan.findMany({ where: { dinas_id: dinas.id }, orderBy: { id: "asc" } }),
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       district: dinas.name,
       category: report.kategori_ukuran.toLowerCase() === "large" ? "BAHAYA" : "AMAN",
       status: reportStatus(report.status),
-      reporter: report.user.nama,
+      reporter: report.user.name,
       photoUrl: report.foto[0]?.url ?? report.foto_url,
       assignedOfficerId: report.petugas_id ?? undefined,
       assignedVehicleId: report.kendaraan_id ?? undefined,
