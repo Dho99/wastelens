@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -21,15 +22,30 @@ import {
 } from "lucide-react";
 import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
 
+const LeafletLocationMap = dynamic(
+  () => import("@/components/leaflet-location-map"),
+  {
+    ssr: false,
+    loading: () => <div className="h-[270px] animate-pulse bg-[#dfeaed]" aria-label="Memuat peta petugas" />,
+  },
+);
+
 export function OfficerDetail({ officerId }: { officerId: string }) {
   const router = useRouter();
   const store = useDlhStore();
   const officer =
     store.officers.find((item) => item.id === officerId) ?? store.officers[0];
+  const officerIndex = Math.max(store.officers.findIndex((item) => item.id === officer.id), 0);
+  const assignedReport = store.reports.find(
+    (report) => report.assignedOfficerId === officer.id && report.latitude !== undefined && report.longitude !== undefined,
+  );
   const [showAll, setShowAll] = useState(false);
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [tracking, setTracking] = useState(false);
+  const [livePosition, setLivePosition] = useState<[number, number] | null>(null);
+  const officerLatitude = livePosition?.[0] ?? assignedReport?.latitude ?? -6.1944 + (officerIndex % 4) * 0.007;
+  const officerLongitude = livePosition?.[1] ?? assignedReport?.longitude ?? 106.8229 + (officerIndex % 5) * 0.008;
 
   const saveException = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,6 +77,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
     }
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        setLivePosition([position.coords.latitude, position.coords.longitude]);
         setTracking(true);
         setNotice(
           `Lokasi langsung aktif: ${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}.`,
@@ -175,31 +192,21 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
             <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(350px,0.9fr)_minmax(0,1.3fr)]">
               <section className="overflow-hidden rounded-[22px] border border-[#bdcbbd] bg-white">
                 <div className="relative h-[270px] bg-[#dfeaed]">
-                  <div className="absolute -left-10 top-12 h-6 w-[120%] -rotate-6 bg-white/85" />
-                  <div className="absolute left-[25%] -top-10 h-[140%] w-6 rotate-[22deg] bg-white/80" />
-                  <div className="absolute inset-[22%_18%] rounded-[30%] bg-[#4cc3b5]/50 ring-2 ring-[#29998e]" />
-                  {[
-                    [35, 35],
-                    [52, 40],
-                    [68, 54],
-                    [43, 67],
-                    [61, 73],
-                    [29, 57],
-                  ].map(([left, top]) => (
-                    <span
-                      key={`${left}-${top}`}
-                      className="absolute size-3 rounded-full border-2 border-white bg-[#15988c]"
-                      style={{ left: `${left}%`, top: `${top}%` }}
-                    />
-                  ))}
-                  <div className="absolute left-4 top-4 rounded-xl bg-white px-4 py-3 shadow-md">
+                  <LeafletLocationMap
+                    lat={officerLatitude}
+                    lng={officerLongitude}
+                    popup={officer.location}
+                    zoom={14}
+                    height="h-[270px]"
+                  />
+                  <div className="absolute left-4 top-4 z-[500] rounded-xl bg-white px-4 py-3 shadow-md">
                     <p className="text-xs font-bold">Lokasi Saat Ini</p>
                     <p className="text-sm text-[#667169]">{officer.location}</p>
                   </div>
                   <button
                     type="button"
                     onClick={toggleLiveTracking}
-                    className={`absolute bottom-4 right-4 flex h-10 items-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-md ${tracking ? "bg-red-600" : "bg-[#087529]"}`}
+                    className={`absolute bottom-4 right-4 z-[500] flex h-10 items-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-md ${tracking ? "bg-red-600" : "bg-[#087529]"}`}
                   >
                     <Navigation className="size-4" />
                     {tracking ? "Hentikan" : "Track Live"}
