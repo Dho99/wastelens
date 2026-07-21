@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   X,
   Loader2,
@@ -18,9 +18,10 @@ import type {
 
 interface Props {
   onClose: () => void;
+  selectedPickupIds?: string[];
 }
 
-export function AutoCollectivePanel({ onClose }: Props) {
+export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) {
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<AutoCollectivePreview | null>(null);
   const [error, setError] = useState("");
@@ -30,6 +31,14 @@ export function AutoCollectivePanel({ onClose }: Props) {
     message: string;
   } | null>(null);
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
   const loadPreview = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -37,7 +46,7 @@ export function AutoCollectivePanel({ onClose }: Props) {
       const res = await fetch("/api/dinas/auto-collective/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ reportIds: selectedPickupIds.length > 0 ? selectedPickupIds : undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Gagal memuat preview");
@@ -47,7 +56,7 @@ export function AutoCollectivePanel({ onClose }: Props) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedPickupIds]);
 
   const [initialized, setInitialized] = useState(false);
   if (!initialized) {
@@ -145,160 +154,169 @@ export function AutoCollectivePanel({ onClose }: Props) {
     }
   }, [preview, onClose]);
 
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      <header className="flex h-14 shrink-0 items-center border-b border-neutral-200 px-4">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-            <Layers className="size-5" />
-          </span>
-          <div>
-            <h2 className="text-sm font-extrabold text-neutral-800">
-              Rute Otomatis Pickup
-            </h2>
-            <p className="text-[11px] text-neutral-500">
-              Algoritma: Greedy Capacity-Aware Nearest-Neighbor
-            </p>
+    <div
+      className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/45 p-4"
+      onClick={handleBackdropClick}
+    >
+      <div className="flex w-full max-w-[min(1200px,94vw)] max-h-[min(800px,90vh)] flex-col rounded-[28px] bg-white shadow-2xl">
+        <header className="flex h-14 shrink-0 items-center border-b border-neutral-200 px-4 rounded-t-[28px]">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+              <Layers className="size-5" />
+            </span>
+            <div>
+              <h2 className="text-sm font-extrabold text-neutral-800">
+                Rute Otomatis Pickup
+              </h2>
+              <p className="text-[11px] text-neutral-500">
+                Algoritma: Greedy Capacity-Aware Nearest-Neighbor
+              </p>
+            </div>
           </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="ml-auto rounded-full p-2 hover:bg-neutral-100"
-        >
-          <X className="size-5" />
-        </button>
-      </header>
-
-      {confirmResult && (
-        <div
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium ${
-            confirmResult.success
-              ? "bg-emerald-50 text-emerald-800"
-              : "bg-red-50 text-red-800"
-          }`}
-        >
-          <CheckCircle2 className="size-4" />
-          {confirmResult.message}
-        </div>
-      )}
-
-      {!confirmResult && (
-        <div className="flex items-center gap-3 border-b border-neutral-100 px-4 py-2.5">
           <button
-            onClick={handleRegenerate}
-            disabled={loading || !preview}
-            className="flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+            onClick={onClose}
+            className="ml-auto rounded-full p-2 hover:bg-neutral-100"
           >
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-            Regenerate
+            <X className="size-5" />
           </button>
-          <button
-            onClick={handleConfirm}
-            disabled={confirming || !preview || preview.routes.length === 0}
-            className="ml-auto flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-extrabold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-          >
-            {confirming ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="size-3.5" />
-            )}
-            {confirming ? "Mengonfirmasi..." : "Konfirmasi Semua"}
-          </button>
-        </div>
-      )}
+        </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="size-8 animate-spin text-emerald-600" />
-            <p className="mt-3 text-sm text-neutral-500">
-              Membangun rute optimal...
-            </p>
-            <p className="mt-1 text-xs text-neutral-400">
-              Memproses pickup point & menghitung jarak OSRM
-            </p>
+        {confirmResult && (
+          <div
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium ${
+              confirmResult.success
+                ? "bg-emerald-50 text-emerald-800"
+                : "bg-red-50 text-red-800"
+            }`}
+          >
+            <CheckCircle2 className="size-4" />
+            {confirmResult.message}
           </div>
         )}
 
-        {error && !loading && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-            <AlertTriangle className="mx-auto size-8 text-red-400" />
-            <p className="mt-2 text-sm font-medium text-red-800">{error}</p>
+        {!confirmResult && (
+          <div className="flex items-center gap-3 border-b border-neutral-100 px-4 py-2.5 shrink-0">
             <button
-              onClick={loadPreview}
-              className="mt-3 rounded-full bg-red-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-red-700"
+              onClick={handleRegenerate}
+              disabled={loading || !preview}
+              className="flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
             >
-              Coba Lagi
+              <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+              Regenerate
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={confirming || !preview || preview.routes.length === 0}
+              className="ml-auto flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-extrabold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+            >
+              {confirming ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="size-3.5" />
+              )}
+              {confirming ? "Mengonfirmasi..." : "Konfirmasi Semua"}
             </button>
           </div>
         )}
 
-        {preview && !loading && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-              <Truck className="size-3.5" />
-              <span>
-                {preview.routes.length} rute terbentuk &middot;{" "}
-                {preview.unassignedReports.length} titik tidak terjangkau
-              </span>
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="size-8 animate-spin text-emerald-600" />
+              <p className="mt-3 text-sm text-neutral-500">
+                Membangun rute optimal...
+              </p>
+              <p className="mt-1 text-xs text-neutral-400">
+                Memproses pickup point & menghitung jarak OSRM
+              </p>
             </div>
+          )}
 
-            {preview.routes.length === 0 && (
-              <div className="rounded-xl border-2 border-dashed border-neutral-200 p-10 text-center">
-                <MapPin className="mx-auto size-8 text-neutral-300" />
-                <p className="mt-3 text-sm font-medium text-neutral-500">
-                  Tidak ada rute yang dapat dibentuk
-                </p>
-                <p className="mt-1 text-xs text-neutral-400">
-                  Semua pickup point sudah di-assign atau tidak ada kendaraan tersedia
-                </p>
+          {error && !loading && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+              <AlertTriangle className="mx-auto size-8 text-red-400" />
+              <p className="mt-2 text-sm font-medium text-red-800">{error}</p>
+              <button
+                onClick={loadPreview}
+                className="mt-3 rounded-full bg-red-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-red-700"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          )}
+
+          {preview && !loading && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                <Truck className="size-3.5" />
+                <span>
+                  {preview.routes.length} rute terbentuk &middot;{" "}
+                  {preview.unassignedReports.length} titik tidak terjangkau
+                </span>
               </div>
-            )}
 
-            <div className="space-y-4">
-              {preview.routes.map((route, idx) => (
-                <AutoCollectiveRouteCard
-                  key={route.temporaryRouteId}
-                  route={route}
-                  index={idx}
-                  onRemoveStop={(stopId) =>
-                    handleRemoveStop(route.temporaryRouteId, stopId)
-                  }
-                />
-              ))}
-            </div>
-
-            {preview.unassignedReports.length > 0 && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <h4 className="flex items-center gap-2 text-xs font-bold text-amber-800">
-                  <AlertTriangle className="size-3.5" />
-                  Tidak Terjangkau ({preview.unassignedReports.length})
-                </h4>
-                <p className="mt-1 text-[11px] text-amber-600">
-                  Titik berikut tidak dapat dimasukkan ke rute karena kapasitas
-                  kendaraan tidak mencukupi atau tidak ada kendaraan/petugas
-                  tersedia. Assign manual diperlukan.
-                </p>
-                <div className="mt-2 space-y-1">
-                  {preview.unassignedReports.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center gap-2 rounded bg-white/70 px-2.5 py-1.5 text-[11px]"
-                    >
-                      <MapPin className="size-3 text-amber-500" />
-                      <span className="truncate">
-                        {r.address_text ?? `${r.lokasi_lat}, ${r.lokasi_lng}`}
-                      </span>
-                      <span className="ml-auto shrink-0 text-amber-600">
-                        {r.estimatedLoadKg} kg
-                      </span>
-                    </div>
-                  ))}
+              {preview.routes.length === 0 && (
+                <div className="rounded-xl border-2 border-dashed border-neutral-200 p-10 text-center">
+                  <MapPin className="mx-auto size-8 text-neutral-300" />
+                  <p className="mt-3 text-sm font-medium text-neutral-500">
+                    Tidak ada rute yang dapat dibentuk
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    Semua pickup point sudah di-assign atau tidak ada kendaraan tersedia
+                  </p>
                 </div>
+              )}
+
+              <div className="space-y-4">
+                {preview.routes.map((route, idx) => (
+                  <AutoCollectiveRouteCard
+                    key={route.temporaryRouteId}
+                    route={route}
+                    index={idx}
+                    onRemoveStop={(stopId) =>
+                      handleRemoveStop(route.temporaryRouteId, stopId)
+                    }
+                  />
+                ))}
               </div>
-            )}
-          </div>
-        )}
+
+              {preview.unassignedReports.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <h4 className="flex items-center gap-2 text-xs font-bold text-amber-800">
+                    <AlertTriangle className="size-3.5" />
+                    Tidak Terjangkau ({preview.unassignedReports.length})
+                  </h4>
+                  <p className="mt-1 text-[11px] text-amber-600">
+                    Titik berikut tidak dapat dimasukkan ke rute karena kapasitas
+                    kendaraan tidak mencukupi atau tidak ada kendaraan/petugas
+                    tersedia. Assign manual diperlukan.
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    {preview.unassignedReports.map((r) => (
+                      <div
+                        key={r.id}
+                        className="flex items-center gap-2 rounded bg-white/70 px-2.5 py-1.5 text-[11px]"
+                      >
+                        <MapPin className="size-3 text-amber-500" />
+                        <span className="truncate">
+                          {r.address_text ?? `${r.lokasi_lat}, ${r.lokasi_lng}`}
+                        </span>
+                        <span className="ml-auto shrink-0 text-amber-600">
+                          {r.estimatedLoadKg} kg
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
