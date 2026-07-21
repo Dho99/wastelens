@@ -65,13 +65,44 @@ export default function VerifyPage({
     reader.readAsDataURL(file);
   };
 
+  const uploadPhoto = async (): Promise<string> => {
+    // Convert base64 to Blob, then upload to Cloudinary via the upload API
+    const byteString = atob(fotoSesudahBase64);
+    const mimeMatch = fotoSesudah?.match(/^data:(image\/\w+);base64,/);
+    const mimeType = mimeMatch?.[1] ?? "image/jpeg";
+
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeType });
+
+    const formData = new FormData();
+    formData.append("photo", blob, `verify-${id}.jpg`);
+
+    const res = await fetch("/api/laporan/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? "Gagal mengunggah foto");
+    }
+
+    const uploadResult = await res.json();
+    return uploadResult.secureUrl;
+  };
+
   const handleSubmit = async () => {
     if (!fotoSesudahBase64) return;
     setSubmitting(true);
     setSubmitError("");
 
     try {
-      await completeTask(id, fotoSesudahBase64);
+      const secureUrl = await uploadPhoto();
+      await completeTask(id, secureUrl);
       setSuccess(true);
     } catch (err) {
       setSubmitError(
