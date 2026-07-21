@@ -30,13 +30,13 @@ model user {
   sessions session[]
   accounts account[]
 
-  dinas           Dinas[]
-  petugas         Petugas[]
-  laporan         Laporan[]
-  notifikasi      Notifikasi[]
-  transaksi_koin  TransaksiKoin[]
-  kopdes          Kopdes[]
-  penukaran       Penukaran[]
+  dinas            Dinas[]
+  petugas          Petugas[]
+  laporan          Laporan[]
+  notifikasi       Notifikasi[]
+  transaksi_koin   TransaksiKoin[]
+  kopdes           Kopdes[]
+  penukaran        Penukaran[]
   coin_transaction CoinTransaction[]
 
   isBanned      Boolean        @default(false)
@@ -309,11 +309,11 @@ model Notifikasi {
 }
 
 model Kopdes {
-  id        String  @id @default(uuid()) @db.Uuid
-  user_id   String
-  nama      String
-  alamat    String
-  isActive  Boolean @default(true) @map("is_active")
+  id       String  @id @default(uuid()) @db.Uuid
+  user_id  String
+  nama     String
+  alamat   String
+  isActive Boolean @default(true) @map("is_active")
 
   user      user        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   produk    Produk[]
@@ -368,42 +368,31 @@ enum CoinTransactionType {
 }
 
 model Penukaran {
-  id          String    @id @default(uuid()) @db.Uuid
-  user_id     String
-  produk_id   String    @db.Uuid
-  jumlah_koin Int
-  status      String    @default("PENDING")
-  qr_token    String?
-  redeemed_at DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-model Penukaran {
-  id                 String             @id @default(uuid()) @db.Uuid
-  user_id            String
-  produk_id          String             @db.Uuid
-  kopdes_id          String             @db.Uuid
-  quantity           Int                @default(1)
-  unit_coin_price    Int
-  jumlah_koin        Int
-  status             RedemptionStatus   @default(PENDING)
-  token_hash         String?            @unique
-  token_hint         String?
-  qr_payload         String?
-  idempotency_key    String?
-  expires_at         DateTime
-  redeemed_at        DateTime?
-  cancelled_at       DateTime?
-  expired_at         DateTime?
+  id                  String           @id @default(uuid()) @db.Uuid
+  user_id             String
+  produk_id           String           @db.Uuid
+  kopdes_id           String           @db.Uuid
+  quantity            Int              @default(1)
+  unit_coin_price     Int
+  jumlah_koin         Int
+  status              RedemptionStatus @default(PENDING)
+  token_hash          String?          @unique
+  token_hint          String?
+  qr_payload          String?
+  idempotency_key     String?
+  expires_at          DateTime
+  redeemed_at         DateTime?
+  cancelled_at        DateTime?
+  expired_at          DateTime?
   redeemed_by_user_id String?
   cancellation_reason String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
-  user              user               @relation(fields: [user_id], references: [id])
-  produk            Produk             @relation(fields: [produk_id], references: [id])
-  kopdes            Kopdes             @relation(fields: [kopdes_id], references: [id])
-  coin_transaction  CoinTransaction[]
+  user             user              @relation(fields: [user_id], references: [id])
+  produk           Produk            @relation(fields: [produk_id], references: [id])
+  kopdes           Kopdes            @relation(fields: [kopdes_id], references: [id])
+  coin_transaction CoinTransaction[]
 
   @@unique([user_id, idempotency_key])
   @@index([user_id, status])
@@ -413,17 +402,17 @@ model Penukaran {
 }
 
 model CoinTransaction {
-  id              String              @id @default(uuid()) @db.Uuid
-  user_id         String
-  redemption_id   String?             @db.Uuid
-  type            CoinTransactionType
-  amount          Int
-  balance_before  Int
-  balance_after   Int
-  description     String?
-  created_at      DateTime            @default(now())
+  id             String              @id @default(uuid()) @db.Uuid
+  user_id        String
+  redemption_id  String?             @db.Uuid
+  type           CoinTransactionType
+  amount         Int
+  balance_before Int
+  balance_after  Int
+  description    String?
+  created_at     DateTime            @default(now())
 
-  user      user      @relation(fields: [user_id], references: [id])
+  user      user       @relation(fields: [user_id], references: [id])
   penukaran Penukaran? @relation(fields: [redemption_id], references: [id])
 
   @@index([user_id, created_at])
