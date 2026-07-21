@@ -472,6 +472,127 @@ async function main() {
         },
     });
 
+    const laporan6 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            dinas_id: dinas2.id,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan6.jpg",
+            lokasi_lat: -7.2733,
+            lokasi_lng: 112.7542,
+            kategori_ukuran: "BESAR",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Gubeng No. 45, Surabaya",
+            road_name: "Jl. Gubeng",
+            district: "Gubeng",
+            city: "Surabaya",
+            province: "Jawa Timur",
+            country: "Indonesia",
+            waste_types: ["kayu", "plastik", "sisa_makanan"],
+            drainage_risk: true,
+            needs_manual_review: true,
+            confidence: 0.62,
+            priority_score: 8.3,
+            priority_level: "HIGH",
+        },
+    });
+
+    const laporan7 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            dinas_id: null,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan7.jpg",
+            lokasi_lat: -6.8936,
+            lokasi_lng: 107.6136,
+            kategori_ukuran: "KECIL",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Dago No. 101, Bandung",
+            road_name: "Jl. Dago",
+            district: "Coblong",
+            city: "Bandung",
+            province: "Jawa Barat",
+            country: "Indonesia",
+            waste_types: ["kertas"],
+            priority_score: 2.5,
+            priority_level: "LOW",
+        },
+    });
+
+    const laporan8 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            dinas_id: null,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan8.jpg",
+            lokasi_lat: -7.3007,
+            lokasi_lng: 112.7351,
+            kategori_ukuran: "SEDANG",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Wonokromo No. 88, Surabaya",
+            road_name: "Jl. Wonokromo",
+            district: "Wonokromo",
+            city: "Surabaya",
+            province: "Jawa Timur",
+            country: "Indonesia",
+            waste_types: ["plastik", "logam"],
+            access_obstruction_risk: true,
+            needs_manual_review: true,
+            confidence: 0.55,
+            priority_score: 5.8,
+            priority_level: "MEDIUM",
+        },
+    });
+
+    const laporan9 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            dinas_id: dinas1.id,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan9.jpg",
+            lokasi_lat: -6.9314,
+            lokasi_lng: 107.6517,
+            kategori_ukuran: "BESAR",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Kiaracondong No. 67, Bandung",
+            road_name: "Jl. Kiaracondong",
+            district: "Kiaracondong",
+            city: "Bandung",
+            province: "Jawa Barat",
+            country: "Indonesia",
+            waste_types: ["elektronik", "plastik", "kayu"],
+            drainage_risk: true,
+            access_obstruction_risk: true,
+            needs_manual_review: true,
+            confidence: 0.48,
+            priority_score: 8.9,
+            priority_level: "HIGH",
+        },
+    });
+
+    const laporan10 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            dinas_id: dinas2.id,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan10.jpg",
+            lokasi_lat: -7.2894,
+            lokasi_lng: 112.7154,
+            kategori_ukuran: "SEDANG",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Dukuh Pakis No. 22, Surabaya",
+            road_name: "Jl. Dukuh Pakis",
+            district: "Dukuh Pakis",
+            city: "Surabaya",
+            province: "Jawa Timur",
+            country: "Indonesia",
+            waste_types: ["sisa_makanan", "plastik"],
+            confidence: 0.71,
+            priority_score: 6.1,
+            priority_level: "MEDIUM",
+        },
+    });
+
     // ─── 11. FOTO ──────────────────────────────────────────
     await prisma.foto.create({
         data: {
@@ -519,6 +640,54 @@ async function main() {
             hash: "d4e5f6a1b2c3",
             mime_type: "image/jpeg",
             size_bytes: 2_780_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan6.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan6.jpg",
+            hash: "e5f6a1b2c3d4",
+            mime_type: "image/jpeg",
+            size_bytes: 3_400_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan7.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan7.jpg",
+            mime_type: "image/png",
+            size_bytes: 1_200_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan8.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan8.jpg",
+            hash: "f6a1b2c3d4e5",
+            mime_type: "image/jpeg",
+            size_bytes: 2_650_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan9.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan9.jpg",
+            hash: "a1b2c3d4e5f7",
+            mime_type: "image/jpeg",
+            size_bytes: 3_800_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan10.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan10.jpg",
+            mime_type: "image/png",
+            size_bytes: 2_100_000,
         },
     });
 
@@ -608,6 +777,51 @@ async function main() {
         },
     });
 
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            laporan_id: laporan6.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: false,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            laporan_id: laporan7.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: false,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            laporan_id: laporan8.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: true,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            laporan_id: laporan9.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian prioritas tinggi.",
+            status_baca: false,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            laporan_id: laporan10.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: false,
+        },
+    });
+
     // ─── 15. PENUKARAN ─────────────────────────────────────
     await prisma.penukaran.create({
         data: {
@@ -677,8 +891,8 @@ async function main() {
     console.log("   - 2 Verification");
     console.log("   - 1 BannedReason, 1 Kopdes, 3 Produk");
     console.log("   - 2 Dinas, 4 AreaCakupan, 2 Petugas, 3 Kendaraan");
-    console.log("   - 5 Laporan, 5 Foto, 3 TransaksiKoin");
-    console.log("   - 2 VerifikasiPickup, 4 Notifikasi");
+    console.log("   - 10 Laporan, 10 Foto, 3 TransaksiKoin");
+    console.log("   - 2 VerifikasiPickup, 9 Notifikasi");
     console.log("   - 2 Penukaran, 2 TemporaryUpload");
 }
 
