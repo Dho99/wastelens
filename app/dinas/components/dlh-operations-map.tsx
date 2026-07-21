@@ -137,29 +137,29 @@ export default function DlhOperationsMap({
             <Popup className="dlh-report-popup" minWidth={260} maxWidth={280}>
               <div className="w-[260px] rounded-[24px] bg-white p-2.5 text-[#26362d]">
                 <div className="rounded-[18px] bg-gradient-to-br from-[#087529] to-[#159447] px-3.5 py-3 pr-8 text-white shadow-[0_8px_18px_rgba(8,117,41,0.2)]">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">Titik Pickup</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/70">Titik Pickup</p>
                   <div className="mt-1 flex items-center gap-2">
                     <p className="min-w-0 flex-1 truncate text-sm font-extrabold" title={report.id}>Laporan {shortReportId(report.id)}</p>
-                    <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-300 text-amber-950" : "bg-white/20 text-white"}`}>{report.status}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-300 text-amber-950" : "bg-white/20 text-white"}`}>{report.status}</span>
                   </div>
                 </div>
                 <div className="space-y-2 px-1 pb-0.5 pt-2.5">
                   <div className="flex items-start gap-2.5">
                     <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e2f5ea] text-[#087529]"><MapPin className="size-3.5" /></span>
                     <div className="min-w-0 flex-1 pt-0.5">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-[#729080]">Alamat</p>
-                      <p className="mt-0.5 text-[11px] font-semibold leading-4">{report.address ?? report.district ?? "Alamat belum tersedia"}</p>
-                      {report.address && report.district && <p className="mt-0.5 text-[9px] text-[#688075]">{report.district}</p>}
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">Alamat</p>
+                      <p className="mt-1 text-sm font-semibold leading-5 text-[#35453c]">{report.address ?? report.district ?? "Alamat belum tersedia"}</p>
+                      {report.address && report.district && <p className="mt-0.5 text-xs text-[#75827b]">{report.district}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2.5 border-t border-[#e7eee9] pt-2">
                     <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e8f3f9] text-[#356d87]"><Navigation className="size-3.5" /></span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-[#718995]">Koordinat</p>
-                      <p className="mt-0.5 truncate font-mono text-[10px] font-bold text-[#31576a]">{report.latitude !== undefined && report.longitude !== undefined ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}` : report.location}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">Koordinat</p>
+                      <p className="mt-1 truncate font-mono text-xs font-bold text-[#35453c]">{report.latitude !== undefined && report.longitude !== undefined ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}` : report.location}</p>
                     </div>
                   </div>
-                  {Boolean(report.wasteTypes?.length) && <div className="flex items-start gap-2.5 border-t border-[#e7eee9] pt-2"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#fff0d9] text-[#9a6200]"><Recycle className="size-3.5" /></span><div className="flex flex-wrap gap-1.5 pt-1">{report.wasteTypes?.map((type) => <span key={type} className="rounded-full bg-[#fff0d9] px-2 py-1 text-[9px] font-bold text-[#8a5900]">{wasteTypeLabel(type)}</span>)}</div></div>}
+                  {Boolean(report.wasteTypes?.length) && <div className="flex items-start gap-2.5 border-t border-[#e7eee9] pt-2"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#fff0d9] text-[#9a6200]"><Recycle className="size-3.5" /></span><div className="flex flex-wrap gap-1.5 pt-1">{report.wasteTypes?.map((type) => <span key={type} className="rounded-full bg-[#edf6f1] px-3 py-1 text-[11px] font-bold text-[#47705b]">{wasteTypeLabel(type)}</span>)}</div></div>}
                   <button type="button" onClick={() => onOpenReport(report.id)} className="mt-1 w-full rounded-full bg-[#087529] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_6px_14px_rgba(8,117,41,0.18)] transition hover:bg-[#066421]">
                     Buka Detail Laporan
                   </button>

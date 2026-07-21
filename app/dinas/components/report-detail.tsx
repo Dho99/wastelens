@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -26,28 +27,21 @@ const timeline = [
   ["Selesai", "11:15 WIB"],
 ];
 
-function LocationMap() {
-  return (
-    <div className="relative h-[230px] overflow-hidden bg-[#d9f1f7] sm:h-[270px]">
-      <div className="absolute -left-10 top-7 h-7 w-[115%] -rotate-6 bg-white shadow-[0_0_0_3px_#bed6df]" />
-      <div className="absolute -left-14 bottom-12 h-8 w-[120%] rotate-3 bg-white shadow-[0_0_0_3px_#c4d8df]" />
-      <div className="absolute left-[16%] -top-10 h-[150%] w-8 rotate-[27deg] bg-white shadow-[0_0_0_3px_#c4d8df]" />
-      <div className="absolute right-[18%] -top-10 h-[150%] w-7 -rotate-[18deg] bg-white shadow-[0_0_0_3px_#c4d8df]" />
-      <div className="absolute left-[36%] top-[10%] h-28 w-44 rounded-[45%] bg-[#cde9c8] opacity-80" />
-      <div className="absolute right-[8%] top-[18%] h-24 w-32 rounded-[45%] bg-[#cde9c8] opacity-80" />
-      <span className="absolute left-[9%] top-[18%] rotate-[-6deg] text-xs font-bold text-[#6c8790]">Jl. Kebon Sirih</span>
-      <span className="absolute bottom-[18%] right-[12%] rotate-[3deg] text-xs font-bold text-[#6c8790]">Jl. M.H. Thamrin</span>
-      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-extrabold text-[#48715f]">MENTENG</span>
-      <span className="absolute left-[56%] top-[47%] grid size-10 place-items-center rounded-full border-4 border-white bg-[#087529] text-white shadow-lg"><MapPin className="size-5" fill="currentColor" /></span>
-      <div className="absolute inset-x-0 bottom-0 h-10 bg-[#72d1e9]/45" />
-    </div>
-  );
-}
+const LeafletLocationMap = dynamic(
+  () => import("@/components/leaflet-location-map"),
+  {
+    ssr: false,
+    loading: () => <div className="h-[230px] animate-pulse bg-[#d9f1f7] sm:h-[270px]" aria-label="Memuat peta lokasi" />,
+  },
+);
 
 export function ReportDetail({ reportId }: { reportId: string }) {
   const router = useRouter();
   const store = useDlhStore();
   const report = store.reports.find((item) => item.id === reportId) ?? store.reports[0];
+  const reportIndex = Math.max(store.reports.findIndex((item) => item.id === report.id), 0);
+  const latitude = report.latitude ?? -6.1754 + (reportIndex % 4) * 0.008;
+  const longitude = report.longitude ?? 106.8272 + (reportIndex % 5) * 0.009;
   const detail = { reporter: report.reporter, time: report.time, address: report.location, district: report.district };
   const assignedOfficer = store.officers.find((item) => item.id === report.assignedOfficerId);
   const assignedVehicle = store.vehicles.find((item) => item.id === report.assignedVehicleId);
@@ -145,7 +139,13 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
           <section className="mt-7 overflow-hidden rounded-[22px] border border-[#bdcdbf] bg-white shadow-sm">
             <div className="flex h-14 items-center gap-2 bg-[#e7f6fd] px-5"><MapPin className="size-5" /><h2 className="text-lg font-extrabold">Koordinat Lokasi</h2></div>
-            <LocationMap />
+            <LeafletLocationMap
+              lat={latitude}
+              lng={longitude}
+              popup={report.address ?? report.location}
+              zoom={15}
+              height="h-[230px] sm:h-[270px]"
+            />
             <div className="px-5 py-4"><p className="font-extrabold">{detail.address}</p><p className="mt-1 text-xs text-[#66746c]">{detail.district}</p></div>
           </section>
 
