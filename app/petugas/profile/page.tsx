@@ -87,7 +87,7 @@ export default function ProfilePage() {
           <span className="font-medium">Informasi Pribadi</span>
         </Link>
         <Link
-          href="/user/profile/change-password"
+          href="/petugas/profile/change-password"
           className="flex items-center gap-2 border-b border-neutral-300 p-4 transition-colors hover:bg-neutral-50"
         >
           <div className="rounded-lg bg-primary/20 p-2 text-primary">
