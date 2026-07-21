@@ -113,7 +113,7 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json({ success: true, data: result }, { status: 200 });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "status" in error) {
       const e = error as { status: number; code: string; message: string };
