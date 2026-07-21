@@ -1,9 +1,1 @@
-export type GeminiWasteResult = {
-  sizeCategory: "SMALL" | "MEDIUM" | "LARGE" | "UNCERTAIN";
-  wasteTypes: string[];
-  drainageRisk: boolean;
-  accessObstructionRisk: boolean;
-  visualIndicators: string[];
-  confidence: number;
-  needsManualReview: boolean;
-};
+export type { WasteAnalysisResult as GeminiWasteResult } from "@/server/integrations/ai/waste-analysis.types";
