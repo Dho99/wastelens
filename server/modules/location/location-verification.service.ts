@@ -1,3 +1,4 @@
+
 import type { LocationVerificationInput, LocationVerificationResult } from "./location-verification.types";
 
 const MAX_ACCURACY_METERS = 150;

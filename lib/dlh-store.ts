@@ -23,6 +23,12 @@ export type DlhReport = {
   notes?: string;
   assignedOfficerId?: string;
   assignedVehicleId?: string;
+  estimatedLoadKg?: number;
+  drainageRisk?: boolean;
+  accessObstructionRisk?: boolean;
+  needsManualReview?: boolean;
+  estimatedLoadUnit?: number;
+  routeOrder?: number;
 };
 
 export type DlhVehicle = {
