@@ -80,7 +80,34 @@ export async function POST(
           data: { status: LAPORAN_STATUS.SELESAI },
         });
 
-        let rewardResult: {
+        if (laporan.kendaraan_id) {
+          const assignedLoad = (laporan as unknown as Record<string, unknown>).assigned_load_kg as number | null;
+          const alreadyReleased = (laporan as unknown as Record<string, unknown>).load_released_at != null;
+          const loadToRelease = assignedLoad ?? 0;
+
+          if (!alreadyReleased && loadToRelease > 0) {
+            const releaseResult = await tx.kendaraan.updateMany({
+              where: {
+                id: laporan.kendaraan_id,
+                current_load: { gte: loadToRelease },
+              },
+              data: {
+                current_load: { decrement: loadToRelease },
+              },
+            });
+
+            if (releaseResult.count !== 1) {
+              throw new Error("VEHICLE_LOAD_INCONSISTENT");
+            }
+
+            await tx.laporan.update({
+              where: { id },
+              data: { load_released_at: new Date() },
+            });
+          }
+        }
+
+        const rewardResult: {
           status: string;
           jumlah: number;
           breakdown: Record<string, unknown>;
@@ -93,7 +120,9 @@ export async function POST(
         };
 
         if (laporan.user_id) {
-          rewardResult = await grantVerificationReward(id);
+          const rewardData = await grantVerificationReward(id);
+          rewardResult.status = "VERIFIED";
+          rewardResult.jumlah = rewardData.jumlah;
 
           await tx.notifikasi.create({
             data: {

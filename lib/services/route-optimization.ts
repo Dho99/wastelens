@@ -19,6 +19,22 @@ interface OSRMTableResponse {
   durations: number[][];
 }
 
+export interface OSRMDurationResult {
+  taskId: string;
+  durationSeconds: number;
+  distanceMeters: number;
+}
+
+export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export async function getOptimizedRoute(
   currentPosition: LatLng,
   tasks: Task[]
@@ -59,6 +75,49 @@ export async function getOptimizedRoute(
     console.warn("OSRM table request failed, falling back to unsorted:", err);
     return tasks;
   }
+}
+
+export async function getOSRMDurationMatrix(
+  originLat: number,
+  originLng: number,
+  destinations: Array<{ lat: number; lng: number }>,
+  timeoutMs = 5000,
+): Promise<number[]> {
+  try {
+    const coords = [
+      [originLng, originLat],
+      ...destinations.map((d) => [d.lng, d.lat]),
+    ];
+    const coordStr = coords.map((c) => c.join(",")).join(";");
+
+    const res = await fetch(
+      `https://router.project-osrm.org/table/v1/driving/${coordStr}?sources=0&annotations=duration`,
+      { signal: AbortSignal.timeout(timeoutMs) },
+    );
+
+    if (!res.ok) throw new Error("OSRM non-OK");
+    const data: OSRMTableResponse = await res.json();
+    if (data.code !== "Ok" || !data.durations?.[0]) throw new Error("OSRM invalid");
+
+    return data.durations[0].slice(1);
+  } catch {
+    return destinations.map((d) =>
+      haversineDistance(originLat, originLng, d.lat, d.lng) / 8.3,
+    );
+  }
+}
+
+export function computeRouteScore(
+  durationSeconds: number,
+  priorityScore: number | null,
+  maxDuration: number,
+  maxPriority: number,
+  distanceWeight = 0.65,
+  priorityWeight = 0.35,
+): number {
+  const normDuration = maxDuration > 0 ? durationSeconds / maxDuration : 0;
+  const normPriority = maxPriority > 0 ? ((priorityScore ?? 0) / maxPriority) : 0;
+  return distanceWeight * normDuration - priorityWeight * normPriority;
 }
 
 export async function fetchRouteGeometry(
@@ -102,14 +161,4 @@ export async function fetchRouteGeometry(
       duration: distance / 8.3,
     };
   }
-}
-
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }

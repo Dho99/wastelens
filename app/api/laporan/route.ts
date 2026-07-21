@@ -72,6 +72,11 @@ async function handleNewPayload(body: Record<string, unknown>, userId: string) {
             exif: {
                 latitude: number | null;
                 longitude: number | null;
+                timestamp: string | null;
+            };
+            verification: {
+                distanceDifferenceMeters: number | null;
+                riskFlags: string[];
             };
         },
     });
@@ -133,7 +138,7 @@ async function handleLegacyPayload(
                   rekomendasi_kendaraan ?? null,
                   kategori_ukuran,
               )
-            : { kendaraan_id: null, petugas_id: null };
+            : { kendaraan_id: null, petugas_id: null, estimatedLoadKg: 0 };
 
         const laporan = await tx.laporan.create({
             data: {
@@ -147,6 +152,10 @@ async function handleLegacyPayload(
                 kategori_ukuran,
                 rekomendasi_kendaraan: rekomendasi_kendaraan ?? null,
                 status: LAPORAN_STATUS.PENDING,
+                assigned_load_kg: kendaraanResult.kendaraan_id
+                    ? kendaraanResult.estimatedLoadKg
+                    : null,
+                load_released_at: null,
             },
         });
 

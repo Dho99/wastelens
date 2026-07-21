@@ -109,13 +109,14 @@ model Dinas {
   nama_dinas String
   kontak     String
 
-  user         user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  petugas      Petugas[]
-  area_cakupan AreaCakupan[]
-  kendaraan    Kendaraan[]
-  laporan      Laporan[]
-  portal_state DlhPortalState?
-  media        DlhMedia[]
+  user                     user                    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  petugas                  Petugas[]
+  area_cakupan             AreaCakupan[]
+  kendaraan                Kendaraan[]
+  laporan                  Laporan[]
+  portal_state             DlhPortalState?
+  media                    DlhMedia[]
+  auto_collective_requests AutoCollectiveRequest[]
 
   @@map("DINAS")
 }
@@ -186,19 +187,27 @@ model Kendaraan {
 }
 
 model Laporan {
-  id                    String   @id @default(uuid()) @db.Uuid
+  id                    String        @id @default(uuid()) @db.Uuid
   user_id               String
-  dinas_id              String?  @db.Uuid
-  petugas_id            String?  @db.Uuid
-  kendaraan_id          String?  @db.Uuid
+  dinas_id              String?       @db.Uuid
+  petugas_id            String?       @db.Uuid
+  kendaraan_id          String?       @db.Uuid
   foto_url              String
   lokasi_lat            Float
   lokasi_lng            Float
   kategori_ukuran       String
   rekomendasi_kendaraan String?
-  status                String
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  status                LaporanStatus
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  // Correction oleh petugas/dinas terhadap hasil AI
+  corrected_kategori_ukuran         String?   @map("corrected_kategori_ukuran")
+  corrected_drainage_risk           Boolean?  @map("corrected_drainage_risk")
+  corrected_access_obstruction_risk Boolean?  @map("corrected_access_obstruction_risk")
+  corrected_by                      String?   @map("corrected_by")
+  corrected_at                      DateTime? @map("corrected_at")
+  correction_reason                 String?   @map("correction_reason")
 
   // Location enhancement
   lokasi_accuracy      Float?    @map("lokasi_accuracy")
@@ -242,6 +251,13 @@ model Laporan {
   // Idempotency & load
   client_request_id   String? @unique @map("client_request_id")
   estimated_load_unit Int?    @map("estimated_load_unit")
+
+  // Assignment load tracking
+  assigned_load_kg Int?      @map("assigned_load_kg")
+  load_released_at DateTime? @map("load_released_at")
+
+  // Dispatch routing
+  route_order Int?
 
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
@@ -443,4 +459,19 @@ model TemporaryUpload {
   usedAt        DateTime?
 
   @@map("TEMPORARY_UPLOAD")
+}
+
+model AutoCollectiveRequest {
+  id              String   @id @default(uuid()) @db.Uuid
+  dinas_id        String   @db.Uuid
+  idempotency_key String
+  request_hash    String
+  response_data   Json?
+  created_at      DateTime @default(now())
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@unique([dinas_id, idempotency_key])
+  @@index([dinas_id, created_at])
+  @@map("AUTO_COLLECTIVE_REQUEST")
 }

@@ -14,6 +14,7 @@ import {
   MapPin,
   Navigation,
   Recycle,
+  Route,
   Sparkles,
   UserRound,
   X,
@@ -37,6 +38,11 @@ const MapCanvas = dynamic(() => import("./dlh-operations-map"), {
   ssr: false,
   loading: () => <section className="min-h-[420px] flex-1 animate-pulse bg-[#dcecf2] lg:min-w-[430px]" aria-label="Memuat peta operasional" />,
 });
+
+const AutoCollectivePanel = dynamic(
+  () => import("./auto-collective-panel").then((mod) => ({ default: mod.AutoCollectivePanel })),
+  { ssr: false },
+);
 
 function DropdownField({
   type,
@@ -269,15 +275,42 @@ export function DlhDashboard() {
     && !report.assignedVehicleId
   );
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [autoCollectiveOpen, setAutoCollectiveOpen] = useState(false);
   const selectedReport = activeReports.find((report) => report.id === selectedReportId) ?? activeReports[0];
   const reportOpen = Boolean(selectedReportId && selectedReport);
+
+  const eligibleCount = store.reports.filter((r) =>
+    (r.status === "Menunggu") &&
+    !r.assignedOfficerId &&
+    !r.assignedVehicleId &&
+    !r.needsManualReview
+  ).length;
 
   return (
     <DlhShell>
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <MapCanvas reports={activeReports} reportOpen={reportOpen} selectedReportId={selectedReportId} onOpenReport={setSelectedReportId} />
-        {reportOpen && selectedReport && <ReportPanel report={selectedReport} vehicles={store.vehicles} officers={store.officers} onClose={() => setSelectedReportId(null)} />}
+        <div className="relative flex-1">
+          <MapCanvas reports={activeReports} reportOpen={reportOpen || autoCollectiveOpen} selectedReportId={selectedReportId} onOpenReport={setSelectedReportId} />
+
+          <button
+            onClick={() => setAutoCollectiveOpen(true)}
+            className="absolute right-4 top-4 z-20 flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg transition hover:bg-emerald-700 active:scale-95"
+          >
+            <Route className="size-4" />
+            Buat Rute Otomatis
+            {eligibleCount > 0 && (
+              <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs">
+                {eligibleCount}
+              </span>
+            )}
+          </button>
+        </div>
+        {reportOpen && selectedReport && !autoCollectiveOpen && <ReportPanel report={selectedReport} vehicles={store.vehicles} officers={store.officers} onClose={() => setSelectedReportId(null)} />}
       </main>
+
+      {autoCollectiveOpen && (
+        <AutoCollectivePanel onClose={() => setAutoCollectiveOpen(false)} />
+      )}
     </DlhShell>
   );
 }
