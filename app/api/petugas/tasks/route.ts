@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
           status: { not: LAPORAN_STATUS.SELESAI },
         },
         include: {
-          user: { select: { nama: true } },
+          user: { select: { name: true } },
           kendaraan: { select: { jenis: true } },
           dinas: { select: { nama_dinas: true } },
         },
@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
+        success: true,
         data: laporan.map((l) => ({
           id: l.id,
           user_id: l.user_id,

@@ -1,5 +1,3 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 
-export type PrismaTransaction = Parameters<
-  Parameters<PrismaClient["$transaction"]>[0]
->[0];
+export type PrismaTransaction = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;

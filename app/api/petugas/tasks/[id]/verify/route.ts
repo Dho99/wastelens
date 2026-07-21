@@ -15,10 +15,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json({ error: "Unauthorized", code: "AUTH" }, { status: 401 });
     }
@@ -44,7 +41,7 @@ export async function POST(
     if (!foto_sesudah) {
       return NextResponse.json(
         { error: "foto_sesudah is required", code: "VALIDATION" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

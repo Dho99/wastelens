@@ -20,33 +20,34 @@ model user {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+  address       String?
+  phoneNumber   String?
 
-  // Custom application fields
-  nama       String
   saldo_koin Int    @default(0)
   status     String @default("active")
   role       String @default("user")
 
-  // Better Auth relations
   sessions session[]
   accounts account[]
 
-  // Application relations
-  dinas          Dinas[]
-  petugas        Petugas[]
-  laporan        Laporan[]
-  notifikasi     Notifikasi[]
-  transaksi_koin TransaksiKoin[]
-  kopdes         Kopdes[]
-  penukaran      Penukaran[]
-  banned_reason  BannedReason[]
+  dinas           Dinas[]
+  petugas         Petugas[]
+  laporan         Laporan[]
+  notifikasi      Notifikasi[]
+  transaksi_koin  TransaksiKoin[]
+  kopdes          Kopdes[]
+  penukaran       Penukaran[]
+  coin_transaction CoinTransaction[]
+
+  isBanned      Boolean        @default(false)
+  bannedReasons BannedReason[]
 
   @@map("user")
 }
 
 model BannedReason {
   id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("userId")
+  userId    String
   alasan    String
   createdAt DateTime @default(now())
 
@@ -102,20 +103,49 @@ model verification {
 }
 
 // ─── Application models ───────────────────────────────────
-
 model Dinas {
   id         String @id @default(uuid()) @db.Uuid
   user_id    String
   nama_dinas String
   kontak     String
 
-  user         user          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user         user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   petugas      Petugas[]
   area_cakupan AreaCakupan[]
   kendaraan    Kendaraan[]
   laporan      Laporan[]
+  portal_state DlhPortalState?
+  media        DlhMedia[]
 
   @@map("DINAS")
+}
+
+model DlhPortalState {
+  id        String   @id @default(uuid()) @db.Uuid
+  dinas_id  String   @unique @db.Uuid
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@map("DLH_PORTAL_STATE")
+}
+
+model DlhMedia {
+  id          String   @id @default(uuid()) @db.Uuid
+  dinas_id    String   @db.Uuid
+  uploaded_by String
+  kind        String   @default("profile")
+  mime_type   String
+  size_bytes  Int
+  data        Bytes
+  createdAt   DateTime @default(now())
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@index([dinas_id, kind])
+  @@map("DLH_MEDIA")
 }
 
 model Petugas {
@@ -156,27 +186,19 @@ model Kendaraan {
 }
 
 model Laporan {
-  id                    String        @id @default(uuid()) @db.Uuid
+  id                    String   @id @default(uuid()) @db.Uuid
   user_id               String
-  dinas_id              String?       @db.Uuid
-  petugas_id            String?       @db.Uuid
-  kendaraan_id          String?       @db.Uuid
+  dinas_id              String?  @db.Uuid
+  petugas_id            String?  @db.Uuid
+  kendaraan_id          String?  @db.Uuid
   foto_url              String
   lokasi_lat            Float
   lokasi_lng            Float
   kategori_ukuran       String
   rekomendasi_kendaraan String?
-  status                LaporanStatus
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-
-  // Correction oleh petugas/dinas terhadap hasil AI
-  corrected_kategori_ukuran         String?   @map("corrected_kategori_ukuran")
-  corrected_drainage_risk           Boolean?  @map("corrected_drainage_risk")
-  corrected_access_obstruction_risk Boolean?  @map("corrected_access_obstruction_risk")
-  corrected_by                      String?   @map("corrected_by")
-  corrected_at                      DateTime? @map("corrected_at")
-  correction_reason                 String?   @map("correction_reason")
+  status                String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   // Location enhancement
   lokasi_accuracy      Float?    @map("lokasi_accuracy")
@@ -234,9 +256,12 @@ model Laporan {
 }
 
 model Foto {
-  id         String @id @default(uuid()) @db.Uuid
-  laporan_id String @db.Uuid
+  id         String  @id @default(uuid()) @db.Uuid
+  laporan_id String  @db.Uuid
   url        String
+  hash       String?
+  mime_type  String? @map("mime_type")
+  size_bytes Int?    @map("size_bytes")
 
   laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
@@ -284,13 +309,15 @@ model Notifikasi {
 }
 
 model Kopdes {
-  id      String @id @default(uuid()) @db.Uuid
-  user_id String
-  nama    String
-  alamat  String
+  id        String  @id @default(uuid()) @db.Uuid
+  user_id   String
+  nama      String
+  alamat    String
+  isActive  Boolean @default(true) @map("is_active")
 
-  user   user     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  produk Produk[]
+  user      user        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  produk    Produk[]
+  penukaran Penukaran[]
 
   @@map("KOPDES")
 }
@@ -301,6 +328,7 @@ model Produk {
   nama_barang String
   harga_koin  Int
   stok        Int
+  isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -350,8 +378,80 @@ model Penukaran {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user   user   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  produk Produk @relation(fields: [produk_id], references: [id], onDelete: Cascade)
+model Penukaran {
+  id                 String             @id @default(uuid()) @db.Uuid
+  user_id            String
+  produk_id          String             @db.Uuid
+  kopdes_id          String             @db.Uuid
+  quantity           Int                @default(1)
+  unit_coin_price    Int
+  jumlah_koin        Int
+  status             RedemptionStatus   @default(PENDING)
+  token_hash         String?            @unique
+  token_hint         String?
+  qr_payload         String?
+  idempotency_key    String?
+  expires_at         DateTime
+  redeemed_at        DateTime?
+  cancelled_at       DateTime?
+  expired_at         DateTime?
+  redeemed_by_user_id String?
+  cancellation_reason String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
+  user              user               @relation(fields: [user_id], references: [id])
+  produk            Produk             @relation(fields: [produk_id], references: [id])
+  kopdes            Kopdes             @relation(fields: [kopdes_id], references: [id])
+  coin_transaction  CoinTransaction[]
+
+  @@unique([user_id, idempotency_key])
+  @@index([user_id, status])
+  @@index([kopdes_id, status])
+  @@index([expires_at, status])
   @@map("PENUKARAN")
+}
+
+model CoinTransaction {
+  id              String              @id @default(uuid()) @db.Uuid
+  user_id         String
+  redemption_id   String?             @db.Uuid
+  type            CoinTransactionType
+  amount          Int
+  balance_before  Int
+  balance_after   Int
+  description     String?
+  created_at      DateTime            @default(now())
+
+  user      user      @relation(fields: [user_id], references: [id])
+  penukaran Penukaran? @relation(fields: [redemption_id], references: [id])
+
+  @@index([user_id, created_at])
+  @@index([redemption_id])
+  @@map("COIN_TRANSACTION")
+}
+
+enum TemporaryUploadStatus {
+  ACTIVE
+  USED
+  EXPIRED
+
+  @@map("TEMPORARY_UPLOAD_STATUS")
+}
+
+model TemporaryUpload {
+  id            String                @id @default(uuid()) @db.Uuid
+  user_id       String
+  provider      String                @default("cloudinary")
+  public_id     String
+  secure_url    String
+  resource_type String                @default("image")
+  mime_type     String
+  size_bytes    Int
+  status        TemporaryUploadStatus @default(ACTIVE)
+  createdAt     DateTime              @default(now())
+  expiresAt     DateTime
+  usedAt        DateTime?
+
+  @@map("TEMPORARY_UPLOAD")
 }

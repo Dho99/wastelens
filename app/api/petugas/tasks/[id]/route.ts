@@ -47,7 +47,7 @@ export async function GET(
                 petugas_id: petugas.id,
             },
             include: {
-                user: { select: { id: true, nama: true } },
+                user: { select: { id: true, name: true } },
                 kendaraan: { select: { id: true, jenis: true } },
                 dinas: { select: { id: true, nama_dinas: true } },
                 foto: { select: { url: true } },
