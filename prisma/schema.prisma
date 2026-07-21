@@ -39,8 +39,20 @@ model user {
   transaksi_koin TransaksiKoin[]
   kopdes         Kopdes[]
   penukaran      Penukaran[]
+  banned_reason  BannedReason[]
 
   @@map("user")
+}
+
+model BannedReason {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("userId")
+  alasan    String
+  createdAt DateTime @default(now())
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("banned_reason")
 }
 
 model session {
@@ -144,19 +156,70 @@ model Kendaraan {
 }
 
 model Laporan {
-  id              String   @id @default(uuid()) @db.Uuid
-  user_id         String
-  dinas_id        String?  @db.Uuid
-  petugas_id      String?  @db.Uuid
-  kendaraan_id    String?  @db.Uuid
-  foto_url                String
-  lokasi_lat              Float
-  lokasi_lng              Float
-  kategori_ukuran         String
-  rekomendasi_kendaraan   String?
-  status                  String
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                    String        @id @default(uuid()) @db.Uuid
+  user_id               String
+  dinas_id              String?       @db.Uuid
+  petugas_id            String?       @db.Uuid
+  kendaraan_id          String?       @db.Uuid
+  foto_url              String
+  lokasi_lat            Float
+  lokasi_lng            Float
+  kategori_ukuran       String
+  rekomendasi_kendaraan String?
+  status                LaporanStatus
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  // Correction oleh petugas/dinas terhadap hasil AI
+  corrected_kategori_ukuran         String?   @map("corrected_kategori_ukuran")
+  corrected_drainage_risk           Boolean?  @map("corrected_drainage_risk")
+  corrected_access_obstruction_risk Boolean?  @map("corrected_access_obstruction_risk")
+  corrected_by                      String?   @map("corrected_by")
+  corrected_at                      DateTime? @map("corrected_at")
+  correction_reason                 String?   @map("correction_reason")
+
+  // Location enhancement
+  lokasi_accuracy      Float?    @map("lokasi_accuracy")
+  lokasi_confirmed_lat Float?    @map("lokasi_confirmed_lat")
+  lokasi_confirmed_lng Float?    @map("lokasi_confirmed_lng")
+  lokasi_device_lat    Float?    @map("lokasi_device_lat")
+  lokasi_device_lng    Float?    @map("lokasi_device_lng")
+  lokasi_captured_at   DateTime? @map("lokasi_captured_at")
+  lokasi_exif_lat      Float?    @map("lokasi_exif_lat")
+  lokasi_exif_lng      Float?    @map("lokasi_exif_lng")
+  risk_flags           String[]  @default([])
+
+  // Reverse-geocoded address
+  address_text String? @map("address_text")
+  road_name    String? @map("road_name")
+  district     String? @map("district")
+  city         String? @map("city")
+  province     String? @map("province")
+  country      String? @map("country")
+
+  // Photo metadata
+  photo_hash       String? @map("photo_hash")
+  photo_mime_type  String? @map("photo_mime_type")
+  photo_size_bytes Int?    @map("photo_size_bytes")
+
+  // Analysis
+  waste_types             String[]  @default([])
+  drainage_risk           Boolean?  @default(false) @map("drainage_risk")
+  access_obstruction_risk Boolean?  @default(false) @map("access_obstruction_risk")
+  visual_indicators       String[]  @default([]) @map("visual_indicators")
+  confidence              Float?
+  needs_manual_review     Boolean?  @default(false) @map("needs_manual_review")
+  analysis_provider       String?   @map("analysis_provider")
+  analysed_at             DateTime? @map("analysed_at")
+
+  // Priority
+  priority_score          Float?  @map("priority_score")
+  priority_level          String? @map("priority_level")
+  priority_weight_version String? @map("priority_weight_version")
+
+  // Idempotency & load
+  client_request_id   String? @unique @map("client_request_id")
+  estimated_load_unit Int?    @map("estimated_load_unit")
 
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
@@ -186,10 +249,12 @@ model TransaksiKoin {
   laporan_id String @db.Uuid
   jumlah     Int
   jenis      String
+  metadata   Json?
 
   user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
+  @@unique([laporan_id, jenis], name: "laporan_id_jenis", map: "uq_reward_laporan_jenis")
   @@map("TRANSAKSI_KOIN")
 }
 
@@ -245,16 +310,45 @@ model Produk {
   @@map("PRODUK")
 }
 
+enum LaporanStatus {
+  ANALYZED
+  WAITING
+  PENDING
+  DIJEMPUT
+  SELESAI
+  DITOLAK
+
+  @@map("LAPORAN_STATUS")
+}
+
+enum RedemptionStatus {
+  PENDING
+  REDEEMED
+  EXPIRED
+  CANCELLED
+
+  @@map("REDEMPTION_STATUS")
+}
+
+enum CoinTransactionType {
+  REWARD
+  REDEMPTION_RESERVE
+  REDEMPTION_REFUND
+  ADMIN_ADJUSTMENT
+
+  @@map("COIN_TRANSACTION_TYPE")
+}
+
 model Penukaran {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   user_id     String
-  produk_id   String   @db.Uuid
+  produk_id   String    @db.Uuid
   jumlah_koin Int
-  status      String   @default("PENDING")
+  status      String    @default("PENDING")
   qr_token    String?
   redeemed_at DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   user   user   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   produk Produk @relation(fields: [produk_id], references: [id], onDelete: Cascade)

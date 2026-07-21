@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 const COOLDOWN_HOURS = parseInt(process.env.COOLDOWN_HOURS ?? "24", 10);
 const COOLDOWN_RADIUS_METERS = parseInt(process.env.COOLDOWN_RADIUS_METERS ?? "50", 10);
@@ -28,7 +29,7 @@ export async function checkLocationCooldown(
 ): Promise<{ inCooldown: boolean; message: string | null }> {
   const recentReports = await prisma.laporan.findMany({
     where: {
-      status: { not: "selesai" },
+      status: { not: LAPORAN_STATUS.SELESAI },
       createdAt: {
         gte: new Date(Date.now() - COOLDOWN_HOURS * 60 * 60 * 1000),
       },

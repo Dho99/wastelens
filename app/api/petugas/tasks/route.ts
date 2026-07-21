@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
       prisma.laporan.findMany({
         where: {
           petugas_id: petugas.id,
-          status: { not: "SELESAI" },
+          status: { not: LAPORAN_STATUS.SELESAI },
         },
         include: {
           user: { select: { nama: true } },
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       prisma.laporan.count({
         where: {
           petugas_id: petugas.id,
-          status: { not: "SELESAI" },
+          status: { not: LAPORAN_STATUS.SELESAI },
         },
       }),
     ]);
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
           kategori_ukuran: l.kategori_ukuran,
           rekomendasi_kendaraan: l.rekomendasi_kendaraan,
           status: l.status,
-          status_label: l.status === "PENDING" ? "Menunggu Diproses" : l.status,
+          status_label: l.status === LAPORAN_STATUS.PENDING ? "Menunggu Diproses" : l.status,
           createdAt: l.createdAt,
           user: l.user,
           kendaraan: l.kendaraan,
