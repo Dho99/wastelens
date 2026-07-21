@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { findNearestDinas } from "./spatial";
+import { findDinasByDistrict } from "./spatial";
 
 const LOAD_ESTIMATES: Record<string, number> = {
   small: 30,
@@ -8,15 +8,18 @@ const LOAD_ESTIMATES: Record<string, number> = {
 };
 
 export async function autoAssignDinas(
-  lat: number,
-  lng: number
+  district: string | null
 ): Promise<{ dinas_id: string | null; petugas_id: string | null; kendaraan_id: string | null }> {
-  const nearest = await findNearestDinas(lat, lng);
-  if (!nearest) {
+  if (!district || district.trim() === "") {
     return { dinas_id: null, petugas_id: null, kendaraan_id: null };
   }
 
-  return { dinas_id: nearest.dinasId, petugas_id: null, kendaraan_id: null };
+  const dinas = await findDinasByDistrict(district);
+  if (!dinas) {
+    return { dinas_id: null, petugas_id: null, kendaraan_id: null };
+  }
+
+  return { dinas_id: dinas.dinasId, petugas_id: null, kendaraan_id: null };
 }
 
 export async function assignKendaraan(

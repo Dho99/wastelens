@@ -28,7 +28,7 @@ export async function checkLocationCooldown(
 ): Promise<{ inCooldown: boolean; message: string | null }> {
   const recentReports = await prisma.laporan.findMany({
     where: {
-      status: { not: "selesai" },
+      status: { not: "SELESAI" },
       createdAt: {
         gte: new Date(Date.now() - COOLDOWN_HOURS * 60 * 60 * 1000),
       },
@@ -49,34 +49,23 @@ export async function checkLocationCooldown(
   return { inCooldown: false, message: null };
 }
 
-export async function findNearestDinas(
-  lat: number,
-  lng: number
+export async function findDinasByDistrict(
+  district: string
 ): Promise<{ dinasId: string; namaDinas: string } | null> {
-  const areaCakupanRecords = await prisma.areaCakupan.findMany({
+  const normalized = district.trim();
+
+  const area = await prisma.areaCakupan.findFirst({
+    where: {
+      nama_wilayah: { equals: normalized, mode: "insensitive" },
+    },
     include: {
       dinas: {
         select: { id: true, nama_dinas: true },
       },
     },
+    orderBy: { id: "asc" },
   });
 
-  if (areaCakupanRecords.length === 0) return null;
-
-  let nearest: { dinasId: string; namaDinas: string; distance: number } | null = null;
-  const dummyLat = -6.2;
-  const dummyLng = 106.8;
-
-  for (const area of areaCakupanRecords) {
-    const dist = haversineDistance(lat, lng, dummyLat, dummyLng);
-    if (!nearest || dist < nearest.distance) {
-      nearest = {
-        dinasId: area.dinas.id,
-        namaDinas: area.dinas.nama_dinas,
-        distance: dist,
-      };
-    }
-  }
-
-  return nearest ? { dinasId: nearest.dinasId, namaDinas: nearest.namaDinas } : null;
+  if (!area) return null;
+  return { dinasId: area.dinas.id, namaDinas: area.dinas.nama_dinas };
 }
