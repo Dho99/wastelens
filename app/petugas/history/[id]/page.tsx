@@ -146,14 +146,19 @@ export default function DetailHistoryPage({
             {/* Before */}
             <div className="flex flex-col items-center">
               <div className="relative mb-2 aspect-[4/5] w-full overflow-hidden rounded-xl border border-neutral-200">
-                {fotoSebelum && (
+                {fotoSebelum ? (
                   <Image
                     src={fotoSebelum}
                     alt="Kondisi Awal"
                     fill
+                    unoptimized
                     className="object-cover"
                     sizes="50vw"
                   />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-neutral-100 text-sm text-neutral-400">
+                    Tidak ada foto
+                  </div>
                 )}
               </div>
               <p className="text-sm font-medium text-neutral-600">

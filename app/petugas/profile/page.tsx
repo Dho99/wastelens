@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "@/lib/auth-client";
-
-// Slices
-import { ProfileAvatar } from "@/app/user/profile/components/ProfileAvatar";
-import { mdiAccount, mdiCheckboxMarkedCircleOutline, mdiHelpBoxOutline, mdiLogout, mdiSecurity } from "@mdi/js";
-import Icon from "@mdi/react";
 import Link from "next/link";
+import Icon from "@mdi/react";
+import {
+  mdiAccount,
+  mdiCheckboxMarkedCircleOutline,
+  mdiHelpBoxOutline,
+  mdiLogout,
+  mdiSecurity,
+} from "@mdi/js";
+import { signOut, useSession } from "@/lib/auth-client";
+import { usePetugasProfile } from "../hooks/useProfile";
+
+import { ProfileAvatar } from "@/app/user/profile/components/ProfileAvatar";
 
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
@@ -16,36 +22,34 @@ const PLACEHOLDER_IMAGE =
 export default function ProfilePage() {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending: sessionLoading } = useSession();
+  const { data: profile, isLoading: profileLoading } = usePetugasProfile();
 
   const displayName =
-    (session?.user as { name?: string })?.name ||
-    session?.user?.name ||
+    (session?.user as { name?: string })?.name ??
+    session?.user?.name ??
     "Pengguna";
   const avatarUrl = session?.user?.image || PLACEHOLDER_IMAGE;
 
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-      console.log("Signing out user...");
       await signOut();
       router.push("/login");
       router.refresh();
-    } catch (err) {
-      console.error("Error signing out:", err);
-      // Fallback redirect if network error or session issues
+    } catch {
       router.push("/login");
     }
   };
 
-  if (isPending) {
+  if (sessionLoading) {
     return (
-      <div className="space-y-4 p-4 animate-pulse">
-        <div className="flex justify-between items-center h-10" />
-        <div className="h-28 w-28 bg-gray-200 rounded-full mx-auto" />
-        <div className="h-6 w-32 bg-gray-200 rounded-md mx-auto" />
-        <div className="h-16 bg-gray-200 rounded-3xl" />
-        <div className="h-48 bg-gray-200 rounded-3xl" />
+      <div className="min-h-screen space-y-4 p-4 pb-8 animate-pulse">
+        <div className="flex h-10 items-center justify-between" />
+        <div className="mx-auto h-28 w-28 rounded-full bg-gray-200" />
+        <div className="mx-auto h-6 w-32 rounded-md bg-gray-200" />
+        <div className="h-16 rounded-3xl bg-gray-200" />
+        <div className="h-48 rounded-3xl bg-gray-200" />
       </div>
     );
   }
@@ -54,47 +58,56 @@ export default function ProfilePage() {
     <div className="min-h-screen pb-8">
       <ProfileAvatar
         name={displayName}
-        ecoRole={"Petugas Senior"}
+        ecoRole="Petugas Lapangan"
         avatarUrl={avatarUrl}
-        onEditAvatar={() => console.log("Edit avatar clicked...")}
+        onEditAvatar={() => {}}
       />
 
-      <div className="text-center border border-neutral-300 p-4 rounded-xl flex flex-col items-center mb-8">
-        <div className="m-auto bg-primary/20 p-2 rounded-full text-primary mb-2">
+      <div className="mb-8 flex flex-col items-center rounded-xl border border-neutral-300 p-4 text-center">
+        <div className="m-auto mb-2 rounded-full bg-primary/20 p-2 text-primary">
           <Icon path={mdiCheckboxMarkedCircleOutline} size={1} />
         </div>
-        <h4 className="text-2xl font-bold">142</h4>
+        {profileLoading ? (
+          <div className="h-8 w-16 animate-pulse rounded-md bg-neutral-100" />
+        ) : (
+          <h4 className="text-2xl font-bold">{profile?.tugas_selesai ?? 0}</h4>
+        )}
         <p>Tugas Selesai</p>
       </div>
 
-      <p className="mb-2">Pengaturan Akun</p>
-      <div className="border border-neutral-300 rounded-xl overflow-hidden mb-8">
-        <Link href={"/petugas/profile/detail"} className="flex items-center p-4 gap-2 border-b border-neutral-300">
-          <div className="bg-primary/20 p-2 rounded-lg text-primary">
+      <p className="mb-2 text-sm font-medium text-neutral-500">Pengaturan Akun</p>
+      <div className="mb-8 overflow-hidden rounded-xl border border-neutral-300">
+        <Link
+          href="/petugas/profile/information"
+          className="flex items-center gap-2 border-b border-neutral-300 p-4 transition-colors hover:bg-neutral-50"
+        >
+          <div className="rounded-lg bg-primary/20 p-2 text-primary">
             <Icon path={mdiAccount} size={1} />
           </div>
           <span className="font-medium">Informasi Pribadi</span>
         </Link>
-        <Link href={"/petugas/profile/detail"} className="flex items-center p-4 gap-2 border-b border-neutral-300">
-          <div className="bg-primary/20 p-2 rounded-lg text-primary">
+        <Link
+          href="/petugas/profile/change-password"
+          className="flex items-center gap-2 border-b border-neutral-300 p-4 transition-colors hover:bg-neutral-50"
+        >
+          <div className="rounded-lg bg-primary/20 p-2 text-primary">
             <Icon path={mdiSecurity} size={1} />
           </div>
           <span className="font-medium">Ganti Kata Sandi</span>
         </Link>
-        <Link href={"/petugas/profile/detail"} className="flex items-center p-4 gap-2 border-b border-neutral-300">
-          <div className="bg-primary/20 p-2 rounded-lg text-primary">
+        <div className="flex items-center gap-2 border-b border-neutral-300 p-4 opacity-50">
+          <div className="rounded-lg bg-primary/20 p-2 text-primary">
             <Icon path={mdiHelpBoxOutline} size={1} />
           </div>
           <span className="font-medium">Pusat Bantuan</span>
-        </Link>
+        </div>
       </div>
 
-      {/* 6. Logout Button (Keluar) */}
       <div className="mb-6">
         <button
           onClick={handleLogout}
           disabled={loggingOut}
-          className="w-full border border-red-500/40 hover:bg-red-500/5 cursor-pointer text-red-500 font-black py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50"
+          className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-red-500/40 py-4 font-black text-red-500 transition-all duration-200 hover:bg-red-500/5 disabled:opacity-50"
         >
           <Icon path={mdiLogout} size={1} />
           <span>{loggingOut ? "Mengeluarkan..." : "Keluar"}</span>
