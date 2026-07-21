@@ -92,7 +92,7 @@ export default function VerifyPage({
     }
 
     const uploadResult = await res.json();
-    return uploadResult.secureUrl;
+    return uploadResult.data?.secureUrl ?? "";
   };
 
   const handleSubmit = async () => {
