@@ -274,11 +274,12 @@ model TransaksiKoin {
   laporan_id String @db.Uuid
   jumlah     Int
   jenis      String
+  metadata   Json?
 
   user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
-  @@unique([laporan_id, jenis])
+  @@unique([laporan_id, jenis], name: "laporan_id_jenis", map: "uq_reward_laporan_jenis")
   @@map("TRANSAKSI_KOIN")
 }
 
@@ -337,6 +338,17 @@ model Produk {
   @@map("PRODUK")
 }
 
+enum LaporanStatus {
+  ANALYZED
+  WAITING
+  PENDING
+  DIJEMPUT
+  SELESAI
+  DITOLAK
+
+  @@map("LAPORAN_STATUS")
+}
+
 enum RedemptionStatus {
   PENDING
   REDEEMED
@@ -354,6 +366,17 @@ enum CoinTransactionType {
 
   @@map("COIN_TRANSACTION_TYPE")
 }
+
+model Penukaran {
+  id          String    @id @default(uuid()) @db.Uuid
+  user_id     String
+  produk_id   String    @db.Uuid
+  jumlah_koin Int
+  status      String    @default("PENDING")
+  qr_token    String?
+  redeemed_at DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
 model Penukaran {
   id                 String             @id @default(uuid()) @db.Uuid

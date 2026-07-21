@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export async function GET(
     request: NextRequest,
@@ -72,14 +73,11 @@ export async function GET(
 
         return NextResponse.json(
             {
-                success: true,
-                data: {
-                    ...laporan,
-                    status_label:
-                        laporan.status === "PENDING"
-                            ? "Menunggu Diproses"
-                            : laporan.status,
-                },
+                ...laporan,
+                status_label:
+                    laporan.status === LAPORAN_STATUS.PENDING
+                        ? "Menunggu Diproses"
+                        : laporan.status,
             },
             { status: 200 },
         );
