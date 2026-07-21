@@ -9,6 +9,7 @@ import {
   Bell,
   CheckCircle2,
   ChevronDown,
+  LoaderCircle,
   LockKeyhole,
   Mail,
   Pencil,
@@ -26,7 +27,9 @@ export function EditAdminProfile() {
   const admin = store.admin;
   const fileRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState(admin.photo ?? "");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const selectPhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -39,6 +42,7 @@ export function EditAdminProfile() {
       setError("Ukuran foto maksimal 2 MB.");
       return;
     }
+    setPhotoFile(file);
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -60,17 +64,36 @@ export function EditAdminProfile() {
     reader.readAsDataURL(file);
   };
 
-  const save = (event: FormEvent<HTMLFormElement>) => {
+  const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError("");
+    setSaving(true);
     const data = new FormData(event.currentTarget);
-    updateDlhStore((draft) => {
-      draft.admin.name = String(data.get("name")).trim();
-      draft.admin.email = String(data.get("email")).trim();
-      draft.admin.department = String(data.get("department"));
-      draft.admin.phone = String(data.get("phone")).trim();
-      draft.admin.photo = photo || undefined;
-    });
-    router.push("/dinas/accounts");
+    try {
+      let persistedPhoto = photo;
+      if (photoFile) {
+        const upload = new FormData();
+        upload.append("photo", photoFile);
+        if (admin.photo) upload.append("previousUrl", admin.photo);
+        const response = await fetch("/api/dinas/media", { method: "POST", body: upload });
+        const result = await response.json() as { data?: { url?: string }; error?: string };
+        if (!response.ok || !result.data?.url) throw new Error(result.error ?? "Foto gagal diunggah.");
+        persistedPhoto = result.data.url;
+      }
+
+      updateDlhStore((draft) => {
+        draft.admin.name = String(data.get("name")).trim();
+        draft.admin.email = String(data.get("email")).trim();
+        draft.admin.department = String(data.get("department"));
+        draft.admin.phone = String(data.get("phone")).trim();
+        draft.admin.photo = persistedPhoto || undefined;
+      });
+      router.push("/dinas/accounts");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Profil gagal disimpan.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -99,6 +122,7 @@ export function EditAdminProfile() {
               fill
               className="object-cover object-top"
               sizes="36px"
+              unoptimized={photo.startsWith("data:") || photo.startsWith("/api/dinas/media/")}
             />
           </span>
         </header>
@@ -149,6 +173,7 @@ export function EditAdminProfile() {
                       priority
                       className="object-cover object-top"
                       sizes="144px"
+                      unoptimized={photo.startsWith("data:") || photo.startsWith("/api/dinas/media/")}
                     />
                   </span>
                   <span className="absolute bottom-1 right-0 grid size-10 place-items-center rounded-full border-2 border-white bg-[#087529] text-white shadow-md group-hover:bg-[#066421]">
@@ -267,10 +292,11 @@ export function EditAdminProfile() {
                     </button>
                     <button
                       type="submit"
-                      className="flex h-11 items-center justify-center gap-2 rounded-full bg-[#087529] px-8 text-sm font-bold text-white shadow-md hover:bg-[#066421]"
+                      disabled={saving}
+                      className="flex h-11 items-center justify-center gap-2 rounded-full bg-[#087529] px-8 text-sm font-bold text-white shadow-md hover:bg-[#066421] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <Save className="size-4" />
-                      Simpan Perubahan
+                      {saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+                      {saving ? "Mengunggah..." : "Simpan Perubahan"}
                     </button>
                   </div>
                 </form>

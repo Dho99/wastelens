@@ -1,4 +1,5 @@
 import { EditOfficerProfile } from "../../../../components/edit-officer-profile";
+import { DlhShell } from "../../../../components/dlh-shell";
 
 export default async function EditOfficerPage({
   params,
@@ -6,5 +7,5 @@ export default async function EditOfficerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <EditOfficerProfile officerId={id} />;
+  return <DlhShell hideHeader><EditOfficerProfile officerId={id} /></DlhShell>;
 }

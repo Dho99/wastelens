@@ -125,6 +125,7 @@ export function ChangeAdminPassword() {
               fill
               className="object-cover object-top"
               sizes="36px"
+              unoptimized={Boolean(store.admin.photo?.startsWith("data:") || store.admin.photo?.startsWith("/api/dinas/media/"))}
             />
           </span>
         </header>

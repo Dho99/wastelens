@@ -93,11 +93,25 @@ export function LogisticsManagement() {
 
   return (
     <DlhShell>
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[#f5fbfe] p-4 sm:p-5">
-        <div className="mx-auto max-w-[1400px]">
-          {notice && <div role="status" className="mb-4 flex items-center rounded-2xl bg-[#dff5e9] px-4 py-3 text-sm font-bold text-[#176a35]">{notice}<button type="button" onClick={() => setNotice("")} className="ml-auto rounded-full p-1 hover:bg-white/60"><X className="size-4" /></button></div>}
+      <main className="min-h-0 flex-1 overflow-y-auto bg-[#f5fbfe] p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#39815a]">Fleet Operations</p>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl">Manajemen Logistik</h2>
+            <p className="mt-1 text-sm text-slate-500">Kelola armada dan petugas operasional dalam satu tempat.</p>
+          </div>
 
-          <SectionHeading title="Kelola Armada" subtitle="Monitoring and management of waste collection fleet" button="Tambah Armada" icon="vehicle" onClick={() => router.push("/dinas/logistics/vehicles/new")} />
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <SummaryCard icon={<Truck />} color="bg-[#dff4e8] text-[#087529]" label="Total Armada" value={`${vehicles.length} Unit`} />
+            <SummaryCard icon={<UserCog />} color="bg-[#dceff8] text-[#35687e]" label="Petugas Aktif" value={`${officers.length} Orang`} />
+            <SummaryCard icon={<History />} color="bg-[#ffd9ae] text-[#956100]" label="Update Terakhir" value={`${new Date(store.updatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`} />
+          </div>
+
+          {notice && <div role="status" className="mt-5 flex items-center rounded-2xl bg-[#dff5e9] px-4 py-3 text-sm font-bold text-[#176a35]">{notice}<button type="button" onClick={() => setNotice("")} className="ml-auto rounded-full p-1 hover:bg-white/60"><X className="size-4" /></button></div>}
+
+          <div className="mt-8">
+            <SectionHeading title="Kelola Armada" subtitle="Pantau dan kelola armada pengangkut sampah." button="Tambah Armada" icon="vehicle" onClick={() => router.push("/dinas/logistics/vehicles/new")} />
+          </div>
           <section className="mt-4 overflow-hidden rounded-[20px] border border-[#b8cabc] bg-white/30 shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left">
@@ -108,7 +122,7 @@ export function LogisticsManagement() {
             <TableFooter shown={visibleVehicles.length} total={vehicles.length} noun="armada" page={vehiclePage} pageSize={vehiclePageSize} canNext={(vehiclePage + 1) * vehiclePageSize < vehicles.length} onPageSizeChange={(size) => { setVehiclePageSize(size); setVehiclePage(0); }} onPrevious={() => setVehiclePage((page) => Math.max(0, page - 1))} onNext={() => setVehiclePage((page) => page + 1)} />
           </section>
 
-          <div className="mt-5"><SectionHeading title="Kelola Petugas" subtitle="Personnel assignment and contact directory" button="Tambah Petugas" icon="officer" onClick={() => router.push("/dinas/logistics/officers/new")} /></div>
+          <div className="mt-8"><SectionHeading title="Kelola Petugas" subtitle="Atur penugasan dan kontak petugas lapangan." button="Tambah Petugas" icon="officer" onClick={() => router.push("/dinas/logistics/officers/new")} /></div>
           <section className="mt-4 overflow-hidden rounded-[20px] border border-[#b8cabc] bg-white/30 shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[880px] text-left">
@@ -119,11 +133,6 @@ export function LogisticsManagement() {
             <TableFooter shown={visibleOfficers.length} total={officers.length} noun="petugas" page={officerPage} pageSize={officerPageSize} canNext={(officerPage + 1) * officerPageSize < officers.length} onPageSizeChange={(size) => { setOfficerPageSize(size); setOfficerPage(0); }} onPrevious={() => setOfficerPage((page) => Math.max(0, page - 1))} onNext={() => setOfficerPage((page) => page + 1)} />
           </section>
 
-          <div className="mx-auto mt-5 grid max-w-[1080px] gap-3 sm:grid-cols-3">
-            <SummaryCard icon={<Truck />} color="bg-[#258237] text-[#075d20]" label="Total Armada" value={`${vehicles.length} Unit`} />
-            <SummaryCard icon={<UserCog />} color="bg-[#bcebd1] text-[#47705b]" label="Petugas Aktif" value={`${officers.length} Orang`} />
-            <SummaryCard icon={<History />} color="bg-[#ffd9ae] text-[#956100]" label="Update Terakhir" value={`${new Date(store.updatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`} />
-          </div>
         </div>
       </main>
 
@@ -148,7 +157,7 @@ function TableFooter({ shown, total, noun, page, pageSize, canNext, onPageSizeCh
 }
 
 function SummaryCard({ icon, color, label, value }: { icon: React.ReactNode; color: string; label: string; value: string }) {
-  return <div className="flex items-center gap-3 rounded-2xl bg-white p-4"><span className={`grid size-10 place-items-center rounded-full [&_svg]:size-4 ${color}`}>{icon}</span><div><p className="text-[11px] text-[#667169]">{label}</p><p className="text-lg font-extrabold">{value}</p></div></div>;
+  return <div className="flex min-h-24 items-center gap-4 rounded-[22px] border border-[#d8e7df] bg-white p-5 shadow-sm"><span className={`grid size-12 shrink-0 place-items-center rounded-2xl [&_svg]:size-5 ${color}`}>{icon}</span><div className="min-w-0"><p className="text-xs font-medium text-[#667169]">{label}</p><p className="mt-1 truncate text-2xl font-extrabold tracking-[-0.025em]">{value}</p></div></div>;
 }
 
 function EditorModal({ editor, onClose, onSubmit }: { editor: Editor; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {

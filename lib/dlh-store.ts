@@ -10,6 +10,12 @@ export type DlhReport = {
   time: string;
   location: string;
   district: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  wasteTypes?: string[];
+  sizeCategory?: string;
+  priorityLevel?: string;
   category: "BAHAYA" | "AMAN";
   status: "Menunggu" | "Diproses" | "Selesai";
   reporter: string;

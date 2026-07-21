@@ -33,7 +33,7 @@ export function AdminProfile() {
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
         <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
           <h1 className="text-xl font-extrabold text-[#087529]">
-            Profil Admin
+            Profil Dinas
           </h1>
           <Link
             href="/dinas/notifications"
@@ -45,10 +45,16 @@ export function AdminProfile() {
           <span className="relative ml-4 size-9 overflow-hidden rounded-full border-2 border-[#087529]">
             <Image
               src={store.admin.photo ?? "/images/dlh-field-officer.png"}
-              alt="Admin DLH"
+              alt="Profil Dinas"
               fill
+              loading="eager"
               className="object-cover object-top"
               sizes="36px"
+              unoptimized={Boolean(
+                store.admin.photo?.startsWith("data:")
+                  || store.admin.photo?.startsWith("/api/dinas/media/")
+                  || store.admin.photo?.includes("/svg"),
+              )}
             />
           </span>
         </header>
@@ -80,9 +86,14 @@ export function AdminProfile() {
                       src={store.admin.photo ?? "/images/dlh-field-officer.png"}
                       alt={name}
                       fill
-                      priority
+                      loading="eager"
                       className="object-cover object-top"
                       sizes="128px"
+                      unoptimized={Boolean(
+                        store.admin.photo?.startsWith("data:")
+                          || store.admin.photo?.startsWith("/api/dinas/media/")
+                          || store.admin.photo?.includes("/svg"),
+                      )}
                     />
                   </div>
                   <div>
@@ -198,12 +209,12 @@ export function AdminProfile() {
                 draft.admin.email = String(data.get("email"));
               });
               setEditOpen(false);
-              setNotice("Profil admin berhasil diperbarui.");
+              setNotice("Profil dinas berhasil diperbarui.");
             }}
             className="w-full max-w-md rounded-[24px] bg-white p-6 shadow-2xl"
           >
             <div className="flex items-center">
-              <h2 className="text-lg font-extrabold">Edit Profil Admin</h2>
+              <h2 className="text-lg font-extrabold">Edit Profil Dinas</h2>
               <button
                 type="button"
                 onClick={() => setEditOpen(false)}

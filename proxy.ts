@@ -14,9 +14,7 @@ export function proxy(request: NextRequest) {
 
   // Logout — redirect to login (Better Auth handles cookie clearing client-side)
   if (searchParams.has("logout")) {
-    return NextResponse.redirect(
-      new URL(pathname.startsWith("/dinas") ? "/login/dinas" : "/login", request.url),
-    );
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Allow public paths through without auth
@@ -28,7 +26,7 @@ export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   if (!sessionCookie) {
-    const loginUrl = new URL(pathname.startsWith("/dinas") ? "/login/dinas" : "/login", request.url);
+    const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 

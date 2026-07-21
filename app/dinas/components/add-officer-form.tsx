@@ -11,6 +11,7 @@ import {
   Check,
   ChevronDown,
   Info,
+  LoaderCircle,
   UploadCloud,
   UserPlus,
   X,
@@ -25,10 +26,12 @@ export function AddOfficerForm() {
   const store = useDlhStore();
   const fileInput = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState("");
   const [dragging, setDragging] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const processFile = (file?: File) => {
     if (!file) return;
@@ -52,6 +55,9 @@ export function AddOfficerForm() {
           .getContext("2d")
           ?.drawImage(image, 0, 0, canvas.width, canvas.height);
         setPhoto(canvas.toDataURL("image/jpeg", 0.75));
+        canvas.toBlob((blob) => {
+          if (blob) setPhotoFile(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+        }, "image/jpeg", 0.75);
       };
       image.src = String(reader.result);
     };
@@ -68,9 +74,9 @@ export function AddOfficerForm() {
     processFile(event.dataTransfer.files[0]);
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!photo) {
+    if (!photo || !photoFile) {
       setFileError("Foto identitas wajib diunggah.");
       return;
     }
@@ -80,32 +86,49 @@ export function AddOfficerForm() {
       setFileError(`ID ${id} sudah digunakan.`);
       return;
     }
-    const name = String(data.get("name"));
-    updateDlhStore((draft) => {
-      draft.officers.push({
-        id,
-        name,
-        initials: name
-          .split(" ")
-          .map((part) => part[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase(),
-        zone: String(data.get("zone")),
-        phone: String(data.get("phone")),
-        email: `${name.toLowerCase().replaceAll(" ", ".")}@dlh-jakarta.go.id`,
-        color: "bg-[#bcebd1]",
-        role: String(data.get("role")),
-        shift: "Pagi",
-        mobileAccess: true,
-        tracking: true,
-        photo,
-        tasks: 0,
-        location: draft.settings.region,
-        recentTasks: [],
+    setSaving(true);
+    setFileError("");
+    try {
+      const upload = new FormData();
+      upload.append("photo", photoFile);
+      upload.append("kind", "officer-profile");
+      upload.append("officerId", id);
+      const response = await fetch("/api/dinas/media", { method: "POST", body: upload });
+      const result = await response.json() as { data?: { url?: string }; error?: string };
+      const photoUrl = result.data?.url;
+      if (!response.ok || !photoUrl) throw new Error(result.error ?? "Foto petugas gagal diunggah.");
+
+      const name = String(data.get("name"));
+      updateDlhStore((draft) => {
+        draft.officers.push({
+          id,
+          name,
+          initials: name
+            .split(" ")
+            .map((part) => part[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase(),
+          zone: String(data.get("zone")),
+          phone: String(data.get("phone")),
+          email: `${name.toLowerCase().replaceAll(" ", ".")}@dlh-jakarta.go.id`,
+          color: "bg-[#bcebd1]",
+          role: String(data.get("role")),
+          shift: "Pagi",
+          mobileAccess: true,
+          tracking: true,
+          photo: photoUrl,
+          tasks: 0,
+          location: draft.settings.region,
+          recentTasks: [],
+        });
       });
-    });
-    setSaved(true);
+      setSaved(true);
+    } catch (submitError) {
+      setFileError(submitError instanceof Error ? submitError.message : "Data petugas gagal disimpan.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -304,10 +327,11 @@ export function AddOfficerForm() {
                 </div>
                 <button
                   type="submit"
-                  className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#087529] text-sm font-extrabold text-white hover:bg-[#066421]"
+                  disabled={saving}
+                  className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#087529] text-sm font-extrabold text-white hover:bg-[#066421] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <UserPlus className="size-4" />
-                  Simpan Data Petugas
+                  {saving ? <LoaderCircle className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
+                  {saving ? "Mengunggah foto..." : "Simpan Data Petugas"}
                 </button>
                 <button
                   type="button"
