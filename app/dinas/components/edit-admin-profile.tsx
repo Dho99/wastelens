@@ -84,6 +84,7 @@ export function EditAdminProfile() {
       await updateAdmin.mutateAsync({
         name: String(data.get("name")).trim(),
         phoneNumber: String(data.get("phone")).trim(),
+        image: persistedPhoto || admin?.image || undefined,
       });
       router.push("/dinas/accounts");
     } catch (saveError) {

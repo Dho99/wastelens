@@ -10,6 +10,7 @@ export interface TaskItem {
   kategori_ukuran: string;
   rekomendasi_kendaraan: string | null;
   status: string;
+  route_order: number | null;
   createdAt: string;
   user: { nama: string } | null;
   kendaraan: { jenis: string } | null;

@@ -27,6 +27,15 @@ export default function TaskListPage() {
         return;
       }
 
+      // Auto-collective routes already carry an authoritative pickup order.
+      // Do not replace it with a fresh GPS-based sort on the officer device.
+      if (taskList.some((task) => task.route_order != null)) {
+        setTasks(taskList);
+        setSorted(true);
+        setLoading(false);
+        return;
+      }
+
       if (!navigator.geolocation) {
         setTasks(taskList);
         setLoading(false);
@@ -59,7 +68,8 @@ export default function TaskListPage() {
   }, []);
 
   useEffect(() => {
-    loadTasks();
+    const timeout = window.setTimeout(() => void loadTasks(), 0);
+    return () => window.clearTimeout(timeout);
   }, [loadTasks]);
 
   if (loading) {

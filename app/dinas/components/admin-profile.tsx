@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
-  Bell,
   CheckCircle2,
   Pencil,
   Save,
@@ -74,34 +73,6 @@ export function AdminProfile() {
   return (
       <>
       <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
-        <header className="flex h-14 shrink-0 items-center border-b border-[#c7d6cc] px-5 sm:px-6">
-          <h1 className="text-xl font-extrabold text-[#087529]">
-            Profil Dinas
-          </h1>
-          <Link
-            href="/dinas/notifications"
-            className="ml-auto rounded-full p-2 hover:bg-white"
-            aria-label="Notifikasi"
-          >
-            <Bell className="size-5" />
-          </Link>
-          <span className="relative ml-4 size-9 overflow-hidden rounded-full border-2 border-[#087529]">
-            <Image
-              src={image ?? "/images/dlh-field-officer.png"}
-              alt="Profil Dinas"
-              fill
-              loading="eager"
-              className="object-cover object-top"
-              sizes="36px"
-              unoptimized={Boolean(
-                image?.startsWith("data:")
-                  || image?.startsWith("/api/dinas/media/")
-                  || image?.includes("/svg"),
-              )}
-            />
-          </span>
-        </header>
-
         <main className="min-h-0 flex-1 overflow-y-auto bg-white p-4 sm:p-5">
           <div className="mx-auto grid max-w-[1220px] items-start gap-5 lg:grid-cols-[minmax(0,2.4fr)_330px]">
             <div className="space-y-5">

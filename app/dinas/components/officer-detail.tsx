@@ -9,8 +9,6 @@ import {
     ArrowLeft,
     Bell,
     CheckCircle2,
-    ChevronRight,
-    Clock3,
     History,
     MapPin,
     Navigation,
@@ -45,16 +43,26 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
     const [livePosition, setLivePosition] = useState<[number, number] | null>(
         null,
     );
-    const officerLatitude =
-        livePosition?.[0] ??
-        assignedReport?.latitude ??
-        -6.1944 + (officerIndex % 4) * 0.007;
-    const officerLongitude =
-        livePosition?.[1] ??
-        assignedReport?.longitude ??
-        106.8229 + (officerIndex % 5) * 0.008;
 
     if (!officer) return null;
+
+    const assignedReport = officer.laporan?.[0];
+    const coordinateOffset = [...officerId].reduce(
+        (sum, character) => sum + character.charCodeAt(0),
+        0,
+    );
+    const officerLatitude =
+        livePosition?.[0] ??
+        assignedReport?.lokasi_lat ??
+        -6.1944 + (coordinateOffset % 4) * 0.007;
+    const officerLongitude =
+        livePosition?.[1] ??
+        assignedReport?.lokasi_lng ??
+        106.8229 + (coordinateOffset % 5) * 0.008;
+    const officerLocation =
+        assignedReport?.address_text ??
+        assignedReport?.district ??
+        "Lokasi petugas";
 
     const saveException = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -208,7 +216,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
                                     <LeafletLocationMap
                                         lat={officerLatitude}
                                         lng={officerLongitude}
-                                        popup={officer.location}
+                                        popup={officerLocation}
                                         zoom={14}
                                         height="h-[270px]"
                                     />

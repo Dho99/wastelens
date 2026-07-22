@@ -3,12 +3,13 @@
 import "leaflet/dist/leaflet.css";
 import "@/lib/leaflet";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
-import type { Map as LeafletMap } from "leaflet";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import L, { type Map as LeafletMap } from "leaflet";
 import {
   Circle,
   CircleMarker,
   MapContainer,
+  Polyline,
   Popup,
   TileLayer,
   Tooltip,
@@ -25,6 +26,7 @@ function reportPosition(report: DinasReport): [number, number] {
 
 type DlhOperationsMapProps = {
   reports: DinasReport[];
+  assignedReports?: DinasReport[];
   reportOpen: boolean;
   selectedReportId: string | null;
   onOpenReport: (id: string) => void;
@@ -34,6 +36,7 @@ type DlhOperationsMapProps = {
 
 export default function DlhOperationsMap({
   reports,
+  assignedReports = [],
   reportOpen,
   selectedReportId,
   onOpenReport,
@@ -42,6 +45,24 @@ export default function DlhOperationsMap({
 }: DlhOperationsMapProps) {
   const [view, setView] = useState<"heatmap" | "points">("heatmap");
   const [map, setMap] = useState<LeafletMap | null>(null);
+  const fittedPointsKey = useRef("");
+
+  const assignedRoutes = useMemo(() => {
+    const groups = new Map<string, DinasReport[]>();
+    for (const report of assignedReports) {
+      const key = `${report.petugas_id ?? "none"}:${report.kendaraan_id ?? "none"}`;
+      const group = groups.get(key) ?? [];
+      group.push(report);
+      groups.set(key, group);
+    }
+    return [...groups.values()].map((group) =>
+      group.sort((a, b) => (a.route_order ?? Number.MAX_SAFE_INTEGER) - (b.route_order ?? Number.MAX_SAFE_INTEGER)),
+    );
+  }, [assignedReports]);
+  const heatmapReports = useMemo(
+    () => [...reports, ...assignedReports],
+    [assignedReports, reports],
+  );
 
   useEffect(() => {
     if (!map) return;
@@ -64,6 +85,19 @@ export default function DlhOperationsMap({
     const frame = requestAnimationFrame(() => map.invalidateSize({ animate: false }));
     return () => cancelAnimationFrame(frame);
   }, [map, reportOpen]);
+
+  useEffect(() => {
+    if (!map) return;
+    const allReports = [...reports, ...assignedReports];
+    if (allReports.length === 0) return;
+    const pointsKey = allReports.map((report) => report.id).sort().join(":");
+    if (fittedPointsKey.current === pointsKey) return;
+    fittedPointsKey.current = pointsKey;
+
+    const bounds = L.latLngBounds(allReports.map(reportPosition));
+    if (allReports.length === 1) map.setView(reportPosition(allReports[0]), 15);
+    else map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+  }, [assignedReports, map, reports]);
 
   useEffect(() => {
     if (!map || !reportOpen || !selectedReportId) return;
@@ -102,7 +136,7 @@ export default function DlhOperationsMap({
         />
 
         {view === "heatmap" &&
-          reports.map((report) => {
+          heatmapReports.map((report) => {
             const center = reportPosition(report);
             const weight = report.kategori_ukuran === "BAHAYA" ? 1.25 : 1;
             return (
@@ -168,6 +202,34 @@ export default function DlhOperationsMap({
               </CircleMarker>
             );
           })}
+
+        {assignedRoutes.map((route, routeIndex) => (
+          <Fragment key={`assigned-route-${routeIndex}`}>
+            {route.length > 1 && (
+              <Polyline
+                positions={route.map(reportPosition)}
+                pathOptions={{ color: "#7c3aed", weight: 5, opacity: 0.85, dashArray: "10 7" }}
+              />
+            )}
+            {route.map((report, index) => (
+              <CircleMarker
+                key={`assigned-${report.id}`}
+                center={reportPosition(report)}
+                radius={14}
+                pathOptions={{ color: "#ffffff", weight: 4, fillColor: "#7c3aed", fillOpacity: 1 }}
+              >
+                <Tooltip permanent direction="top" offset={[0, -14]} className="dlh-selected-report-label">
+                  Pickup {report.route_order ?? index + 1}
+                </Tooltip>
+                <Popup>
+                  <strong>Pickup {report.route_order ?? index + 1}</strong><br />
+                  {report.address_text ?? report.district ?? "Lokasi pickup"}<br />
+                  Status: {report.status}
+                </Popup>
+              </CircleMarker>
+            ))}
+          </Fragment>
+        ))}
 
         {selectedReport && (
           <>

@@ -42,11 +42,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, phoneNumber } = body;
+    const { name, phoneNumber, image } = body;
 
     const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name;
     if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+    if (image !== undefined) updateData.image = image;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "Tidak ada data yang diupdate", code: "VALIDATION" }, { status: 400 });

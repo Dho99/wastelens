@@ -19,14 +19,6 @@ import { DlhShell } from "./dlh-shell";
 import { useReport, useAssignReport } from "../hooks/useReports";
 import { useOfficers } from "../hooks/useOfficers";
 import { useVehicles } from "../hooks/useVehicles";
-import type { DinasReport } from "@/lib/services/dinas/types";
-
-const STATUS_DISPLAY: Record<string, string> = {
-    WAITING: "Menunggu",
-    PENDING: "Diproses",
-    SELESAI: "Selesai",
-};
-
 const STATUS_TO_API: Record<string, string> = {
     Menunggu: "WAITING",
     Diproses: "PENDING",
