@@ -37,6 +37,19 @@ export async function analyzeWasteImageWithFallback(
     imageUrl: string,
     mimeType: string,
 ): Promise<ProviderResult> {
+    if (process.env.AI_PROVIDER === "mock") {
+        console.log("[AI Service] Mock provider active. Returning static result.");
+        return {
+            sizeCategory: "LARGE",
+            wasteTypes: ["plastik", "logam"],
+            drainageRisk: true,
+            accessObstructionRisk: true,
+            visualIndicators: ["tumpukan", "menyumbat"],
+            confidence: 0.95,
+            needsManualReview: false,
+            rawResponse: JSON.stringify({ mock: true }),
+        };
+    }
     const errors: string[] = [];
 
     for (const provider of PROVIDERS) {

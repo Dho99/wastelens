@@ -35,10 +35,20 @@ export async function uploadFile(
   validateFile(mimeType, fileBuffer.length, fileBuffer);
 
   const cloudinary = getCloudinaryProvider();
-  const result = await cloudinary.upload(fileBuffer, {
-    folder: "wastelens",
-    publicId: `${userId}_${Date.now()}`,
-  });
+  let result;
+  if (process.env.AI_PROVIDER === "mock") {
+    result = {
+      publicId: `mock_${userId}_${Date.now()}`,
+      secureUrl: `https://res.cloudinary.com/dummy-cloud/image/upload/mock_${userId}.jpg`,
+      resourceType: "image",
+      bytes: fileBuffer.length,
+    };
+  } else {
+    result = await cloudinary.upload(fileBuffer, {
+      folder: "wastelens",
+      publicId: `${userId}_${Date.now()}`,
+    });
+  }
 
   const expiresAt = new Date(Date.now() + EXPIRY_HOURS * 60 * 60 * 1000);
 

@@ -29,6 +29,16 @@ export async function reverseGeocode(
   lat: number,
   lng: number,
 ): Promise<NominatimAddress | null> {
+  if (process.env.AI_PROVIDER === "mock") {
+    return {
+      addressText: "Jl. Ir. H. Juanda No. 1, Kecamatan Bandung Wetan, Bandung, Jawa Barat",
+      roadName: "Jl. Ir. H. Juanda",
+      district: "Kecamatan Bandung Wetan",
+      city: "Bandung",
+      province: "Jawa Barat",
+      country: "Indonesia",
+    };
+  }
   const cached = getCached(lat, lng);
   if (cached) return cached;
 

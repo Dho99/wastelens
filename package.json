@@ -7,7 +7,13 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
-        "tasik:seed": "tsx prisma/tasik-seed.ts"
+        "tasik:seed": "tsx prisma/tasik-seed.ts",
+        "test:e2e": "dotenv -e .env.e2e -- npx playwright test",
+        "test:e2e:ui": "dotenv -e .env.e2e -- npx playwright test --ui",
+        "test:e2e:headed": "dotenv -e .env.e2e -- npx playwright test --headed",
+        "test:e2e:report": "npx playwright show-report",
+        "test:e2e:setup": "dotenv -e .env.e2e -- npx tsx e2e/scripts/db-op.ts seed",
+        "test:e2e:debug": "dotenv -e .env.e2e -- npx playwright test --debug"
     },
     "dependencies": {
         "@google/genai": "^2.12.0",
@@ -15,6 +21,7 @@
         "@hookform/resolvers": "^5.4.0",
         "@mdi/js": "^7.4.47",
         "@mdi/react": "^1.6.1",
+        "@openrouter/sdk": "^1.0.7",
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.8.0",
         "@tanstack/react-query": "^5.101.2",
@@ -39,6 +46,7 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
+        "@playwright/test": "^1.61.1",
         "@tailwindcss/postcss": "^4",
         "@types/leaflet": "^1.9.21",
         "@types/node": "^20.19.43",
@@ -46,6 +54,7 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "dotenv": "^17.4.2",
+        "dotenv-cli": "^11.0.0",
         "eslint": "^9",
         "eslint-config-next": "16.2.10",
         "prisma": "^7.8.0",

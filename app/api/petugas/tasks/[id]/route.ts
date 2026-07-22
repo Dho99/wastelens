@@ -73,11 +73,14 @@ export async function GET(
 
         return NextResponse.json(
             {
-                ...laporan,
-                status_label:
-                    laporan.status === LAPORAN_STATUS.PENDING
-                        ? "Menunggu Diproses"
-                        : laporan.status,
+                success: true,
+                data: {
+                    ...laporan,
+                    status_label:
+                        laporan.status === LAPORAN_STATUS.PENDING
+                            ? "Menunggu Diproses"
+                            : laporan.status,
+                },
             },
             { status: 200 },
         );
