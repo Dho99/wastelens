@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: dinas.user_id },
+      where: { id: dinas.userId },
       select: { id: true, name: true, email: true, image: true, phoneNumber: true },
     });
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       data: {
         ...user,
         dinasId: dinas.id,
-        dinasName: dinas.nama_dinas,
+        dinasName: dinas.name,
       },
     });
   } catch (error) {
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updated = await prisma.user.update({
-      where: { id: dinas.user_id },
+      where: { id: dinas.userId },
       data: updateData,
       select: { id: true, name: true, email: true, image: true, phoneNumber: true },
     });

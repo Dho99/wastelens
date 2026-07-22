@@ -42,7 +42,7 @@ export function DlhDashboard() {
     const { data: dashboard } = useDashboardData();
     const activeReports = (dashboard?.activeReports ?? []).filter(
         (report) =>
-            (report.status === "WAITING") &&
+            (report.status === "ANALYZED" || report.status === "WAITING") &&
             !report.petugas_id &&
             !report.kendaraan_id,
     );

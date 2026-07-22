@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestDinas } from "@/lib/dinas-auth";
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
       prisma.laporan.findMany({
         where: {
           dinas_id: dinas.id,
+          status: { in: [LAPORAN_STATUS.ANALYZED, LAPORAN_STATUS.WAITING] },
           petugas_id: null,
           kendaraan_id: null,
         },

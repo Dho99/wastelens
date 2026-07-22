@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { AutoCollectiveRoute } from "@/app/dinas/types/auto-collective";
 import {
   MapPin,
@@ -8,6 +9,14 @@ import {
   Truck,
   User,
 } from "lucide-react";
+
+const AutoCollectiveRouteMap = dynamic(
+  () => import("./auto-collective-route-map").then((mod) => mod.AutoCollectiveRouteMap),
+  {
+    ssr: false,
+    loading: () => <div className="h-56 animate-pulse bg-sky-50" />,
+  },
+);
 
 interface Props {
   route: AutoCollectiveRoute;
@@ -70,6 +79,8 @@ export function AutoCollectiveRouteCard({
           {route.routingSource}
         </span>
       </div>
+
+      <AutoCollectiveRouteMap route={route} color="#059669" />
 
       <div className="flex items-center gap-3 border-b border-neutral-100 px-4 py-2.5">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">

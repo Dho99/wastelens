@@ -12,6 +12,8 @@ import {
   Truck,
   UserRound,
   X,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdmin, useUpdateAdmin, useChangePassword } from "../hooks/useAdmin";
@@ -21,7 +23,7 @@ import { useSettings } from "../hooks/useSettings";
 
 export function AdminProfile() {
   const queryClient = useQueryClient();
-  const { data: admin, isLoading } = useAdmin();
+  const { data: admin, isLoading, isError, refetch } = useAdmin();
   const { data: reportsData } = useReports();
   const { data: vehiclesData } = useVehicles();
   const { data: settings } = useSettings();
@@ -30,14 +32,42 @@ export function AdminProfile() {
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [notice, setNotice] = useState("");
-  const reports = reportsData?.data ?? [];
+  const reports = reportsData ?? [];
   const vehicles = vehiclesData ?? [];
   const completedReports = reports.filter(
     (report) => report.status === "SELESAI",
   ).length;
   const operatingVehicles = vehicles.length;
 
-  if (isLoading || !admin) return null;
+  if (isLoading) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center justify-center bg-[#f4fbff]">
+        <div className="text-center text-[#087529]">
+          <Loader2 className="mx-auto size-8 animate-spin" />
+          <p className="mt-3 text-sm font-semibold">Memuat profil Dinas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !admin) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center justify-center bg-[#f4fbff] p-6">
+        <div className="w-full max-w-md rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm">
+          <AlertTriangle className="mx-auto size-10 text-red-500" />
+          <h1 className="mt-4 text-lg font-extrabold text-slate-800">Profil Dinas gagal dimuat</h1>
+          <p className="mt-2 text-sm text-slate-500">Terjadi kendala saat mengambil data akun. Silakan coba kembali.</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-5 rounded-full bg-[#087529] px-6 py-2.5 text-sm font-bold text-white"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const { name, email, image } = admin;
 

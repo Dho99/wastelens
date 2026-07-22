@@ -20,7 +20,16 @@ class ConfirmError extends Error {
 }
 
 function hashBody(body: ConfirmRequest): string {
-  const canonical = JSON.stringify(body, Object.keys(body).sort());
+  const canonical = JSON.stringify({
+    idempotencyKey: body.idempotencyKey,
+    routes: body.routes.map((route) => ({
+      temporaryRouteId: route.temporaryRouteId,
+      petugasId: route.petugasId,
+      kendaraanId: route.kendaraanId,
+      stopIds: route.stopIds,
+      routeOrder: route.routeOrder,
+    })),
+  });
   return createHash("sha256").update(canonical).digest("hex");
 }
 
