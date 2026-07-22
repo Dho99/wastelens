@@ -31,60 +31,62 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
     message: string;
   } | null>(null);
 
+  const fetchPreviewCore = useCallback(async () => {
+    const res = await fetch("/api/dinas/auto-collective/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportIds: selectedPickupIds.length > 0 ? selectedPickupIds : undefined }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Gagal memuat preview");
+    return data.data as AutoCollectivePreview;
+  }, [selectedPickupIds]);
+
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+    let cancelled = false;
+    fetchPreviewCore()
+      .then((result) => { if (!cancelled) setPreview(result); })
+      .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : "Gagal memuat"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [fetchPreviewCore]);
 
   const loadPreview = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/dinas/auto-collective/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportIds: selectedPickupIds.length > 0 ? selectedPickupIds : undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Gagal memuat preview");
-      setPreview(data.data);
+      const data = await fetchPreviewCore();
+      setPreview(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat");
     } finally {
       setLoading(false);
     }
-  }, [selectedPickupIds]);
-
-  const [initialized, setInitialized] = useState(false);
-  if (!initialized) {
-    setInitialized(true);
-    loadPreview();
-  }
+  }, [fetchPreviewCore]);
 
   const handleRemoveStop = useCallback(
     (temporaryRouteId: string, stopId: string) => {
       if (!preview) return;
-      const updatedRoutes = preview.routes.map((route) => {
-        if (route.temporaryRouteId !== temporaryRouteId) return route;
-        const removedStop = route.stops.find((s) => s.reportId === stopId);
-        if (!removedStop) return route;
-        return {
-          ...route,
-          stops: route.stops.filter((s) => s.reportId !== stopId),
-          totalEstimatedLoad: route.totalEstimatedLoad - removedStop.estimatedLoadKg,
-          remainingCapacity: route.remainingCapacity + removedStop.estimatedLoadKg,
-        };
-      });
+      const updatedRoutes = preview.routes
+        .map((route) => {
+          if (route.temporaryRouteId !== temporaryRouteId) return route;
+          const removedStop = route.stops.find((s) => s.reportId === stopId);
+          if (!removedStop) return route;
+          return {
+            ...route,
+            stops: route.stops.filter((s) => s.reportId !== stopId),
+            totalEstimatedLoad: route.totalEstimatedLoad - removedStop.estimatedLoadKg,
+            remainingCapacity: route.remainingCapacity + removedStop.estimatedLoadKg,
+          };
+        })
+        .filter((route) => route.stops.length > 0);
       setPreview({ ...preview, routes: updatedRoutes });
     },
     [preview],
   );
 
   const handleRegenerate = useCallback(async () => {
-    if (!preview) return;
+    if (!preview || preview.routes.length === 0) return;
     setLoading(true);
     setError("");
     try {
@@ -154,16 +156,8 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
     }
   }, [preview, onClose]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
-  }, [onClose]);
-
   return (
-    <div
-      className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/45 p-4"
-      onClick={handleBackdropClick}
-    >
-      <div className="flex w-full max-w-[min(1200px,94vw)] max-h-[min(800px,90vh)] flex-col rounded-[28px] bg-white shadow-2xl">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl">
         <header className="flex h-14 shrink-0 items-center border-b border-neutral-200 px-4 rounded-t-[28px]">
           <div className="flex items-center gap-3">
             <span className="flex size-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
@@ -318,6 +312,5 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
           )}
         </div>
       </div>
-    </div>
   );
 }

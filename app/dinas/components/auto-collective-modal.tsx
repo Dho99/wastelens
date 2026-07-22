@@ -43,7 +43,7 @@ export function AutoCollectiveModal({ selectedPickupIds, onClose }: Props) {
                 if (event.target === event.currentTarget) onClose();
             }}
         >
-            <div className="h-[min(90dvh,800px)] w-[min(94vw,1200px)] overflow-hidden rounded-[24px] bg-white shadow-2xl [&>*]:!relative [&>*]:!inset-auto [&>*]:!h-full [&>*]:!w-full">
+            <div className="h-[min(90dvh,800px)] w-[min(94vw,1200px)] overflow-hidden rounded-[24px] bg-white shadow-2xl">
                 <AutoCollectivePanel
                     onClose={onClose}
                     selectedPickupIds={selectedPickupIds}

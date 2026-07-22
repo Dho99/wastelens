@@ -4,12 +4,13 @@ import dynamic from "next/dynamic";
 import { type ComponentType, useState } from "react";
 import { Route } from "lucide-react";
 import { DlhShell } from "./dlh-shell";
-import { useDlhStore } from "@/lib/dlh-store";
+import { useDashboardData } from "../hooks/useDashboard";
+import type { DinasReport } from "@/lib/services/dinas/types";
 import { ReportPanel } from "./report-panel";
 import { AutoCollectiveModal } from "./auto-collective-modal";
 
 type MapCanvasProps = {
-    reports: import("@/lib/dlh-store").DlhReport[];
+    reports: DinasReport[];
     reportOpen: boolean;
     selectedReportId: string | null;
     onOpenReport: (id: string) => void;
@@ -38,12 +39,12 @@ const MapCanvas = dynamic<MapCanvasProps>(
 );
 
 export function DlhDashboard() {
-    const store = useDlhStore();
-    const activeReports = store.reports.filter(
+    const { data: dashboard } = useDashboardData();
+    const activeReports = (dashboard?.activeReports ?? []).filter(
         (report) =>
-            report.status === "Menunggu" &&
-            !report.assignedOfficerId &&
-            !report.assignedVehicleId,
+            (report.status === "WAITING") &&
+            !report.petugas_id &&
+            !report.kendaraan_id,
     );
 
     const [selectedReportId, setSelectedReportId] = useState<string | null>(
@@ -75,6 +76,7 @@ export function DlhDashboard() {
     const handleOpenCollective = () => {
         if (selectedPickupIds.length > 0) {
             setAutoCollectiveOpen(true);
+            setSelectedReportId(null);
         }
     };
 
@@ -109,8 +111,8 @@ export function DlhDashboard() {
                 {reportOpen && selectedReport && (
                     <ReportPanel
                         report={selectedReport}
-                        vehicles={store.vehicles}
-                        officers={store.officers}
+                        vehicles={dashboard?.vehicles ?? []}
+                        officers={dashboard?.officers ?? []}
                         onClose={() => setSelectedReportId(null)}
                     />
                 )}
