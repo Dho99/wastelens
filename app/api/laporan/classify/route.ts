@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
             upload.mime_type,
         );
 
+        console.log(result);
+
         return NextResponse.json(
             {
                 success: true,
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
             { status: 200 },
         );
     } catch (error) {
+        console.log(error);
         const message =
             error instanceof Error ? error.message : "Internal server error";
         return NextResponse.json(

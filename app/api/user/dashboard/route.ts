@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
                 prisma.laporan.groupBy({
                     by: ["user_id"],
                     _count: { id: true },
+
                     orderBy: { _count: { id: "desc" } },
                     take: 3,
                 }),
@@ -109,7 +110,10 @@ export async function GET(request: NextRequest) {
             name: userMap.get(entry.user_id)?.name ?? "Unknown",
             avatarUrl: userMap.get(entry.user_id)?.image ?? "",
             isTop: i === 0,
-            totalCoins: entry._sum.jumlah ?? 0,
+
+            totalCoins:
+                recentLaporan.find((l) => l.user_id === entry.user_id)
+                    ?.transaksi_koin[0]?.jumlah ?? 0,
         }));
 
         const partners: NearestPartner[] = kopdesList.map((k) => ({

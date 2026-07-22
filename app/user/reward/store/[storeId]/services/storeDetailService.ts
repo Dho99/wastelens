@@ -3,6 +3,8 @@ export interface ProductItem {
   name: string;
   category: 'SEMBAKO' | 'KEBERSIHAN' | 'LAINNYA';
   coinsPrice: number;
+  stock: number;
+  isActive: boolean;
   imageUrl: string;
 }
 

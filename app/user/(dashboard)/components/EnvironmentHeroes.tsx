@@ -1,5 +1,5 @@
 import React from "react";
-import { EnvironmentHero } from "../services/dashboardService";
+import { EnvironmentHero } from "../../services/dashboardService";
 
 interface EnvironmentHeroesProps {
   heroes: EnvironmentHero[];

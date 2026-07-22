@@ -8,30 +8,34 @@ datasource db {
 }
 
 model user {
-  id               String             @id
-  name             String
-  email            String             @unique
-  emailVerified    Boolean
-  image            String?
-  createdAt        DateTime
-  updatedAt        DateTime
-  address          String?
-  phoneNumber      String?
-  saldo_koin       Int                @default(0)
-  status           String             @default("active")
-  role             String             @default("user")
-  isBanned         Boolean            @default(false)
-  COIN_TRANSACTION COIN_TRANSACTION[]
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  address       String?
+  phoneNumber   String?
+
+  saldo_koin Int    @default(0)
+  status     String @default("active")
+  role       String @default("user")
+
+  sessions session[]
+  accounts account[]
+
   dinas            Dinas[]
-  kopdes           Kopdes[]
+  petugas          Petugas[]
   laporan          Laporan[]
   notifikasi       Notifikasi[]
-  penukaran        Penukaran[]
-  petugas          Petugas[]
   transaksi_koin   TransaksiKoin[]
-  accounts         account[]
-  bannedReasons    BannedReason[]
-  sessions         session[]
+  kopdes           Kopdes[]
+  penukaran        Penukaran[]
+  coin_transaction CoinTransaction[]
+
+  isBanned      Boolean        @default(false)
+  bannedReasons BannedReason[]
 
   @@map("user")
 }
@@ -91,20 +95,49 @@ model verification {
 }
 
 model Dinas {
-  id                      String                    @id @default(uuid()) @db.Uuid
-  user_id                 String
-  nama_dinas              String
-  kontak                  String
-  area_cakupan            AreaCakupan[]
-  AUTO_COLLECTIVE_REQUEST AUTO_COLLECTIVE_REQUEST[]
-  user                    user                      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  DLH_MEDIA               DLH_MEDIA[]
-  DLH_PORTAL_STATE        DLH_PORTAL_STATE?
-  kendaraan               Kendaraan[]
-  laporan                 Laporan[]
-  petugas                 Petugas[]
+  id         String @id @default(uuid()) @db.Uuid
+  user_id    String
+  nama_dinas String
+  kontak     String
+
+  user                     user                    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  petugas                  Petugas[]
+  area_cakupan             AreaCakupan[]
+  kendaraan                Kendaraan[]
+  laporan                  Laporan[]
+  portal_state             DlhPortalState?
+  media                    DlhMedia[]
+  auto_collective_requests AutoCollectiveRequest[]
 
   @@map("DINAS")
+}
+
+model DlhPortalState {
+  id        String   @id @default(uuid()) @db.Uuid
+  dinas_id  String   @unique @db.Uuid
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@map("DLH_PORTAL_STATE")
+}
+
+model DlhMedia {
+  id          String   @id @default(uuid()) @db.Uuid
+  dinas_id    String   @db.Uuid
+  uploaded_by String
+  kind        String   @default("profile")
+  mime_type   String
+  size_bytes  Int
+  data        Bytes
+  createdAt   DateTime @default(now())
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@index([dinas_id, kind])
+  @@map("DLH_MEDIA")
 }
 
 model Petugas {
@@ -142,67 +175,86 @@ model Kendaraan {
 }
 
 model Laporan {
-  id                                String             @id @default(uuid()) @db.Uuid
-  user_id                           String
-  dinas_id                          String?            @db.Uuid
-  petugas_id                        String?            @db.Uuid
-  kendaraan_id                      String?            @db.Uuid
-  foto_url                          String
-  lokasi_lat                        Float
-  lokasi_lng                        Float
-  kategori_ukuran                   String
-  rekomendasi_kendaraan             String?
-  status                            LAPORAN_STATUS
-  createdAt                         DateTime           @default(now())
-  updatedAt                         DateTime           @updatedAt
-  lokasi_accuracy                   Float?             @map("lokasi_accuracy")
-  lokasi_confirmed_lat              Float?             @map("lokasi_confirmed_lat")
-  lokasi_confirmed_lng              Float?             @map("lokasi_confirmed_lng")
-  lokasi_device_lat                 Float?             @map("lokasi_device_lat")
-  lokasi_device_lng                 Float?             @map("lokasi_device_lng")
-  lokasi_captured_at                DateTime?          @map("lokasi_captured_at")
-  lokasi_exif_lat                   Float?             @map("lokasi_exif_lat")
-  lokasi_exif_lng                   Float?             @map("lokasi_exif_lng")
-  risk_flags                        String[]           @default([])
-  address_text                      String?            @map("address_text")
-  road_name                         String?            @map("road_name")
-  district                          String?            @map("district")
-  city                              String?            @map("city")
-  province                          String?            @map("province")
-  country                           String?            @map("country")
-  photo_hash                        String?            @map("photo_hash")
-  photo_mime_type                   String?            @map("photo_mime_type")
-  photo_size_bytes                  Int?               @map("photo_size_bytes")
-  waste_types                       String[]           @default([])
-  drainage_risk                     Boolean?           @default(false) @map("drainage_risk")
-  access_obstruction_risk           Boolean?           @default(false) @map("access_obstruction_risk")
-  visual_indicators                 String[]           @default([]) @map("visual_indicators")
-  confidence                        Float?
-  needs_manual_review               Boolean?           @default(false) @map("needs_manual_review")
-  analysis_provider                 String?            @map("analysis_provider")
-  analysed_at                       DateTime?          @map("analysed_at")
-  priority_score                    Float?             @map("priority_score")
-  priority_level                    String?            @map("priority_level")
-  priority_weight_version           String?            @map("priority_weight_version")
-  client_request_id                 String?            @unique @map("client_request_id")
-  estimated_load_unit               Int?               @map("estimated_load_unit")
-  corrected_access_obstruction_risk Boolean?
-  corrected_at                      DateTime?
-  corrected_by                      String?
-  corrected_drainage_risk           Boolean?
-  corrected_kategori_ukuran         String?
-  correction_reason                 String?
-  assigned_load_kg                  Int?
-  load_released_at                  DateTime?
-  route_order                       Int?
-  foto                              Foto[]
-  dinas                             Dinas?             @relation(fields: [dinas_id], references: [id])
-  kendaraan                         Kendaraan?         @relation(fields: [kendaraan_id], references: [id])
-  petugas                           Petugas?           @relation(fields: [petugas_id], references: [id])
-  user                              user               @relation(fields: [user_id], references: [id])
-  notifikasi                        Notifikasi[]
-  transaksi_koin                    TransaksiKoin[]
-  verifikasi_pickup                 VerifikasiPickup[]
+  id                    String        @id @default(uuid()) @db.Uuid
+  user_id               String
+  dinas_id              String?       @db.Uuid
+  petugas_id            String?       @db.Uuid
+  kendaraan_id          String?       @db.Uuid
+  foto_url              String
+  lokasi_lat            Float
+  lokasi_lng            Float
+  kategori_ukuran       String
+  rekomendasi_kendaraan String?
+  status                LaporanStatus
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  // Correction oleh petugas/dinas terhadap hasil AI
+  corrected_kategori_ukuran         String?   @map("corrected_kategori_ukuran")
+  corrected_drainage_risk           Boolean?  @map("corrected_drainage_risk")
+  corrected_access_obstruction_risk Boolean?  @map("corrected_access_obstruction_risk")
+  corrected_by                      String?   @map("corrected_by")
+  corrected_at                      DateTime? @map("corrected_at")
+  correction_reason                 String?   @map("correction_reason")
+
+  // Location enhancement
+  lokasi_accuracy      Float?    @map("lokasi_accuracy")
+  lokasi_confirmed_lat Float?    @map("lokasi_confirmed_lat")
+  lokasi_confirmed_lng Float?    @map("lokasi_confirmed_lng")
+  lokasi_device_lat    Float?    @map("lokasi_device_lat")
+  lokasi_device_lng    Float?    @map("lokasi_device_lng")
+  lokasi_captured_at   DateTime? @map("lokasi_captured_at")
+  lokasi_exif_lat      Float?    @map("lokasi_exif_lat")
+  lokasi_exif_lng      Float?    @map("lokasi_exif_lng")
+  risk_flags           String[]  @default([])
+
+  // Reverse-geocoded address
+  address_text String? @map("address_text")
+  road_name    String? @map("road_name")
+  district     String? @map("district")
+  city         String? @map("city")
+  province     String? @map("province")
+  country      String? @map("country")
+
+  // Photo metadata
+  photo_hash       String? @map("photo_hash")
+  photo_mime_type  String? @map("photo_mime_type")
+  photo_size_bytes Int?    @map("photo_size_bytes")
+
+  // Analysis
+  waste_types             String[]  @default([])
+  drainage_risk           Boolean?  @default(false) @map("drainage_risk")
+  access_obstruction_risk Boolean?  @default(false) @map("access_obstruction_risk")
+  visual_indicators       String[]  @default([]) @map("visual_indicators")
+  confidence              Float?
+  needs_manual_review     Boolean?  @default(false) @map("needs_manual_review")
+  analysis_provider       String?   @map("analysis_provider")
+  analysed_at             DateTime? @map("analysed_at")
+
+  // Priority
+  priority_score          Float?  @map("priority_score")
+  priority_level          String? @map("priority_level")
+  priority_weight_version String? @map("priority_weight_version")
+
+  // Idempotency & load
+  client_request_id   String? @unique @map("client_request_id")
+  estimated_load_unit Int?    @map("estimated_load_unit")
+
+  // Assignment load tracking
+  assigned_load_kg Int?      @map("assigned_load_kg")
+  load_released_at DateTime? @map("load_released_at")
+
+  // Dispatch routing
+  route_order Int?
+
+  user              user               @relation(fields: [user_id], references: [id])
+  dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
+  petugas           Petugas?           @relation(fields: [petugas_id], references: [id])
+  kendaraan         Kendaraan?         @relation(fields: [kendaraan_id], references: [id])
+  foto              Foto[]
+  transaksi_koin    TransaksiKoin[]
+  verifikasi_pickup VerifikasiPickup[]
+  notifikasi        Notifikasi[]
 
   @@map("LAPORAN")
 }
@@ -220,16 +272,17 @@ model Foto {
 }
 
 model TransaksiKoin {
-  id         String  @id @default(uuid()) @db.Uuid
+  id         String @id @default(uuid()) @db.Uuid
   user_id    String
-  laporan_id String  @db.Uuid
+  laporan_id String @db.Uuid
   jumlah     Int
   jenis      String
   metadata   Json?
-  laporan    Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
-  user       user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([laporan_id, jenis], map: "uq_reward_laporan_jenis")
+  user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+
+  @@unique([laporan_id, jenis], name: "laporan_id_jenis", map: "uq_reward_laporan_jenis")
   @@map("TRANSAKSI_KOIN")
 }
 
@@ -257,43 +310,74 @@ model Notifikasi {
 }
 
 model Kopdes {
-  id        String      @id @default(uuid()) @db.Uuid
-  user_id   String
-  nama      String
-  alamat    String
-  is_active Boolean     @default(true)
+  id       String  @id @default(uuid()) @db.Uuid
+  user_id  String
+  nama     String
+  alamat   String
+  isActive Boolean @default(true) @map("is_active")
+
   user      user        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  PENUKARAN Penukaran[]
   produk    Produk[]
+  penukaran Penukaran[]
 
   @@map("KOPDES")
 }
 
 model Produk {
-  id          String      @id @default(uuid()) @db.Uuid
-  kopdes_id   String      @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  kopdes_id   String   @db.Uuid
   nama_barang String
   harga_koin  Int
   stok        Int
-  is_active   Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  penukaran   Penukaran[]
-  kopdes      Kopdes      @relation(fields: [kopdes_id], references: [id], onDelete: Cascade)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  kopdes    Kopdes      @relation(fields: [kopdes_id], references: [id], onDelete: Cascade)
+  penukaran Penukaran[]
 
   @@map("PRODUK")
 }
 
+enum LaporanStatus {
+  ANALYZED
+  WAITING
+  PENDING
+  DIJEMPUT
+  SELESAI
+  DITOLAK
+
+  @@map("LAPORAN_STATUS")
+}
+
+enum RedemptionStatus {
+  PENDING
+  REDEEMED
+  EXPIRED
+  CANCELLED
+
+  @@map("REDEMPTION_STATUS")
+}
+
+enum CoinTransactionType {
+  REWARD
+  REDEMPTION_RESERVE
+  REDEMPTION_REFUND
+  ADMIN_ADJUSTMENT
+
+  @@map("COIN_TRANSACTION_TYPE")
+}
+
 model Penukaran {
-  id                  String             @id @default(uuid()) @db.Uuid
+  id                  String           @id @default(uuid()) @db.Uuid
   user_id             String
-  produk_id           String             @db.Uuid
-  kopdes_id           String             @db.Uuid
-  quantity            Int                @default(1)
+  produk_id           String           @db.Uuid
+  kopdes_id           String           @db.Uuid
+  quantity            Int              @default(1)
   unit_coin_price     Int
   jumlah_koin         Int
-  status              REDEMPTION_STATUS  @default(PENDING)
-  token_hash          String?            @unique
+  status              RedemptionStatus @default(PENDING)
+  token_hash          String?          @unique
   token_hint          String?
   qr_payload          String?
   idempotency_key     String?
@@ -303,18 +387,46 @@ model Penukaran {
   expired_at          DateTime?
   redeemed_by_user_id String?
   cancellation_reason String?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  COIN_TRANSACTION    COIN_TRANSACTION[]
-  KOPDES              Kopdes             @relation(fields: [kopdes_id], references: [id])
-  produk              Produk             @relation(fields: [produk_id], references: [id])
-  user                user               @relation(fields: [user_id], references: [id])
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  user             user              @relation(fields: [user_id], references: [id])
+  produk           Produk            @relation(fields: [produk_id], references: [id])
+  kopdes           Kopdes            @relation(fields: [kopdes_id], references: [id])
+  coin_transaction CoinTransaction[]
 
   @@unique([user_id, idempotency_key])
-  @@index([expires_at, status])
-  @@index([kopdes_id, status])
   @@index([user_id, status])
+  @@index([kopdes_id, status])
+  @@index([expires_at, status])
   @@map("PENUKARAN")
+}
+
+model CoinTransaction {
+  id             String              @id @default(uuid()) @db.Uuid
+  user_id        String
+  redemption_id  String?             @db.Uuid
+  type           CoinTransactionType
+  amount         Int
+  balance_before Int
+  balance_after  Int
+  description    String?
+  created_at     DateTime            @default(now())
+
+  user      user       @relation(fields: [user_id], references: [id])
+  penukaran Penukaran? @relation(fields: [redemption_id], references: [id])
+
+  @@index([user_id, created_at])
+  @@index([redemption_id])
+  @@map("COIN_TRANSACTION")
+}
+
+enum TemporaryUploadStatus {
+  ACTIVE
+  USED
+  EXPIRED
+
+  @@map("TEMPORARY_UPLOAD_STATUS")
 }
 
 model TemporaryUpload {
@@ -334,86 +446,17 @@ model TemporaryUpload {
   @@map("TEMPORARY_UPLOAD")
 }
 
-model AUTO_COLLECTIVE_REQUEST {
-  id              String   @id @db.Uuid
+model AutoCollectiveRequest {
+  id              String   @id @default(uuid()) @db.Uuid
   dinas_id        String   @db.Uuid
   idempotency_key String
   request_hash    String
   response_data   Json?
   created_at      DateTime @default(now())
-  DINAS           Dinas    @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
 
   @@unique([dinas_id, idempotency_key])
   @@index([dinas_id, created_at])
-}
-
-model COIN_TRANSACTION {
-  id             String                @id @db.Uuid
-  user_id        String
-  redemption_id  String?               @db.Uuid
-  type           COIN_TRANSACTION_TYPE
-  amount         Int
-  balance_before Int
-  balance_after  Int
-  description    String?
-  created_at     DateTime              @default(now())
-  PENUKARAN      Penukaran?            @relation(fields: [redemption_id], references: [id])
-  user           user                  @relation(fields: [user_id], references: [id])
-
-  @@index([redemption_id])
-  @@index([user_id, created_at])
-}
-
-model DLH_MEDIA {
-  id          String   @id @db.Uuid
-  dinas_id    String   @db.Uuid
-  uploaded_by String
-  kind        String   @default("profile")
-  mime_type   String
-  size_bytes  Int
-  data        Bytes
-  createdAt   DateTime @default(now())
-  DINAS       Dinas    @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-
-  @@index([dinas_id, kind])
-}
-
-model DLH_PORTAL_STATE {
-  id        String   @id @db.Uuid
-  dinas_id  String   @unique @db.Uuid
-  data      Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  DINAS     Dinas    @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-}
-
-enum TemporaryUploadStatus {
-  ACTIVE
-  USED
-  EXPIRED
-
-  @@map("TEMPORARY_UPLOAD_STATUS")
-}
-
-enum COIN_TRANSACTION_TYPE {
-  REWARD
-  REDEMPTION_RESERVE
-  REDEMPTION_REFUND
-  ADMIN_ADJUSTMENT
-}
-
-enum LAPORAN_STATUS {
-  ANALYZED
-  WAITING
-  PENDING
-  DIJEMPUT
-  SELESAI
-  DITOLAK
-}
-
-enum REDEMPTION_STATUS {
-  PENDING
-  REDEEMED
-  EXPIRED
-  CANCELLED
+  @@map("AUTO_COLLECTIVE_REQUEST")
 }

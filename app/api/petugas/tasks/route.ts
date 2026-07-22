@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,27 +36,32 @@ export async function GET(request: NextRequest) {
       prisma.laporan.findMany({
         where: {
           petugas_id: petugas.id,
-          status: { not: "SELESAI" },
+          status: { not: LAPORAN_STATUS.SELESAI },
         },
         include: {
-          user: { select: { nama: true } },
+          user: { select: { name: true } },
           kendaraan: { select: { jenis: true } },
           dinas: { select: { nama_dinas: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { route_order: { sort: "asc", nulls: "last" } },
+          { priority_score: { sort: "desc", nulls: "last" } },
+          { createdAt: "asc" },
+        ],
         skip,
         take: limit,
       }),
       prisma.laporan.count({
         where: {
           petugas_id: petugas.id,
-          status: { not: "SELESAI" },
+          status: { not: LAPORAN_STATUS.SELESAI },
         },
       }),
     ]);
 
     return NextResponse.json(
       {
+        success: true,
         data: laporan.map((l) => ({
           id: l.id,
           user_id: l.user_id,
@@ -68,7 +74,9 @@ export async function GET(request: NextRequest) {
           kategori_ukuran: l.kategori_ukuran,
           rekomendasi_kendaraan: l.rekomendasi_kendaraan,
           status: l.status,
-          status_label: l.status === "PENDING" ? "Menunggu Diproses" : l.status,
+          status_label: l.status === LAPORAN_STATUS.PENDING ? "Menunggu Diproses" : l.status,
+          route_order: (l as unknown as Record<string, unknown>).route_order ?? null,
+          priority_score: (l as unknown as Record<string, unknown>).priority_score ?? null,
           createdAt: l.createdAt,
           user: l.user,
           kendaraan: l.kendaraan,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export async function GET(
     request: NextRequest,
@@ -46,7 +47,7 @@ export async function GET(
                 petugas_id: petugas.id,
             },
             include: {
-                user: { select: { id: true, nama: true } },
+                user: { select: { id: true, name: true } },
                 kendaraan: { select: { id: true, jenis: true } },
                 dinas: { select: { id: true, nama_dinas: true } },
                 foto: { select: { url: true } },
@@ -74,7 +75,7 @@ export async function GET(
             {
                 ...laporan,
                 status_label:
-                    laporan.status === "PENDING"
+                    laporan.status === LAPORAN_STATUS.PENDING
                         ? "Menunggu Diproses"
                         : laporan.status,
             },
