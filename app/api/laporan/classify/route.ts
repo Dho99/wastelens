@@ -43,7 +43,9 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
             {
-                analysis: {
+                success: true,
+                data: {
+                    rawResponse: result.rawResponse,
                     sizeCategory: result.sizeCategory,
                     wasteTypes: result.wasteTypes,
                     drainageRisk: result.drainageRisk,
