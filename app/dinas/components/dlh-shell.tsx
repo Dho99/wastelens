@@ -2,13 +2,12 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useEffect } from "react";
-import { hydrateDlhStore, useDlhStore } from "@/lib/dlh-store";
 import { Bell, Settings } from "lucide-react";
+import { useNotifications } from "../hooks/useNotifications";
 
 function DashboardHeader() {
-    const store = useDlhStore();
-    const unreadCount = store.notifications.filter((item) => !item.read).length;
+    const { data: notifications } = useNotifications();
+    const unreadCount = (notifications ?? []).filter((n) => !n.status_baca).length;
     return (
         <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
             <div className="ml-auto flex items-center gap-2 sm:gap-5">
@@ -54,10 +53,6 @@ export function DlhShell({
     children: ReactNode;
     hideHeader?: boolean;
 }) {
-    useEffect(() => {
-        void hydrateDlhStore();
-    }, []);
-
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f4fbff] text-[#17231d]">
             {!hideHeader && <DashboardHeader />}

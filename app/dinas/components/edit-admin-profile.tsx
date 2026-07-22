@@ -16,17 +16,17 @@ import {
   Save,
   X,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useAdmin, useUpdateAdmin } from "../hooks/useAdmin";
 
 const fieldClass =
   "mt-2 h-12 w-full rounded-full border-2 border-[#bdcbbd] bg-white px-5 text-sm font-normal outline-none transition focus:border-[#087529]";
 
 export function EditAdminProfile() {
   const router = useRouter();
-  const store = useDlhStore();
-  const admin = store.admin;
+  const { data: admin, isLoading } = useAdmin();
+  const updateAdmin = useUpdateAdmin();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [photo, setPhoto] = useState(admin.photo ?? "");
+  const [photo, setPhoto] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -74,19 +74,16 @@ export function EditAdminProfile() {
       if (photoFile) {
         const upload = new FormData();
         upload.append("photo", photoFile);
-        if (admin.photo) upload.append("previousUrl", admin.photo);
+        if (admin?.image) upload.append("previousUrl", admin.image);
         const response = await fetch("/api/dinas/media", { method: "POST", body: upload });
         const result = await response.json() as { data?: { url?: string }; error?: string };
         if (!response.ok || !result.data?.url) throw new Error(result.error ?? "Foto gagal diunggah.");
         persistedPhoto = result.data.url;
       }
 
-      updateDlhStore((draft) => {
-        draft.admin.name = String(data.get("name")).trim();
-        draft.admin.email = String(data.get("email")).trim();
-        draft.admin.department = String(data.get("department"));
-        draft.admin.phone = String(data.get("phone")).trim();
-        draft.admin.photo = persistedPhoto || undefined;
+      await updateAdmin.mutateAsync({
+        name: String(data.get("name")).trim(),
+        phoneNumber: String(data.get("phone")).trim(),
       });
       router.push("/dinas/accounts");
     } catch (saveError) {
@@ -95,6 +92,8 @@ export function EditAdminProfile() {
       setSaving(false);
     }
   };
+
+  if (isLoading || !admin) return null;
 
   return (
       <>
@@ -117,7 +116,7 @@ export function EditAdminProfile() {
           </Link>
           <span className="relative ml-4 size-9 overflow-hidden rounded-full border-2 border-[#087529] bg-[#dceef5]">
             <Image
-              src={photo || "/images/dlh-field-officer.png"}
+              src={photo || admin.image || "/images/dlh-field-officer.png"}
               alt={admin.name}
               fill
               className="object-cover object-top"
@@ -167,7 +166,7 @@ export function EditAdminProfile() {
                 >
                   <span className="relative block size-full overflow-hidden rounded-full border-4 border-[#bcebd1] bg-[#dceef5]">
                     <Image
-                      src={photo || "/images/dlh-field-officer.png"}
+                      src={photo || admin.image || "/images/dlh-field-officer.png"}
                       alt={admin.name}
                       fill
                       priority
@@ -245,9 +244,7 @@ export function EditAdminProfile() {
                     <span className="relative block">
                       <select
                         name="department"
-                        defaultValue={
-                          admin.department ?? "Operasional Pengolahan Limbah"
-                        }
+                        defaultValue={"Operasional Pengolahan Limbah"}
                         className={`${fieldClass} appearance-none pr-12`}
                       >
                         <option>Operasional Pengolahan Limbah</option>
@@ -262,7 +259,7 @@ export function EditAdminProfile() {
                     <label className="text-sm font-bold text-[#465148]">
                       Jabatan
                       <input
-                        value={admin.position ?? "Kepala Bidang Operasional"}
+                        value={"Kepala Bidang Operasional"}
                         readOnly
                         className={`${fieldClass} bg-[#e2eff6] text-[#536159]`}
                       />
@@ -276,7 +273,7 @@ export function EditAdminProfile() {
                         name="phone"
                         type="tel"
                         required
-                        defaultValue={admin.phone ?? "+62 812-3456-7890"}
+                        defaultValue={admin.phoneNumber ?? "+62 812-3456-7890"}
                         className={fieldClass}
                       />
                     </label>

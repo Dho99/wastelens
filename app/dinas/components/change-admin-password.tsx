@@ -16,14 +16,17 @@ import {
   Save,
   ShieldCheck,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useAdmin, useChangePassword } from "../hooks/useAdmin";
 
 type PasswordField = "current" | "next" | "confirm";
 
 export function ChangeAdminPassword() {
   const router = useRouter();
-  const store = useDlhStore();
+  const queryClient = useQueryClient();
+  const { data: admin } = useAdmin();
+  const changePasswordMutation = useChangePassword();
   const [visible, setVisible] = useState<Record<PasswordField, boolean>>({
     current: false,
     next: false,
@@ -77,26 +80,31 @@ export function ChangeAdminPassword() {
     }
 
     setSaving(true);
-    if (process.env.NODE_ENV !== "development") {
-      const result = await authClient.changePassword({
-        currentPassword,
-        newPassword,
-        revokeOtherSessions: true,
-      });
-      if (result.error) {
-        setError(
-          result.error.message ??
-            "Kata sandi saat ini salah atau perubahan gagal.",
-        );
-        setSaving(false);
-        return;
+    try {
+      if (process.env.NODE_ENV !== "development") {
+        const result = await authClient.changePassword({
+          currentPassword,
+          newPassword,
+          revokeOtherSessions: true,
+        });
+        if (result.error) {
+          setError(
+            result.error.message ??
+              "Kata sandi saat ini salah atau perubahan gagal.",
+          );
+          setSaving(false);
+          return;
+        }
       }
+
+      await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
+      queryClient.invalidateQueries({ queryKey: ["dinas-admin"] });
+      setSaving(false);
+      setSuccess(true);
+    } catch {
+      setError("Kata sandi gagal diperbarui.");
+      setSaving(false);
     }
-    updateDlhStore((draft) => {
-      draft.admin.passwordUpdatedAt = "baru saja";
-    });
-    setSaving(false);
-    setSuccess(true);
   };
 
   return (
@@ -120,12 +128,12 @@ export function ChangeAdminPassword() {
           </Link>
           <span className="relative ml-4 size-9 overflow-hidden rounded-full border-2 border-[#087529] bg-[#dceef5]">
             <Image
-              src={store.admin.photo ?? "/images/dlh-field-officer.png"}
-              alt={store.admin.name}
+              src={admin?.image ?? "/images/dlh-field-officer.png"}
+              alt={admin?.name ?? ""}
               fill
               className="object-cover object-top"
               sizes="36px"
-              unoptimized={Boolean(store.admin.photo?.startsWith("data:") || store.admin.photo?.startsWith("/api/dinas/media/"))}
+              unoptimized={Boolean(admin?.image?.startsWith("data:") || admin?.image?.startsWith("/api/dinas/media/"))}
             />
           </span>
         </header>

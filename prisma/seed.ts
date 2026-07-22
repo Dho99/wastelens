@@ -17,6 +17,87 @@ async function main() {
     const twoDaysLater = new Date(now.getTime() + 2 * 86400000);
     const tomorrow = new Date(now.getTime() + 86400000);
 
+    const daysAgo = (d: number) => new Date(now.getTime() - d * 86400000);
+
+    const KECAMATAN = {
+        TAWANG: {
+            name: "Tawang",
+            centerLat: -7.327,
+            centerLng: 108.221,
+            roads: [
+                "Jl. Bhayangkara", "Jl. Rangga", "Jl. RE Martadinata", "Jl. Kartini",
+                "Jl. Moh. Hatta", "Jl. Otista", "Jl. Siliwangi", "Jl. Pasar Wetan",
+                "Jl. Tentara Pelajar", "Jl. KZ Mustofa",
+            ],
+        },
+        BUNGURSARI: {
+            name: "Bungursari",
+            centerLat: -7.317,
+            centerLng: 108.199,
+            roads: [
+                "Jl. Bungursari", "Jl. Raya Cipedes", "Jl. Cipedes", "Jl. Sukamaju",
+                "Jl. Cikalang", "Jl. Nagarasari", "Jl. Panyusuhan", "Jl. Parakannyasag",
+                "Jl. Cikunten", "Jl. Cibereum",
+            ],
+        },
+        INDIHIANG: {
+            name: "Indihiang",
+            centerLat: -7.308,
+            centerLng: 108.274,
+            roads: [
+                "Jl. Indihiang", "Jl. Raya Indihiang", "Jl. Sukamulya", "Jl. Cibungkul",
+                "Jl. Parung", "Jl. Cigeureung", "Jl. Sirnarasa", "Jl. Cikawung",
+                "Jl. Pasir", "Jl. Leuwiliang",
+            ],
+        },
+    } as const;
+
+    const WASTE_OPTIONS = [
+        ["plastik", "kertas"], ["plastik", "sisa_makanan"], ["kayu", "logam", "plastik"],
+        ["kertas", "kaca"], ["sisa_makanan", "plastik", "kertas"], ["elektronik", "logam"],
+        ["plastik", "karet"], ["kayu", "kertas", "kaca"], ["kain", "plastik"],
+        ["sisa_makanan", "organik"], ["kaca", "logam", "elektronik"], ["plastik", "kayu", "logam"],
+    ];
+
+    const UKURAN_OPTIONS = [
+        "KECIL", "KECIL", "KECIL", "KECIL",
+        "SEDANG", "SEDANG", "SEDANG", "SEDANG",
+        "BESAR", "BESAR",
+    ];
+
+    const STATUS_DISTRIBUTION: {
+        status: keyof typeof LAPORAN_STATUS;
+        eligible: boolean;
+    }[] = [
+        { status: "ANALYZED", eligible: true },
+        { status: "ANALYZED", eligible: true },
+        { status: "ANALYZED", eligible: true },
+        { status: "ANALYZED", eligible: true },
+        { status: "ANALYZED", eligible: true },
+        { status: "WAITING", eligible: true },
+        { status: "WAITING", eligible: true },
+        { status: "WAITING", eligible: true },
+        { status: "PENDING", eligible: false },
+        { status: "DIJEMPUT", eligible: false },
+    ];
+
+    function rand(min: number, max: number): number {
+        return min + Math.random() * (max - min);
+    }
+
+    function pick<T>(arr: readonly T[]): T {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function buildAddress(road: string, kecamatan: string): string {
+        const num = Math.floor(rand(1, 200));
+        return `${road} No. ${num}, Kec. ${kecamatan}, Kota Tasikmalaya, Jawa Barat`;
+    }
+
+    function buildWasteTypes(): string[] {
+        return [...pick(WASTE_OPTIONS)];
+    }
+
     const userId = (email: string): string => {
         const id = userMap.get(email);
         if (!id) throw new Error(`User not found: ${email}`);
@@ -84,6 +165,61 @@ async function main() {
             email: "banned@wastelens.com",
             password: "password123",
             name: "Samsul Bahri",
+            role: "user",
+        },
+        // Tasikmalaya users
+        {
+            email: "dinas_tasik@wastelens.com",
+            password: "password123",
+            name: "Bambang Supriyadi",
+            role: "dinas",
+        },
+        {
+            email: "petugas_tawang@wastelens.com",
+            password: "password123",
+            name: "Cecep Hermawan",
+            role: "petugas",
+        },
+        {
+            email: "petugas_bungursari@wastelens.com",
+            password: "password123",
+            name: "Yayat Suryana",
+            role: "petugas",
+        },
+        {
+            email: "petugas_indihiang@wastelens.com",
+            password: "password123",
+            name: "Dedi Kurniawan",
+            role: "petugas",
+        },
+        {
+            email: "warga_tsk1@wastelens.com",
+            password: "password123",
+            name: "Asep Komarudin",
+            role: "user",
+        },
+        {
+            email: "warga_tsk2@wastelens.com",
+            password: "password123",
+            name: "Neneng Ratnasari",
+            role: "user",
+        },
+        {
+            email: "warga_tsk3@wastelens.com",
+            password: "password123",
+            name: "Dadang Rustandi",
+            role: "user",
+        },
+        {
+            email: "warga_tsk4@wastelens.com",
+            password: "password123",
+            name: "Yanti Suryani",
+            role: "user",
+        },
+        {
+            email: "warga_tsk5@wastelens.com",
+            password: "password123",
+            name: "Wawan Setiawan",
             role: "user",
         },
     ];
@@ -214,6 +350,33 @@ async function main() {
         },
     });
 
+    // Tasikmalaya user profile updates
+    const tasikProfileUpdates: { email: string; address: string; phone: string }[] = [
+        { email: "dinas_tasik@wastelens.com", address: "Jl. Perintis Kemerdekaan No. 1, Kota Tasikmalaya", phone: "081234567901" },
+        { email: "petugas_tawang@wastelens.com", address: "Jl. Bhayangkara No. 45, Kec. Tawang", phone: "081234567902" },
+        { email: "petugas_bungursari@wastelens.com", address: "Jl. Bungursari No. 12, Kec. Bungursari", phone: "081234567903" },
+        { email: "petugas_indihiang@wastelens.com", address: "Jl. Indihiang No. 33, Kec. Indihiang", phone: "081234567904" },
+        { email: "warga_tsk1@wastelens.com", address: "Jl. Cihideung No. 10, Kota Tasikmalaya", phone: "081234567905" },
+        { email: "warga_tsk2@wastelens.com", address: "Jl. Cigeureung No. 22, Kec. Indihiang", phone: "081234567906" },
+        { email: "warga_tsk3@wastelens.com", address: "Jl. Sukamaju No. 7, Kec. Bungursari", phone: "081234567907" },
+        { email: "warga_tsk4@wastelens.com", address: "Jl. Pasar Wetan No. 15, Kec. Tawang", phone: "081234567908" },
+        { email: "warga_tsk5@wastelens.com", address: "Jl. Raya Indihiang No. 88, Kec. Indihiang", phone: "081234567909" },
+    ];
+
+    for (const u of tasikProfileUpdates) {
+        await prisma.user.update({
+            where: { id: userId(u.email) },
+            data: {
+                address: u.address,
+                phoneNumber: u.phone,
+                image: `https://api.dicebear.com/9.x/initials/svg?seed=${u.email.split("@")[0]}`,
+                createdAt: daysAgo(30),
+                emailVerified: true,
+                saldo_koin: u.email.startsWith("warga") ? Math.floor(rand(10, 200)) : 0,
+            },
+        });
+    }
+
     // ─── 2. VERIFICATIONS ─────────────────────────────────────
     await prisma.verification.create({
         data: {
@@ -299,6 +462,14 @@ async function main() {
         },
     });
 
+    const dinasTasik = await prisma.dinas.create({
+        data: {
+            user_id: userId("dinas_tasik@wastelens.com"),
+            nama_dinas: "DLH Kota Tasikmalaya",
+            kontak: "0265-123456",
+        },
+    });
+
     // ─── 7. AREA CAKUPAN ──────────────────────────────────
     await prisma.areaCakupan.create({
         data: { dinas_id: dinas1.id, nama_wilayah: "Kecamatan Bandung Wetan" },
@@ -315,6 +486,13 @@ async function main() {
     await prisma.areaCakupan.create({
         data: { dinas_id: dinas2.id, nama_wilayah: "Kecamatan Surabaya Timur" },
     });
+
+    // Tasikmalaya area cakupan
+    for (const k of Object.values(KECAMATAN)) {
+        await prisma.areaCakupan.create({
+            data: { dinas_id: dinasTasik.id, nama_wilayah: `Kecamatan ${k.name}` },
+        });
+    }
 
     // ─── 8. PETUGAS ──────────────────────────────────────
     const petugas1Record = await prisma.petugas.create({
@@ -334,6 +512,40 @@ async function main() {
             no_hp: "081234567894",
         },
     });
+
+    // Tasikmalaya petugas
+    const petugasTawang = await prisma.petugas.create({
+        data: {
+            dinas_id: dinasTasik.id,
+            user_id: userId("petugas_tawang@wastelens.com"),
+            nama: "Cecep Hermawan",
+            no_hp: "081234567902",
+        },
+    });
+
+    const petugasBungursari = await prisma.petugas.create({
+        data: {
+            dinas_id: dinasTasik.id,
+            user_id: userId("petugas_bungursari@wastelens.com"),
+            nama: "Yayat Suryana",
+            no_hp: "081234567903",
+        },
+    });
+
+    const petugasIndihiang = await prisma.petugas.create({
+        data: {
+            dinas_id: dinasTasik.id,
+            user_id: userId("petugas_indihiang@wastelens.com"),
+            nama: "Dedi Kurniawan",
+            no_hp: "081234567904",
+        },
+    });
+
+    const PETUGAS_BY_KECAMATAN: Record<string, { id: string }> = {
+        Tawang: petugasTawang,
+        Bungursari: petugasBungursari,
+        Indihiang: petugasIndihiang,
+    };
 
     // ─── 9. KENDARAAN ────────────────────────────────────
     const kendaraan1 = await prisma.kendaraan.create({
@@ -362,6 +574,30 @@ async function main() {
             current_load: 2000,
         },
     });
+
+    // Tasikmalaya kendaraan
+    const kendaraanDumpTruckTsk = await prisma.kendaraan.create({
+        data: { dinas_id: dinasTasik.id, jenis: "Dump Truck", kapasitas: 5000, current_load: 0 },
+    });
+
+    const kendaraanArmrollTsk = await prisma.kendaraan.create({
+        data: { dinas_id: dinasTasik.id, jenis: "Armroll Truck", kapasitas: 8000, current_load: 0 },
+    });
+
+    const kendaraanPickUpTsk = await prisma.kendaraan.create({
+        data: { dinas_id: dinasTasik.id, jenis: "Pick Up", kapasitas: 1500, current_load: 0 },
+    });
+
+    const kendaraanMotorTsk = await prisma.kendaraan.create({
+        data: { dinas_id: dinasTasik.id, jenis: "Motor Roda Tiga", kapasitas: 500, current_load: 0 },
+    });
+
+    const KENDARAAN_TSK_LIST = [
+        kendaraanDumpTruckTsk,
+        kendaraanArmrollTsk,
+        kendaraanPickUpTsk,
+        kendaraanMotorTsk,
+    ];
 
     // ─── 10. LAPORAN ──────────────────────────────────────
     const laporan1 = await prisma.laporan.create({
@@ -472,6 +708,127 @@ async function main() {
         },
     });
 
+    const laporan6 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            dinas_id: dinas2.id,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan6.jpg",
+            lokasi_lat: -7.2733,
+            lokasi_lng: 112.7542,
+            kategori_ukuran: "BESAR",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Gubeng No. 45, Surabaya",
+            road_name: "Jl. Gubeng",
+            district: "Gubeng",
+            city: "Surabaya",
+            province: "Jawa Timur",
+            country: "Indonesia",
+            waste_types: ["kayu", "plastik", "sisa_makanan"],
+            drainage_risk: true,
+            needs_manual_review: true,
+            confidence: 0.62,
+            priority_score: 8.3,
+            priority_level: "HIGH",
+        },
+    });
+
+    const laporan7 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            dinas_id: null,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan7.jpg",
+            lokasi_lat: -6.8936,
+            lokasi_lng: 107.6136,
+            kategori_ukuran: "KECIL",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Dago No. 101, Bandung",
+            road_name: "Jl. Dago",
+            district: "Coblong",
+            city: "Bandung",
+            province: "Jawa Barat",
+            country: "Indonesia",
+            waste_types: ["kertas"],
+            priority_score: 2.5,
+            priority_level: "LOW",
+        },
+    });
+
+    const laporan8 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            dinas_id: null,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan8.jpg",
+            lokasi_lat: -7.3007,
+            lokasi_lng: 112.7351,
+            kategori_ukuran: "SEDANG",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Wonokromo No. 88, Surabaya",
+            road_name: "Jl. Wonokromo",
+            district: "Wonokromo",
+            city: "Surabaya",
+            province: "Jawa Timur",
+            country: "Indonesia",
+            waste_types: ["plastik", "logam"],
+            access_obstruction_risk: true,
+            needs_manual_review: true,
+            confidence: 0.55,
+            priority_score: 5.8,
+            priority_level: "MEDIUM",
+        },
+    });
+
+    const laporan9 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            dinas_id: dinas1.id,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan9.jpg",
+            lokasi_lat: -6.9314,
+            lokasi_lng: 107.6517,
+            kategori_ukuran: "BESAR",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Kiaracondong No. 67, Bandung",
+            road_name: "Jl. Kiaracondong",
+            district: "Kiaracondong",
+            city: "Bandung",
+            province: "Jawa Barat",
+            country: "Indonesia",
+            waste_types: ["elektronik", "plastik", "kayu"],
+            drainage_risk: true,
+            access_obstruction_risk: true,
+            needs_manual_review: true,
+            confidence: 0.48,
+            priority_score: 8.9,
+            priority_level: "HIGH",
+        },
+    });
+
+    const laporan10 = await prisma.laporan.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            dinas_id: dinas2.id,
+            foto_url:
+                "https://res.cloudinary.com/wastelens/image/upload/laporan10.jpg",
+            lokasi_lat: -7.2894,
+            lokasi_lng: 112.7154,
+            kategori_ukuran: "SEDANG",
+            status: LAPORAN_STATUS.PENDING,
+            address_text: "Jl. Dukuh Pakis No. 22, Surabaya",
+            road_name: "Jl. Dukuh Pakis",
+            district: "Dukuh Pakis",
+            city: "Surabaya",
+            province: "Jawa Timur",
+            country: "Indonesia",
+            waste_types: ["sisa_makanan", "plastik"],
+            confidence: 0.71,
+            priority_score: 6.1,
+            priority_level: "MEDIUM",
+        },
+    });
+
     // ─── 11. FOTO ──────────────────────────────────────────
     await prisma.foto.create({
         data: {
@@ -521,6 +878,159 @@ async function main() {
             size_bytes: 2_780_000,
         },
     });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan6.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan6.jpg",
+            hash: "e5f6a1b2c3d4",
+            mime_type: "image/jpeg",
+            size_bytes: 3_400_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan7.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan7.jpg",
+            mime_type: "image/png",
+            size_bytes: 1_200_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan8.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan8.jpg",
+            hash: "f6a1b2c3d4e5",
+            mime_type: "image/jpeg",
+            size_bytes: 2_650_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan9.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan9.jpg",
+            hash: "a1b2c3d4e5f7",
+            mime_type: "image/jpeg",
+            size_bytes: 3_800_000,
+        },
+    });
+
+    await prisma.foto.create({
+        data: {
+            laporan_id: laporan10.id,
+            url: "https://res.cloudinary.com/wastelens/image/upload/laporan10.jpg",
+            mime_type: "image/png",
+            size_bytes: 2_100_000,
+        },
+    });
+
+    // ─── 17. LAPORAN TASIKMALAYA (auto-collective demo) ────
+    const WARGA_TSK_EMAILS = [
+        "warga_tsk1@wastelens.com",
+        "warga_tsk2@wastelens.com",
+        "warga_tsk3@wastelens.com",
+        "warga_tsk4@wastelens.com",
+        "warga_tsk5@wastelens.com",
+    ];
+
+    let tasikLaporanCount = 0;
+
+    for (const [kecKey, kec] of Object.entries(KECAMATAN)) {
+        const petugas = PETUGAS_BY_KECAMATAN[kecKey];
+
+        for (let i = 0; i < 10; i++) {
+            const stat = STATUS_DISTRIBUTION[i];
+            const road = kec.roads[i];
+            const lat = +(kec.centerLat + rand(-0.005, 0.005)).toFixed(6);
+            const lng = +(kec.centerLng + rand(-0.005, 0.005)).toFixed(6);
+            const ukuran = UKURAN_OPTIONS[i];
+            const wasteTypes = buildWasteTypes();
+            const createdAt = daysAgo(Math.floor(rand(7, 30)));
+            const wargaEmail = pick(WARGA_TSK_EMAILS);
+            const isEligible = stat.eligible;
+
+            const loadMap: Record<string, number> = {
+                KECIL: 25,
+                SEDANG: 100,
+                BESAR: 300,
+            };
+            const estimatedLoad = loadMap[ukuran] ?? 0;
+
+            const laporanTsk = await prisma.laporan.create({
+                data: {
+                    user_id: userId(wargaEmail),
+                    dinas_id: dinasTasik.id,
+                    petugas_id: isEligible ? null : petugas?.id,
+                    kendaraan_id: isEligible ? null : pick(KENDARAAN_TSK_LIST).id,
+                    foto_url: `https://res.cloudinary.com/wastelens/image/upload/tasik/${kecKey.toLowerCase()}_laporan${i + 1}.jpg`,
+                    lokasi_lat: lat,
+                    lokasi_lng: lng,
+                    kategori_ukuran: ukuran,
+                    status: LAPORAN_STATUS[stat.status],
+                    address_text: buildAddress(road, kec.name),
+                    road_name: road,
+                    district: `Kec. ${kec.name}`,
+                    city: "Kota Tasikmalaya",
+                    province: "Jawa Barat",
+                    country: "Indonesia",
+                    waste_types: wasteTypes,
+                    confidence: isEligible
+                        ? +(0.7 + Math.random() * 0.28).toFixed(2)
+                        : +(0.4 + Math.random() * 0.4).toFixed(2),
+                    needs_manual_review: !isEligible && Math.random() > 0.5,
+                    estimated_load_unit: estimatedLoad,
+                    drainage_risk: Math.random() > 0.7,
+                    access_obstruction_risk: Math.random() > 0.85,
+                    priority_score: isEligible
+                        ? +(5 + Math.random() * 5).toFixed(1)
+                        : +(2 + Math.random() * 3).toFixed(1),
+                    priority_level: isEligible
+                        ? estimatedLoad >= 300
+                            ? "HIGH"
+                            : estimatedLoad >= 100
+                              ? "MEDIUM"
+                              : "LOW"
+                        : "LOW",
+                    createdAt,
+                    analysed_at: daysAgo(Math.floor(rand(1, 5))),
+                },
+            });
+
+            await prisma.foto.create({
+                data: {
+                    laporan_id: laporanTsk.id,
+                    url: `https://res.cloudinary.com/wastelens/image/upload/tasik/${kecKey.toLowerCase()}_laporan${i + 1}.jpg`,
+                    hash: `tasik_${kecKey.toLowerCase()}_${i + 1}_${Math.random().toString(36).slice(2, 8)}`,
+                    mime_type: "image/jpeg",
+                    size_bytes: Math.floor(rand(800_000, 4_000_000)),
+                },
+            });
+
+            tasikLaporanCount++;
+        }
+    }
+
+    // ─── 18. UPDATE KENDARAAN LOAD (Tasikmalaya) ──────────
+    const nonEligibleLaporan = await prisma.laporan.findMany({
+        where: {
+            dinas_id: dinasTasik.id,
+            kendaraan_id: { not: null },
+            status: { in: [LAPORAN_STATUS.DIJEMPUT, LAPORAN_STATUS.PENDING] },
+        },
+        select: { id: true, kendaraan_id: true, estimated_load_unit: true },
+    });
+
+    for (const lap of nonEligibleLaporan) {
+        if (lap.kendaraan_id && lap.estimated_load_unit) {
+            await prisma.kendaraan.update({
+                where: { id: lap.kendaraan_id },
+                data: { current_load: { increment: lap.estimated_load_unit } },
+            });
+        }
+    }
 
     // ─── 12. TRANSAKSI KOIN ────────────────────────────────
     await prisma.transaksiKoin.create({
@@ -608,6 +1118,51 @@ async function main() {
         },
     });
 
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            laporan_id: laporan6.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: false,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            laporan_id: laporan7.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: false,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            laporan_id: laporan8.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: true,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga1@wastelens.com"),
+            laporan_id: laporan9.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian prioritas tinggi.",
+            status_baca: false,
+        },
+    });
+
+    await prisma.notifikasi.create({
+        data: {
+            user_id: userId("warga2@wastelens.com"),
+            laporan_id: laporan10.id,
+            pesan: "Laporan Anda telah diterima dan sedang dalam antrian.",
+            status_baca: false,
+        },
+    });
+
     // ─── 15. PENUKARAN ─────────────────────────────────────
     await prisma.penukaran.create({
         data: {
@@ -676,10 +1231,11 @@ async function main() {
     );
     console.log("   - 2 Verification");
     console.log("   - 1 BannedReason, 1 Kopdes, 3 Produk");
-    console.log("   - 2 Dinas, 4 AreaCakupan, 2 Petugas, 3 Kendaraan");
-    console.log("   - 5 Laporan, 5 Foto, 3 TransaksiKoin");
-    console.log("   - 2 VerifikasiPickup, 4 Notifikasi");
+    console.log("   - 3 Dinas (Bandung, Surabaya, Tasikmalaya), 7 AreaCakupan, 5 Petugas, 7 Kendaraan");
+    console.log("   - 40 Laporan, 40 Foto, 3 TransaksiKoin");
+    console.log("   - 2 VerifikasiPickup, 9 Notifikasi");
     console.log("   - 2 Penukaran, 2 TemporaryUpload");
+    console.log("   - (Tasikmalaya: 30 laporan tersebar di Tawang, Bungursari, Indihiang)");
 }
 
 main()

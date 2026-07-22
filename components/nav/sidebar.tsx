@@ -14,7 +14,7 @@ export interface NavItem {
 
 const brandByRole: Record<string, { title: string; subtitle?: string }> = {
   dinas: { title: "DLH Dashboard", subtitle: "Government Portal" },
-  admin: { title: "Admin Panel" },
+  admin: { title: "WasteLens", subtitle: "SUPERADMIN CONSOLE" },
   kopdes: { title: "Kopdes Dashboard" },
 };
 
@@ -192,7 +192,7 @@ export function SidebarLayout({
           <span className="font-semibold text-sm">{brand.title}</span>
         </header>
 
-        <main className="flex-1">{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
       </div>
     </div>
   );

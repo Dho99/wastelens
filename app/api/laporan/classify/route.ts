@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { analyzeWasteImage } from "@/server/integrations/gemini/gemini.client";
+import { analyzeWasteImageWithFallback } from "@/server/integrations/ai/ai.service";
 import { findUploadById } from "@/server/modules/upload/upload.repository";
 
 export async function POST(request: NextRequest) {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await analyzeWasteImage(
+        const result = await analyzeWasteImageWithFallback(
             upload.secure_url,
             upload.mime_type,
         );
@@ -43,7 +43,9 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
             {
-                analysis: {
+                success: true,
+                data: {
+                    rawResponse: result.rawResponse,
                     sizeCategory: result.sizeCategory,
                     wasteTypes: result.wasteTypes,
                     drainageRisk: result.drainageRisk,

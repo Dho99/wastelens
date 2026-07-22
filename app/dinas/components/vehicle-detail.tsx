@@ -13,31 +13,30 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useVehicle, useUpdateVehicle } from "../hooks/useVehicles";
 
 export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
   const router = useRouter();
-  const store = useDlhStore();
-  const vehicle =
-    store.vehicles.find((item) => item.id === vehicleId) ?? store.vehicles[0];
+  const { data: vehicle } = useVehicle(vehicleId);
+  const updateVehicle = useUpdateVehicle();
   const [editOpen, setEditOpen] = useState(false);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
-  const [showAll, setShowAll] = useState(false);
   const [notice, setNotice] = useState("");
-  const capacity = Number.parseFloat(vehicle.capacity);
+
+  if (!vehicle) return null;
+
   const loadPercent =
-    capacity > 0
-      ? Math.min(100, Math.round((vehicle.load / capacity) * 100))
+    vehicle.kapasitas > 0
+      ? Math.min(100, Math.round((vehicle.current_load / vehicle.kapasitas) * 100))
       : 0;
 
-  const save = (event: FormEvent<HTMLFormElement>) => {
+  const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    updateDlhStore((draft) => {
-      const target = draft.vehicles.find((item) => item.id === vehicleId);
-      if (!target) return;
-      target.plate = String(data.get("plate")).toUpperCase();
-      target.capacity = `${Number(data.get("capacity")).toFixed(1)} Ton`;
+    await updateVehicle.mutateAsync({
+      id: vehicleId,
+      jenis: String(data.get("plate")).toUpperCase(),
+      kapasitas: Math.round(Number(data.get("capacity")) * 1000),
     });
     setEditOpen(false);
     setNotice("Data armada berhasil diperbarui.");
@@ -61,7 +60,7 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
                 Detail Armada
               </h1>
               <p className="text-sm text-[#667169]">
-                {vehicleId} • {vehicle.area}
+                {vehicleId}
               </p>
             </div>
             <div className="flex gap-2 sm:ml-auto">
@@ -118,19 +117,19 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
               <div className="p-5">
                 <div className="flex items-start">
                   <div>
-                    <h2 className="text-xl font-extrabold">{vehicle.type}</h2>
+                    <h2 className="text-xl font-extrabold">{vehicle.jenis}</h2>
                     <p className="mt-1 text-sm text-[#667169]">
-                      Hino 500 Series • {vehicle.plate}
+                      {vehicle.jenis}
                     </p>
                   </div>
                   <span className="ml-auto rounded-full bg-[#bcebd1] px-4 py-1 text-sm font-bold text-[#47705b]">
-                    {vehicle.year}
+                    {new Date().getFullYear()}
                   </span>
                 </div>
                 <div className="mt-6 flex justify-between text-sm font-bold">
                   <span>Kapasitas Muatan</span>
                   <span>
-                    {vehicle.load} / {capacity.toFixed(1)} Ton ({loadPercent}%)
+                    {vehicle.current_load}kg / {vehicle.kapasitas}kg ({loadPercent}%)
                   </span>
                 </div>
                 <div className="mt-2 h-3 overflow-hidden rounded-full bg-[#dcebf3]">
@@ -151,48 +150,8 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
                   <History className="size-5 text-[#087529]" />
                   Log Pemeliharaan
                 </h2>
-                <button
-                  type="button"
-                  onClick={() => setShowAll((value) => !value)}
-                  className="ml-auto text-xs font-bold text-[#087529]"
-                >
-                  {showAll ? "Tampilkan Ringkas" : "Lihat Semua"}
-                </button>
               </div>
-              <ol className="mt-5 space-y-5">
-                {vehicle.maintenance
-                  .slice(0, showAll ? vehicle.maintenance.length : 3)
-                  .map((log, index, visible) => (
-                    <li key={log.id} className="relative flex gap-4">
-                      {index < visible.length - 1 && (
-                        <span className="absolute left-4 top-8 h-[calc(100%+4px)] w-px bg-[#bdcbbd]" />
-                      )}
-                      <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full bg-[#2e8737] text-white">
-                        <Wrench className="size-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex gap-3">
-                          <h3 className="text-sm font-extrabold">
-                            {log.title}
-                          </h3>
-                          <time className="ml-auto shrink-0 text-[11px] text-[#667169]">
-                            {new Date(log.date).toLocaleDateString("id-ID", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </time>
-                        </div>
-                        <p className="mt-1 text-xs leading-5 text-[#667169]">
-                          {log.description}
-                        </p>
-                        <span className="mt-2 inline-block rounded-full bg-[#bcebd1] px-3 py-0.5 text-[10px] font-bold text-[#47705b]">
-                          {log.status}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-              </ol>
+              <p className="mt-5 text-sm text-[#667169]">Tidak ada log pemeliharaan.</p>
               <div className="mt-6 flex items-center gap-3 rounded-[20px] bg-[#ffd8d5] p-4 text-[#a9131a]">
                 <CalendarClock className="size-6 shrink-0" />
                 <div>
@@ -240,7 +199,7 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
                 <input
                   name="plate"
                   required
-                  defaultValue={vehicle.plate}
+                  defaultValue={vehicle.jenis}
                   className="mt-1.5 h-11 w-full rounded-xl border px-4 font-normal outline-none focus:border-[#087529]"
                 />
               </label>
@@ -252,7 +211,7 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
                   min="1"
                   step="0.5"
                   required
-                  defaultValue={capacity}
+                  defaultValue={vehicle.kapasitas / 1000}
                   className="mt-1.5 h-11 w-full rounded-xl border px-4 font-normal outline-none focus:border-[#087529]"
                 />
               </label>
@@ -272,22 +231,6 @@ export function VehicleDetail({ vehicleId }: { vehicleId: string }) {
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              const data = new FormData(event.currentTarget);
-              const date = String(data.get("date"));
-              updateDlhStore((draft) => {
-                const target = draft.vehicles.find(
-                  (item) => item.id === vehicleId,
-                );
-                if (!target) return;
-                target.nextService = date;
-                target.maintenance.unshift({
-                  id: crypto.randomUUID(),
-                  title: "Jadwal Servis Rutin",
-                  date,
-                  description: "Janji pemeliharaan terjadwal.",
-                  status: "Terjadwal",
-                });
-              });
               setAppointmentOpen(false);
               setNotice("Jadwal pemeliharaan berhasil dibuat.");
             }}

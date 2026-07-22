@@ -7,6 +7,7 @@ export interface ReportDetail {
   aiPhotoUrl: string;
   locationTitle: string;
   locationDetails: string;
+  fullAddress?: string | null;
   reportTime: string;
   wasteTypes: string[];
   pointsGained: number;

@@ -16,7 +16,15 @@ export default function EditUserModal({ user, onClose, onSubmit }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (user) setForm({ nama: user.nama, email: user.email });
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active && user) {
+        setForm({ nama: user.nama, email: user.email });
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   async function handleSubmit(e: React.FormEvent) {

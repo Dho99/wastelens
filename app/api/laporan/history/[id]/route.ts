@@ -99,6 +99,7 @@ export async function GET(
                 laporan.lokasi_lng,
             ),
             locationDetails: `Lat: ${laporan.lokasi_lat.toFixed(6)}, Lng: ${laporan.lokasi_lng.toFixed(6)}`,
+            fullAddress: laporan.address_text ?? null,
             reportTime:
                 new Date(laporan.createdAt).toLocaleDateString("id-ID", {
                     day: "numeric",

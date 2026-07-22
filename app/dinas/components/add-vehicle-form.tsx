@@ -19,7 +19,7 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useVehicles, useCreateVehicle } from "../hooks/useVehicles";
 
 type OperationalStatus = "Beroperasi" | "Maintenance" | "Standby";
 
@@ -28,33 +28,29 @@ const fieldClass =
 
 export function AddVehicleForm() {
   const router = useRouter();
-  const store = useDlhStore();
+  const { data: vehicles } = useVehicles();
+  const createVehicle = useCreateVehicle();
   const [status, setStatus] = useState<OperationalStatus>("Beroperasi");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const id = String(data.get("id")).toUpperCase();
-    if (store.vehicles.some((vehicle) => vehicle.id === id)) {
+    if (vehicles?.some((vehicle) => vehicle.id === id)) {
       setError(`ID ${id} sudah digunakan.`);
       return;
     }
-    updateDlhStore((draft) => {
-      draft.vehicles.push({
-        id,
-        plate: String(data.get("plate")).toUpperCase(),
-        capacity: `${Number(data.get("capacity")).toFixed(1)} Ton`,
-        status,
-        type: String(data.get("type")),
-        year: new Date().getFullYear(),
-        area: draft.settings.region,
-        load: 0,
-        maintenance: [],
+    try {
+      await createVehicle.mutateAsync({
+        jenis: String(data.get("plate")).toUpperCase(),
+        kapasitas: Math.round(Number(data.get("capacity")) * 1000),
       });
-    });
-    setSaved(true);
+      setSaved(true);
+    } catch {
+      setError("Gagal menyimpan armada.");
+    }
   };
 
   return (

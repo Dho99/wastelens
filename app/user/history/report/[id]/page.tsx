@@ -60,6 +60,7 @@ export default function ReportDetailPage({ params }: PageProps) {
       <ReportMeta
         locationTitle={report.locationTitle}
         locationDetails={report.locationDetails}
+        fullAddress={report.fullAddress}
         reportTime={report.reportTime}
         wasteTypes={report.wasteTypes}
       />

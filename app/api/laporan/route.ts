@@ -6,6 +6,7 @@ import {
     createReport,
     ReportError,
 } from "@/server/modules/reports/report.service";
+import { reverseGeocode } from "@/server/modules/location/reverse-geocode.service";
 import { triggerUserEvent } from "@/server/websocket/pusher.service";
 import { createReportCreatedEvent } from "@/server/websocket/websocket.events";
 import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
@@ -130,7 +131,9 @@ async function handleLegacyPayload(
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        const { dinas_id, petugas_id } = await autoAssignDinas(lat, lng);
+        const address = await reverseGeocode(lat, lng);
+        const district = address?.district ?? null;
+        const { dinas_id, petugas_id } = await autoAssignDinas(district);
 
         const kendaraanResult = dinas_id
             ? await assignKendaraan(

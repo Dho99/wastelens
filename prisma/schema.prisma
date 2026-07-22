@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -50,8 +45,7 @@ model BannedReason {
   userId    String
   alasan    String
   createdAt DateTime @default(now())
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("banned_reason")
 }
@@ -65,8 +59,7 @@ model session {
   ipAddress String?
   userAgent String?
   userId    String
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
@@ -85,8 +78,7 @@ model account {
   password              String?
   createdAt             DateTime
   updatedAt             DateTime
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -102,7 +94,6 @@ model verification {
   @@map("verification")
 }
 
-// ─── Application models ───────────────────────────────────
 model Dinas {
   id         String @id @default(uuid()) @db.Uuid
   user_id    String
@@ -150,15 +141,14 @@ model DlhMedia {
 }
 
 model Petugas {
-  id       String @id @default(uuid()) @db.Uuid
-  dinas_id String @db.Uuid
+  id       String    @id @default(uuid()) @db.Uuid
+  dinas_id String    @db.Uuid
   user_id  String
   nama     String
   no_hp    String
-
-  dinas   Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-  user    user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  laporan Laporan[]
+  laporan  Laporan[]
+  dinas    Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  user     user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("PETUGAS")
 }
@@ -167,21 +157,19 @@ model AreaCakupan {
   id           String @id @default(uuid()) @db.Uuid
   dinas_id     String @db.Uuid
   nama_wilayah String
-
-  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  dinas        Dinas  @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
 
   @@map("AREA_CAKUPAN")
 }
 
 model Kendaraan {
-  id           String @id @default(uuid()) @db.Uuid
-  dinas_id     String @db.Uuid
+  id           String    @id @default(uuid()) @db.Uuid
+  dinas_id     String    @db.Uuid
   jenis        String
   kapasitas    Int
   current_load Int
-
-  dinas   Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-  laporan Laporan[]
+  dinas        Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  laporan      Laporan[]
 
   @@map("KENDARAAN")
 }
@@ -278,8 +266,7 @@ model Foto {
   hash       String?
   mime_type  String? @map("mime_type")
   size_bytes Int?    @map("size_bytes")
-
-  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  laporan    Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
   @@map("FOTO")
 }
@@ -305,8 +292,7 @@ model VerifikasiPickup {
   foto_sebelum String
   foto_sesudah String
   waktu        DateTime @default(now())
-
-  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  laporan      Laporan  @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
   @@map("VERIFIKASI_PICKUP")
 }
@@ -317,9 +303,10 @@ model Notifikasi {
   laporan_id  String  @db.Uuid
   pesan       String
   status_baca Boolean @default(false)
+  laporan     Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  user        user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@map("NOTIFIKASI")
 }

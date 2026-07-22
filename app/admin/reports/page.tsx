@@ -258,8 +258,8 @@ export default function AdminReportsPage() {
                           </td>
                           <td className="py-3.5 text-right">
                             <button
-                              onClick={() => setSelectedReport(r)}
-                              className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 mx-auto"
+                              onClick={() => router.push(`/admin/reports/detail/${r.id}`)}
+                              className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 mx-auto cursor-pointer"
                               title="Lihat Detail Audit"
                             >
                               <Eye className="w-4 h-4" />
