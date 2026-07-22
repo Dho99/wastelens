@@ -15,18 +15,33 @@ import {
   X,
 } from "lucide-react";
 import { DlhShell } from "./dlh-shell";
-import { type DlhOfficer as Officer, type DlhVehicle as Vehicle, updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import type { DinasVehicle as Vehicle, DinasOfficer as Officer } from "@/lib/services/dinas/types";
+import { useVehicles, useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from "../hooks/useVehicles";
+import { useOfficers, useCreateOfficer, useUpdateOfficer, useDeleteOfficer } from "../hooks/useOfficers";
 
 type Editor = { kind: "vehicle"; item?: Vehicle; draftId?: string } | { kind: "officer"; item?: Officer; draftId?: string };
 type DeleteTarget = { kind: "vehicle" | "officer"; id: string; label: string };
 
 const inputClass = "mt-2 h-11 w-full rounded-xl border border-[#c3d1c7] bg-[#f7fbfd] px-4 font-normal outline-none focus:border-[#087529]";
 
+const OFFICER_COLORS = ["bg-[#bcebd1]", "bg-[#ffd9ae]", "bg-[#d7eafd]", "bg-[#e5ddfb]"] as const;
+
+function getOfficerInitials(nama: string) {
+  return nama.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
 export function LogisticsManagement() {
   const router = useRouter();
-  const store = useDlhStore();
-  const vehicles = store.vehicles;
-  const officers = store.officers;
+  const { data: vehiclesData } = useVehicles();
+  const { data: officersData } = useOfficers();
+  const createVehicle = useCreateVehicle();
+  const updateVehicle = useUpdateVehicle();
+  const deleteVehicle = useDeleteVehicle();
+  const createOfficer = useCreateOfficer();
+  const updateOfficer = useUpdateOfficer();
+  const deleteOfficer = useDeleteOfficer();
+  const vehicles = vehiclesData ?? [];
+  const officers = officersData ?? [];
   const [vehiclePage, setVehiclePage] = useState(0);
   const [officerPage, setOfficerPage] = useState(0);
   const [vehiclePageSize, setVehiclePageSize] = useState(5);
@@ -36,58 +51,51 @@ export function LogisticsManagement() {
   const [notice, setNotice] = useState("");
   const visibleVehicles = vehicles.slice(vehiclePage * vehiclePageSize, vehiclePage * vehiclePageSize + vehiclePageSize);
   const visibleOfficers = officers.slice(officerPage * officerPageSize, officerPage * officerPageSize + officerPageSize);
-  const setVehicles = (update: (current: Vehicle[]) => Vehicle[]) => updateDlhStore((draft) => { draft.vehicles = update(draft.vehicles); });
-  const setOfficers = (update: (current: Officer[]) => Officer[]) => updateDlhStore((draft) => { draft.officers = update(draft.officers); });
 
-  const saveItem = (event: FormEvent<HTMLFormElement>) => {
+  const saveItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!editor) return;
     const data = new FormData(event.currentTarget);
-
-    if (editor.kind === "vehicle") {
-      const item: Vehicle = {
-        id: String(data.get("id")),
-        plate: String(data.get("plate")),
-        capacity: `${Number(data.get("capacity")).toFixed(1)} Ton`,
-        status: String(data.get("status")) as Vehicle["status"],
-        type: editor.item?.type ?? "Compactor Truck",
-        year: editor.item?.year ?? new Date().getFullYear(),
-        area: editor.item?.area ?? "Jakarta Pusat",
-        load: editor.item?.load ?? 0,
-        maintenance: editor.item?.maintenance ?? [],
-      };
-      setVehicles((current) => editor.item ? current.map((vehicle) => vehicle.id === editor.item?.id ? item : vehicle) : [...current, item]);
-      setNotice(editor.item ? "Data armada berhasil diperbarui." : "Armada baru berhasil ditambahkan.");
-    } else {
-      const name = String(data.get("name"));
-      const item: Officer = {
-        id: String(data.get("id")),
-        name,
-        initials: name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase(),
-        zone: String(data.get("zone")),
-        phone: String(data.get("phone")),
-        color: editor.item?.color ?? "bg-[#bcebd1]",
-        email: editor.item?.email ?? `${name.toLowerCase().replaceAll(" ", ".")}@dlh-jakarta.go.id`,
-        role: editor.item?.role ?? "Field Operator",
-        shift: editor.item?.shift ?? "Pagi",
-        mobileAccess: editor.item?.mobileAccess ?? true,
-        tracking: editor.item?.tracking ?? true,
-        photo: editor.item?.photo,
-        tasks: editor.item?.tasks ?? 0,
-        location: editor.item?.location ?? "Jakarta Pusat",
-        recentTasks: editor.item?.recentTasks ?? [],
-      };
-      setOfficers((current) => editor.item ? current.map((officer) => officer.id === editor.item?.id ? item : officer) : [...current, item]);
-      setNotice(editor.item ? "Data petugas berhasil diperbarui." : "Petugas baru berhasil ditambahkan.");
+    try {
+      if (editor.kind === "vehicle") {
+        const jenis = String(data.get("plate"));
+        const kapasitas = Math.round(Number(data.get("capacity")) * 1000);
+        if (editor.item) {
+          await updateVehicle.mutateAsync({ id: editor.item.id, jenis, kapasitas });
+          setNotice("Data armada berhasil diperbarui.");
+        } else {
+          await createVehicle.mutateAsync({ jenis, kapasitas });
+          setNotice("Armada baru berhasil ditambahkan.");
+        }
+      } else {
+        const nama = String(data.get("name"));
+        const no_hp = String(data.get("phone"));
+        if (editor.item) {
+          await updateOfficer.mutateAsync({ id: editor.item.id, nama, no_hp });
+          setNotice("Data petugas berhasil diperbarui.");
+        } else {
+          await createOfficer.mutateAsync({ nama, no_hp });
+          setNotice("Petugas baru berhasil ditambahkan.");
+        }
+      }
+      setEditor(null);
+    } catch {
+      setNotice("Gagal menyimpan data.");
     }
-    setEditor(null);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    if (deleteTarget.kind === "vehicle") setVehicles((current) => current.filter((item) => item.id !== deleteTarget.id));
-    else setOfficers((current) => current.filter((item) => item.id !== deleteTarget.id));
-    setNotice(`${deleteTarget.label} berhasil dihapus.`);
+    try {
+      if (deleteTarget.kind === "vehicle") {
+        await deleteVehicle.mutateAsync(deleteTarget.id);
+      } else {
+        await deleteOfficer.mutateAsync(deleteTarget.id);
+      }
+      setNotice(`${deleteTarget.label} berhasil dihapus.`);
+    } catch {
+      setNotice("Gagal menghapus data.");
+    }
     setDeleteTarget(null);
   };
 
@@ -104,7 +112,7 @@ export function LogisticsManagement() {
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <SummaryCard icon={<Truck />} color="bg-[#dff4e8] text-[#087529]" label="Total Armada" value={`${vehicles.length} Unit`} />
             <SummaryCard icon={<UserCog />} color="bg-[#dceff8] text-[#35687e]" label="Petugas Aktif" value={`${officers.length} Orang`} />
-            <SummaryCard icon={<History />} color="bg-[#ffd9ae] text-[#956100]" label="Update Terakhir" value={`${new Date(store.updatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`} />
+            <SummaryCard icon={<History />} color="bg-[#ffd9ae] text-[#956100]" label="Update Terakhir" value={`${new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`} />
           </div>
 
           {notice && <div role="status" className="mt-5 flex items-center rounded-2xl bg-[#dff5e9] px-4 py-3 text-sm font-bold text-[#176a35]">{notice}<button type="button" onClick={() => setNotice("")} className="ml-auto rounded-full p-1 hover:bg-white/60"><X className="size-4" /></button></div>}
@@ -116,7 +124,7 @@ export function LogisticsManagement() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left">
                 <thead className="bg-[#e2f2fa] text-[11px] font-extrabold uppercase tracking-wide text-[#4a5a51]"><tr><th className="px-7 py-4">ID Kendaraan</th><th className="px-5 py-4">Plat Nomor</th><th className="px-5 py-4">Kapasitas</th><th className="px-5 py-4">Status</th><th className="px-5 py-4 text-center">Aksi</th></tr></thead>
-                <tbody>{visibleVehicles.map((vehicle) => <tr key={vehicle.id} className="border-t border-[#bdcdbf] text-sm"><td className="px-7 py-4 font-extrabold">{vehicle.id}</td><td className="px-5 py-4 font-medium">{vehicle.plate}</td><td className="px-5 py-4"><span className="rounded-full bg-[#bcebd1] px-3 py-1 text-[11px] font-bold text-[#547466]">{vehicle.capacity}</span></td><td className={`px-5 py-4 font-medium ${vehicle.status === "Beroperasi" ? "text-[#177735]" : "text-[#956100]"}`}><span className={`mr-2 inline-block size-2 rounded-full ${vehicle.status === "Beroperasi" ? "bg-[#087529]" : "bg-[#956100]"}`} />{vehicle.status}</td><td className="px-5 py-4"><div className="flex justify-center gap-2"><ActionButton label={`Lihat ${vehicle.id}`} onClick={() => router.push(`/dinas/logistics/vehicles/${vehicle.id}`)}><Eye /></ActionButton><ActionButton label={`Edit ${vehicle.id}`} onClick={() => setEditor({ kind: "vehicle", item: vehicle })}><Pencil /></ActionButton><ActionButton danger label={`Hapus ${vehicle.id}`} onClick={() => setDeleteTarget({ kind: "vehicle", id: vehicle.id, label: `Armada ${vehicle.id}` })}><Trash2 /></ActionButton></div></td></tr>)}</tbody>
+                <tbody>{visibleVehicles.map((vehicle) => <tr key={vehicle.id} className="border-t border-[#bdcdbf] text-sm"><td className="px-7 py-4 font-extrabold">{vehicle.id}</td><td className="px-5 py-4 font-medium">{vehicle.jenis}</td><td className="px-5 py-4"><span className="rounded-full bg-[#bcebd1] px-3 py-1 text-[11px] font-bold text-[#547466]">{vehicle.kapasitas} kg</span></td><td className={`px-5 py-4 font-medium text-[#177735]`}><span className={`mr-2 inline-block size-2 rounded-full bg-[#087529]`} />Beroperasi</td><td className="px-5 py-4"><div className="flex justify-center gap-2"><ActionButton label={`Lihat ${vehicle.id}`} onClick={() => router.push(`/dinas/logistics/vehicles/${vehicle.id}`)}><Eye /></ActionButton><ActionButton label={`Edit ${vehicle.id}`} onClick={() => setEditor({ kind: "vehicle", item: vehicle })}><Pencil /></ActionButton><ActionButton danger label={`Hapus ${vehicle.id}`} onClick={() => setDeleteTarget({ kind: "vehicle", id: vehicle.id, label: `Armada ${vehicle.id}` })}><Trash2 /></ActionButton></div></td></tr>)}</tbody>
               </table>
             </div>
             <TableFooter shown={visibleVehicles.length} total={vehicles.length} noun="armada" page={vehiclePage} pageSize={vehiclePageSize} canNext={(vehiclePage + 1) * vehiclePageSize < vehicles.length} onPageSizeChange={(size) => { setVehiclePageSize(size); setVehiclePage(0); }} onPrevious={() => setVehiclePage((page) => Math.max(0, page - 1))} onNext={() => setVehiclePage((page) => page + 1)} />
@@ -127,7 +135,7 @@ export function LogisticsManagement() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[880px] text-left">
                 <thead className="bg-[#e2f2fa] text-[11px] font-extrabold uppercase tracking-wide text-[#4a5a51]"><tr><th className="px-7 py-4">Nama Petugas</th><th className="px-5 py-4">ID Petugas</th><th className="px-5 py-4">Wilayah Tugas</th><th className="px-5 py-4">No. HP</th><th className="px-5 py-4 text-center">Aksi</th></tr></thead>
-                <tbody>{visibleOfficers.map((officer) => <tr key={officer.id} className="border-t border-[#bdcdbf] text-sm"><td className="px-7 py-4"><div className="flex items-center gap-3"><span className={`grid size-9 place-items-center rounded-full text-xs font-extrabold ${officer.color}`}>{officer.initials}</span><span className="font-extrabold">{officer.name}</span></div></td><td className="px-5 py-4 font-medium">{officer.id}</td><td className="px-5 py-4"><span className="rounded-full border border-[#b7c9ba] bg-[#e8f2f4] px-3 py-1 text-[11px] font-semibold text-[#51645a]">{officer.zone}</span></td><td className="px-5 py-4 font-medium">{officer.phone}</td><td className="px-5 py-4"><div className="flex justify-center gap-2"><ActionButton label={`Lihat ${officer.name}`} onClick={() => router.push(`/dinas/logistics/officers/${officer.id}`)}><Eye /></ActionButton><a href={`tel:${officer.phone.replace(/\s|-/g, "")}`} aria-label={`Telepon ${officer.name}`} className="grid size-9 place-items-center rounded-lg border border-[#b9cabc] transition hover:bg-white"><Phone className="size-4" /></a><ActionButton label={`Edit ${officer.name}`} onClick={() => router.push(`/dinas/logistics/officers/${officer.id}/edit`)}><Pencil /></ActionButton><ActionButton danger label={`Hapus ${officer.name}`} onClick={() => setDeleteTarget({ kind: "officer", id: officer.id, label: `Petugas ${officer.name}` })}><Trash2 /></ActionButton></div></td></tr>)}</tbody>
+                <tbody>{visibleOfficers.map((officer, idx) => <tr key={officer.id} className="border-t border-[#bdcdbf] text-sm"><td className="px-7 py-4"><div className="flex items-center gap-3"><span className={`grid size-9 place-items-center rounded-full text-xs font-extrabold ${OFFICER_COLORS[idx % OFFICER_COLORS.length]}`}>{getOfficerInitials(officer.nama)}</span><span className="font-extrabold">{officer.nama}</span></div></td><td className="px-5 py-4 font-medium">{officer.id}</td><td className="px-5 py-4"><span className="rounded-full border border-[#b7c9ba] bg-[#e8f2f4] px-3 py-1 text-[11px] font-semibold text-[#51645a]">-</span></td><td className="px-5 py-4 font-medium">{officer.no_hp}</td><td className="px-5 py-4"><div className="flex justify-center gap-2"><ActionButton label={`Lihat ${officer.nama}`} onClick={() => router.push(`/dinas/logistics/officers/${officer.id}`)}><Eye /></ActionButton><a href={`tel:${officer.no_hp.replace(/\s|-/g, "")}`} aria-label={`Telepon ${officer.nama}`} className="grid size-9 place-items-center rounded-lg border border-[#b9cabc] transition hover:bg-white"><Phone className="size-4" /></a><ActionButton label={`Edit ${officer.nama}`} onClick={() => router.push(`/dinas/logistics/officers/${officer.id}/edit`)}><Pencil /></ActionButton><ActionButton danger label={`Hapus ${officer.nama}`} onClick={() => setDeleteTarget({ kind: "officer", id: officer.id, label: `Petugas ${officer.nama}` })}><Trash2 /></ActionButton></div></td></tr>)}</tbody>
               </table>
             </div>
             <TableFooter shown={visibleOfficers.length} total={officers.length} noun="petugas" page={officerPage} pageSize={officerPageSize} canNext={(officerPage + 1) * officerPageSize < officers.length} onPageSizeChange={(size) => { setOfficerPageSize(size); setOfficerPage(0); }} onPrevious={() => setOfficerPage((page) => Math.max(0, page - 1))} onNext={() => setOfficerPage((page) => page + 1)} />
@@ -162,7 +170,7 @@ function SummaryCard({ icon, color, label, value }: { icon: React.ReactNode; col
 
 function EditorModal({ editor, onClose, onSubmit }: { editor: Editor; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   const isVehicle = editor.kind === "vehicle";
-  return <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm"><form onSubmit={onSubmit} className="w-full max-w-md rounded-[26px] bg-white p-6 shadow-2xl"><div className="flex items-center"><h3 className="text-xl font-extrabold">{editor.item ? "Edit" : "Tambah"} {isVehicle ? "Armada" : "Petugas"}</h3><button type="button" onClick={onClose} className="ml-auto rounded-full p-2 hover:bg-slate-100"><X className="size-5" /></button></div>{isVehicle ? <div className="mt-5 space-y-4"><label className="block text-sm font-bold">ID Kendaraan<input name="id" required defaultValue={editor.item?.id ?? editor.draftId} className={inputClass} /></label><label className="block text-sm font-bold">Plat Nomor<input name="plate" required defaultValue={editor.item?.plate} className={inputClass} /></label><label className="block text-sm font-bold">Kapasitas (ton)<input name="capacity" type="number" step="0.5" min="1" required defaultValue={editor.item ? Number(editor.item.capacity.split(" ")[0]) : 5} className={inputClass} /></label><label className="block text-sm font-bold">Status<select name="status" defaultValue={editor.item?.status ?? "Beroperasi"} className={inputClass}><option>Beroperasi</option><option>Maintenance</option></select></label></div> : <div className="mt-5 space-y-4"><label className="block text-sm font-bold">Nama Petugas<input name="name" required defaultValue={editor.item?.name} className={inputClass} /></label><label className="block text-sm font-bold">ID Petugas<input name="id" required defaultValue={editor.item?.id ?? editor.draftId} className={inputClass} /></label><label className="block text-sm font-bold">Wilayah Tugas<input name="zone" required defaultValue={editor.item?.zone} className={inputClass} /></label><label className="block text-sm font-bold">No. HP<input name="phone" type="tel" required defaultValue={editor.item?.phone} className={inputClass} /></label></div>}<button type="submit" className="mt-6 h-12 w-full rounded-2xl bg-[#087529] text-sm font-extrabold text-white hover:bg-[#066421]">Simpan</button></form></div>;
+  return <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm"><form onSubmit={onSubmit} className="w-full max-w-md rounded-[26px] bg-white p-6 shadow-2xl"><div className="flex items-center"><h3 className="text-xl font-extrabold">{editor.item ? "Edit" : "Tambah"} {isVehicle ? "Armada" : "Petugas"}</h3><button type="button" onClick={onClose} className="ml-auto rounded-full p-2 hover:bg-slate-100"><X className="size-5" /></button></div>{isVehicle ? <div className="mt-5 space-y-4"><label className="block text-sm font-bold">ID Kendaraan<input name="id" required defaultValue={editor.item?.id ?? editor.draftId} className={inputClass} /></label><label className="block text-sm font-bold">Plat Nomor<input name="plate" required defaultValue={editor.item?.jenis} className={inputClass} /></label><label className="block text-sm font-bold">Kapasitas (ton)<input name="capacity" type="number" step="0.5" min="1" required defaultValue={editor.item ? editor.item.kapasitas / 1000 : 5} className={inputClass} /></label><label className="block text-sm font-bold">Status<select name="status" defaultValue="Beroperasi" className={inputClass}><option>Beroperasi</option><option>Maintenance</option></select></label></div> : <div className="mt-5 space-y-4"><label className="block text-sm font-bold">Nama Petugas<input name="name" required defaultValue={editor.item?.nama} className={inputClass} /></label><label className="block text-sm font-bold">ID Petugas<input name="id" required defaultValue={editor.item?.id ?? editor.draftId} className={inputClass} /></label><label className="block text-sm font-bold">Wilayah Tugas<input name="zone" required defaultValue={""} className={inputClass} /></label><label className="block text-sm font-bold">No. HP<input name="phone" type="tel" required defaultValue={editor.item?.no_hp} className={inputClass} /></label></div>}<button type="submit" className="mt-6 h-12 w-full rounded-xl bg-[#087529] text-sm font-bold text-white">Simpan</button></form></div>;
 }
 
 function DeleteModal({ target, onCancel, onConfirm }: { target: DeleteTarget; onCancel: () => void; onConfirm: () => void }) {

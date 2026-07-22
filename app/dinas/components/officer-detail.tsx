@@ -19,32 +19,20 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useOfficer } from "../hooks/useOfficers";
 
 export function OfficerDetail({ officerId }: { officerId: string }) {
   const router = useRouter();
-  const store = useDlhStore();
-  const officer =
-    store.officers.find((item) => item.id === officerId) ?? store.officers[0];
+  const { data: officer } = useOfficer(officerId);
   const [showAll, setShowAll] = useState(false);
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [tracking, setTracking] = useState(false);
 
+  if (!officer) return null;
+
   const saveException = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    updateDlhStore((draft) => {
-      const target = draft.officers.find((item) => item.id === officerId);
-      if (!target) return;
-      target.recentTasks.unshift({
-        id: crypto.randomUUID(),
-        place: String(data.get("place")),
-        time: "Baru saja",
-        note: String(data.get("note")),
-      });
-      target.tasks += 1;
-    });
     setExceptionOpen(false);
     setNotice("Tugas pengecualian berhasil dicatat.");
   };
@@ -122,29 +110,29 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
               <section className="flex flex-col items-center gap-5 rounded-[22px] border border-[#bdcbbd] bg-white p-6 sm:flex-row">
                 <div className="relative size-40 shrink-0 overflow-hidden rounded-2xl bg-slate-200">
                   <Image
-                    src={officer.photo || "/images/dlh-field-officer.png"}
-                    alt={officer.name}
+                    src={officer.user?.image || "/images/dlh-field-officer.png"}
+                    alt={officer.nama}
                     fill
                     priority
                     className="object-cover object-top"
                     sizes="160px"
-                    unoptimized={Boolean(officer.photo)}
+                    unoptimized={Boolean(officer.user?.image)}
                   />
                   <span className="absolute bottom-2 right-2 grid size-8 place-items-center rounded-full border-2 border-white bg-[#2e8737] text-white">
                     <ShieldCheck className="size-4" />
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-extrabold">{officer.name}</h2>
+                  <h2 className="text-2xl font-extrabold">{officer.nama}</h2>
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     <a
-                      href={`tel:${officer.phone.replace(/\s|-/g, "")}`}
+                      href={`tel:${officer.no_hp.replace(/\s|-/g, "")}`}
                       className="flex items-center gap-3 rounded-[20px] bg-[#e6f4fb] px-5 py-4"
                     >
                       <Phone className="size-5 shrink-0 text-[#087529]" />
                       <div>
                         <p className="text-xs text-[#667169]">Nomor Kontak</p>
-                        <p className="text-sm font-bold">{officer.phone}</p>
+                        <p className="text-sm font-bold">{officer.no_hp}</p>
                       </div>
                     </a>
                     <div className="flex items-center gap-3 rounded-[20px] bg-[#e6f4fb] px-5 py-4">
@@ -152,7 +140,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
                       <div>
                         <p className="text-xs text-[#667169]">Zona Penugasan</p>
                         <p className="text-sm font-bold text-[#956100]">
-                          {officer.zone}
+                          -
                         </p>
                       </div>
                     </div>
@@ -162,7 +150,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
               <section className="relative overflow-hidden rounded-[22px] bg-[#2e8737] p-6 text-white">
                 <CheckCircle2 className="absolute right-5 top-5 size-7 text-[#baffb6]" />
                 <p className="text-6xl font-light leading-none text-[#baffb6]">
-                  {officer.tasks}
+                  {officer._count?.laporan ?? 0}
                 </p>
                 <p className="mt-3 text-sm font-semibold text-white/80">
                   Tugas
@@ -194,7 +182,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
                   ))}
                   <div className="absolute left-4 top-4 rounded-xl bg-white px-4 py-3 shadow-md">
                     <p className="text-xs font-bold">Lokasi Saat Ini</p>
-                    <p className="text-sm text-[#667169]">{officer.location}</p>
+                    <p className="text-sm text-[#667169]">-</p>
                   </div>
                   <button
                     type="button"
@@ -221,28 +209,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
                     {showAll ? "Ringkas" : "Lihat Semua"}
                   </button>
                 </div>
-                <div className="mt-4 space-y-3">
-                  {officer.recentTasks
-                    .slice(0, showAll ? officer.recentTasks.length : 1)
-                    .map((task) => (
-                      <article
-                        key={task.id}
-                        className="flex items-center gap-4 rounded-[20px] border border-[#bdcbbd] p-4"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-extrabold">{task.place}</h3>
-                          <p className="mt-1 flex items-center gap-1 text-[11px] text-[#667169]">
-                            <Clock3 className="size-3" />
-                            {task.time}
-                          </p>
-                          <p className="mt-3 text-xs italic text-[#667169]">
-                            “{task.note}”
-                          </p>
-                        </div>
-                        <ChevronRight className="size-5 shrink-0 text-[#465148]" />
-                      </article>
-                    ))}
-                </div>
+                <p className="mt-5 text-sm text-[#667169]">Belum ada tugas.</p>
                 <button
                   type="button"
                   onClick={() => setExceptionOpen(true)}

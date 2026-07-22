@@ -21,7 +21,7 @@ import {
     Plus,
     Recycle,
 } from "lucide-react";
-import type { DlhReport } from "@/lib/dlh-store";
+import type { DinasReport as DlhReport } from "@/lib/services/dinas/types";
 import { shortReportId, wasteTypeLabel } from "@/app/dinas/lib/report-helpers";
 
 const fallbackPositions: [number, number][] = [
@@ -33,12 +33,15 @@ const fallbackPositions: [number, number][] = [
     [-6.2012, 106.8322],
 ];
 
-function reportPosition(report: DlhReport, index: number): [number, number] {
-    const coordinates = report.location.match(
-        /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/,
-    );
-    if (coordinates) return [Number(coordinates[1]), Number(coordinates[2])];
-    return fallbackPositions[index % fallbackPositions.length];
+function reportPosition(report: DlhReport): [number, number] | null {
+    if (report.lokasi_lat != null && report.lokasi_lng != null) {
+        return [report.lokasi_lat, report.lokasi_lng];
+    }
+    return null;
+}
+
+function reportCategory(report: DlhReport): string {
+    return report.priority_level === "TINGGI" || (report.priority_score != null && report.priority_score > 0.7) ? "BAHAYA" : "AMAN";
 }
 
 export default function DlhOperationsMap({
@@ -80,7 +83,6 @@ export default function DlhOperationsMap({
         return () => {
             cancelAnimationFrame(frame);
             observer.disconnect();
-            window.removeEventListener("resize", invalidate);
             resizeRef.current = null;
         };
     }, [map]);
@@ -100,9 +102,13 @@ export default function DlhOperationsMap({
         );
         if (selectedIndex < 0) return;
 
+        const selectedReport = reports[selectedIndex];
+        const pos = reportPosition(selectedReport);
+        if (!pos) return;
+
         const timeout = window.setTimeout(() => {
             map.flyTo(
-                reportPosition(reports[selectedIndex], selectedIndex),
+                pos,
                 Math.max(map.getZoom(), 13),
                 { animate: true, duration: 0.5 },
             );
@@ -149,9 +155,10 @@ export default function DlhOperationsMap({
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 {view === "heatmap" &&
-                    reports.map((report, index) => {
-                        const center = reportPosition(report, index);
-                        const weight = report.category === "BAHAYA" ? 1.25 : 1;
+                    reports.map((report) => {
+                        const center = reportPosition(report);
+                        if (!center) return null;
+                        const weight = reportCategory(report) === "BAHAYA" ? 1.25 : 1;
 
                         return (
                             <Fragment key={report.id}>
@@ -189,116 +196,150 @@ export default function DlhOperationsMap({
                         );
                     })}
                 {view === "points" &&
-                    reports.map((report, index) => (
-                        <CircleMarker
-                            key={report.id}
-                            center={reportPosition(report, index)}
-                            radius={10}
-                            pathOptions={{
-                                color: "#ffffff",
-                                weight: 3,
-                                fillColor:
-                                    report.category === "BAHAYA"
-                                        ? "#dc2626"
-                                        : "#087529",
-                                fillOpacity: 1,
-                            }}
-                        >
-                            <Popup
-                                className="dlh-report-popup"
-                                minWidth={260}
-                                maxWidth={280}
+                    reports.map((report) => {
+                        const center = reportPosition(report);
+                        if (!center) return null;
+                        return (
+                            <CircleMarker
+                                key={report.id}
+                                center={center}
+                                radius={10}
+                                pathOptions={{
+                                    color: "#ffffff",
+                                    weight: 3,
+                                    fillColor:
+                                        reportCategory(report) === "BAHAYA"
+                                            ? "#dc2626"
+                                            : "#087529",
+                                    fillOpacity: 1,
+                                }}
                             >
-                                <div className="w-[260px] rounded-[24px] bg-white p-2.5 text-[#26362d]">
-                                    <div className="rounded-[18px] bg-gradient-to-br from-[#087529] to-[#159447] px-3.5 py-3 pr-8 text-white shadow-[0_8px_18px_rgba(8,117,41,0.2)]">
-                                        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">
-                                            Titik Pickup
-                                        </p>
-                                        <div className="mt-1 flex items-center gap-2">
-                                            <p
-                                                className="min-w-0 flex-1 truncate text-sm font-extrabold"
-                                                title={report.id}
-                                            >
-                                                Laporan{" "}
-                                                {shortReportId(report.id)}
+                                <Popup
+                                    className="dlh-report-popup"
+                                    minWidth={260}
+                                    maxWidth={280}
+                                >
+                                    <div className="w-[260px] rounded-[24px] bg-white p-2.5 text-[#26362d]">
+                                        <div className="rounded-[18px] bg-gradient-to-br from-[#087529] to-[#159447] px-3.5 py-3 pr-8 text-white shadow-[0_8px_18px_rgba(8,117,41,0.2)]">
+                                            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">
+                                                Titik Pickup
                                             </p>
-                                            <span
-                                                className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-300 text-amber-950" : "bg-white/20 text-white"}`}
-                                            >
-                                                {report.status}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 px-1 pb-0.5 pt-2.5">
-                                        <div className="flex items-start gap-2.5">
-                                            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e2f5ea] text-[#087529]">
-                                                <MapPin className="size-3.5" />
-                                            </span>
-                                            <div className="min-w-0 flex-1 pt-0.5">
-                                                <p className="text-[9px] font-bold uppercase tracking-wider text-[#729080]">
-                                                    Alamat
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <p
+                                                    className="min-w-0 flex-1 truncate text-sm font-extrabold"
+                                                    title={report.id}
+                                                >
+                                                    Laporan{" "}
+                                                    {shortReportId(report.id)}
                                                 </p>
-                                                <p className="mt-0.5 text-[11px] font-semibold leading-4">
-                                                    {report.address ??
-                                                        report.district ??
-                                                        "Alamat belum tersedia"}
-                                                </p>
-                                                {report.address &&
-                                                    report.district && (
-                                                        <p className="mt-0.5 text-[9px] text-[#688075]">
-                                                            {report.district}
-                                                        </p>
-                                                    )}
+                                                <span
+                                                    className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-300 text-amber-950" : "bg-white/20 text-white"}`}
+                                                >
+                                                    {report.status}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2.5 border-t border-[#e7eee9] pt-2">
-                                            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e8f3f9] text-[#356d87]">
-                                                <Navigation className="size-3.5" />
-                                            </span>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-[9px] font-bold uppercase tracking-wider text-[#718995]">
-                                                    Koordinat
-                                                </p>
-                                                <p className="mt-0.5 truncate font-mono text-[10px] font-bold text-[#31576a]">
-                                                    {report.latitude !==
-                                                        undefined &&
-                                                    report.longitude !==
-                                                        undefined
-                                                        ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`
-                                                        : report.location}
-                                                </p>
+                                        <div className="space-y-2 px-1 pb-0.5 pt-2.5">
+                                            <div className="flex items-start gap-2.5">
+                                                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e2f5ea] text-[#087529]">
+                                                    <MapPin className="size-3.5" />
+                                                </span>
+                                                <div className="min-w-0 flex-1 pt-0.5">
+                                                    <p className="text-[9px] font-bold uppercase tracking-wider text-[#729080]">
+                                                        Alamat
+                                                    </p>
+                                                    <p className="mt-0.5 text-[11px] font-semibold leading-4">
+                                                        {report.address_text ??
+                                                            report.district ??
+                                                            "Alamat belum tersedia"}
+                                                    </p>
+                                                    {report.address_text &&
+                                                        report.district && (
+                                                            <p className="mt-0.5 text-[9px] text-[#688075]">
+                                                                {report.district}
+                                                            </p>
+                                                        )}
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-2.5 border-t border-[#e7eee9] pt-2">
                                                 <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e8f3f9] text-[#356d87]">
                                                     <Navigation className="size-3.5" />
                                                 </span>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">
+                                                    <p className="text-[9px] font-bold uppercase tracking-wider text-[#718995]">
                                                         Koordinat
                                                     </p>
-                                                    <p className="mt-1 truncate font-mono text-xs font-bold text-[#35453c]">
-                                                        {report.latitude !==
-                                                            undefined &&
-                                                        report.longitude !==
-                                                            undefined
-                                                            ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`
-                                                            : report.location}
+                                                    <p className="mt-0.5 truncate font-mono text-[10px] font-bold text-[#31576a]">
+                                                        {report.lokasi_lat !=
+                                                            null &&
+                                                        report.lokasi_lng !=
+                                                            null
+                                                            ? `${report.lokasi_lat.toFixed(5)}, ${report.lokasi_lng.toFixed(5)}`
+                                                            : report.address_text ?? `${report.lokasi_lat}, ${report.lokasi_lng}`}
                                                     </p>
                                                 </div>
+                                                <div className="flex items-center gap-2.5 border-t border-[#e7eee9] pt-2">
+                                                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#e8f3f9] text-[#356d87]">
+                                                        <Navigation className="size-3.5" />
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#829087]">
+                                                            Koordinat
+                                                        </p>
+                                                        <p className="mt-1 truncate font-mono text-xs font-bold text-[#35453c]">
+                                                            {report.lokasi_lat !=
+                                                                null &&
+                                                            report.lokasi_lng !=
+                                                                null
+                                                                ? `${report.lokasi_lat.toFixed(5)}, ${report.lokasi_lng.toFixed(5)}`
+                                                                : report.address_text ?? `${report.lokasi_lat}, ${report.lokasi_lng}`}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {Boolean(
+                                                    report.waste_types?.length,
+                                                ) && (
+                                                    <div className="flex items-start gap-2.5 border-t border-[#e7eee9] pt-2">
+                                                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#fff0d9] text-[#9a6200]">
+                                                            <Recycle className="size-3.5" />
+                                                        </span>
+                                                        <div className="flex flex-wrap gap-1.5 pt-1">
+                                                            {report.waste_types?.map(
+                                                                (type) => (
+                                                                    <span
+                                                                        key={type}
+                                                                        className="rounded-full bg-[#edf6f1] px-3 py-1 text-[11px] font-bold text-[#47705b]"
+                                                                    >
+                                                                        {wasteTypeLabel(
+                                                                            type,
+                                                                        )}
+                                                                    </span>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        onOpenReport(report.id)
+                                                    }
+                                                    className="mt-1 w-full rounded-full bg-[#087529] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_6px_14px_rgba(8,117,41,0.18)] transition hover:bg-[#066421]"
+                                                >
+                                                    Buka Detail Laporan
+                                                </button>
                                             </div>
-                                            {Boolean(
-                                                report.wasteTypes?.length,
-                                            ) && (
+                                            {Boolean(report.waste_types?.length) && (
                                                 <div className="flex items-start gap-2.5 border-t border-[#e7eee9] pt-2">
                                                     <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#fff0d9] text-[#9a6200]">
                                                         <Recycle className="size-3.5" />
                                                     </span>
                                                     <div className="flex flex-wrap gap-1.5 pt-1">
-                                                        {report.wasteTypes?.map(
+                                                        {report.waste_types?.map(
                                                             (type) => (
                                                                 <span
                                                                     key={type}
-                                                                    className="rounded-full bg-[#edf6f1] px-3 py-1 text-[11px] font-bold text-[#47705b]"
+                                                                    className="rounded-full bg-[#fff0d9] px-2 py-1 text-[9px] font-bold text-[#8a5900]"
                                                                 >
                                                                     {wasteTypeLabel(
                                                                         type,
@@ -319,85 +360,53 @@ export default function DlhOperationsMap({
                                                 Buka Detail Laporan
                                             </button>
                                         </div>
-                                        {Boolean(report.wasteTypes?.length) && (
-                                            <div className="flex items-start gap-2.5 border-t border-[#e7eee9] pt-2">
-                                                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#fff0d9] text-[#9a6200]">
-                                                    <Recycle className="size-3.5" />
-                                                </span>
-                                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                                    {report.wasteTypes?.map(
-                                                        (type) => (
-                                                            <span
-                                                                key={type}
-                                                                className="rounded-full bg-[#fff0d9] px-2 py-1 text-[9px] font-bold text-[#8a5900]"
-                                                            >
-                                                                {wasteTypeLabel(
-                                                                    type,
-                                                                )}
-                                                            </span>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onOpenReport(report.id)
-                                            }
-                                            className="mt-1 w-full rounded-full bg-[#087529] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_6px_14px_rgba(8,117,41,0.18)] transition hover:bg-[#066421]"
-                                        >
-                                            Buka Detail Laporan
-                                        </button>
                                     </div>
-                                </div>
-                            </Popup>
-                        </CircleMarker>
-                    ))}
+                                </Popup>
+                            </CircleMarker>
+                        );
+                    })}
 
-                {selectedReport && (
-                    <>
-                        <Circle
-                            center={reportPosition(
-                                selectedReport,
-                                selectedReportIndex,
-                            )}
-                            radius={420}
-                            interactive={false}
-                            pathOptions={{
-                                color: "#087529",
-                                weight: 3,
-                                dashArray: "8 7",
-                                fillColor: "#bcebd1",
-                                fillOpacity: 0.2,
-                            }}
-                        />
-                        <CircleMarker
-                            center={reportPosition(
-                                selectedReport,
-                                selectedReportIndex,
-                            )}
-                            radius={14}
-                            interactive={false}
-                            pathOptions={{
-                                color: "#ffffff",
-                                weight: 5,
-                                fillColor: "#087529",
-                                fillOpacity: 1,
-                            }}
-                        >
-                            <Tooltip
-                                permanent
-                                direction="top"
-                                offset={[0, -14]}
-                                className="dlh-selected-report-label"
+                {selectedReport && (() => {
+                    const pos = reportPosition(selectedReport);
+                    if (!pos) return null;
+                    return (
+                        <>
+                            <Circle
+                                center={pos}
+                                radius={420}
+                                interactive={false}
+                                pathOptions={{
+                                    color: "#087529",
+                                    weight: 3,
+                                    dashArray: "8 7",
+                                    fillColor: "#bcebd1",
+                                    fillOpacity: 0.2,
+                                }}
+                            />
+                            <CircleMarker
+                                center={pos}
+                                radius={14}
+                                interactive={false}
+                                pathOptions={{
+                                    color: "#ffffff",
+                                    weight: 5,
+                                    fillColor: "#087529",
+                                    fillOpacity: 1,
+                                }}
                             >
-                                Laporan dipilih •{" "}
-                                {shortReportId(selectedReport.id)}
-                            </Tooltip>
-                        </CircleMarker>
-                    </>
-                )}
+                                <Tooltip
+                                    permanent
+                                    direction="top"
+                                    offset={[0, -14]}
+                                    className="dlh-selected-report-label"
+                                >
+                                    Laporan dipilih •{" "}
+                                    {shortReportId(selectedReport.id)}
+                                </Tooltip>
+                            </CircleMarker>
+                        </>
+                    );
+                })()}
             </MapContainer>
 
             <div className="absolute left-5 top-5 z-[500] flex h-12 gap-1 rounded-full bg-white/90 p-1 text-xs shadow-md backdrop-blur sm:left-6 sm:h-[52px] sm:text-sm">

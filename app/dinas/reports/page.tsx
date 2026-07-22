@@ -1,5 +1,5 @@
-import { ReportsManagement } from "../components/reports-management";
+import { ReportsPageClient } from "./reports-page-client";
 
 export default function DinasReportsPage() {
-  return <ReportsManagement />;
+  return <ReportsPageClient />;
 }

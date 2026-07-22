@@ -16,14 +16,15 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useOfficers, useCreateOfficer } from "../hooks/useOfficers";
 
 const inputClass =
   "mt-1.5 h-11 w-full rounded-full border-2 border-[#768176] bg-white px-4 text-sm font-normal outline-none placeholder:text-[#89939c] focus:border-[#087529]";
 
 export function AddOfficerForm() {
   const router = useRouter();
-  const store = useDlhStore();
+  const { data: officers } = useOfficers();
+  const createOfficer = useCreateOfficer();
   const fileInput = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -82,7 +83,7 @@ export function AddOfficerForm() {
     }
     const data = new FormData(event.currentTarget);
     const id = String(data.get("id")).toUpperCase();
-    if (store.officers.some((officer) => officer.id === id)) {
+    if (officers?.some((officer) => officer.id === id)) {
       setFileError(`ID ${id} sudah digunakan.`);
       return;
     }
@@ -95,34 +96,11 @@ export function AddOfficerForm() {
       upload.append("officerId", id);
       const response = await fetch("/api/dinas/media", { method: "POST", body: upload });
       const result = await response.json() as { data?: { url?: string }; error?: string };
-      const photoUrl = result.data?.url;
-      if (!response.ok || !photoUrl) throw new Error(result.error ?? "Foto petugas gagal diunggah.");
+      if (!response.ok) throw new Error(result.error ?? "Foto petugas gagal diunggah.");
 
-      const name = String(data.get("name"));
-      updateDlhStore((draft) => {
-        draft.officers.push({
-          id,
-          name,
-          initials: name
-            .split(" ")
-            .map((part) => part[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase(),
-          zone: String(data.get("zone")),
-          phone: String(data.get("phone")),
-          email: `${name.toLowerCase().replaceAll(" ", ".")}@dlh-jakarta.go.id`,
-          color: "bg-[#bcebd1]",
-          role: String(data.get("role")),
-          shift: "Pagi",
-          mobileAccess: true,
-          tracking: true,
-          photo: photoUrl,
-          tasks: 0,
-          location: draft.settings.region,
-          recentTasks: [],
-        });
-      });
+      const nama = String(data.get("name"));
+      const no_hp = String(data.get("phone"));
+      await createOfficer.mutateAsync({ nama, no_hp });
       setSaved(true);
     } catch (submitError) {
       setFileError(submitError instanceof Error ? submitError.message : "Data petugas gagal disimpan.");

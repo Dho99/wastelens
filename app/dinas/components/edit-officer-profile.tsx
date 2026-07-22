@@ -16,40 +16,33 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useOfficer, useUpdateOfficer } from "../hooks/useOfficers";
 
 const inputClass =
   "mt-1.5 h-11 w-full rounded-full border-2 border-[#bdcbbd] bg-[#f5fbfe] px-4 text-sm font-normal outline-none focus:border-[#087529]";
 
+function getOfficerInitials(nama: string) {
+  return nama.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
 export function EditOfficerProfile({ officerId }: { officerId: string }) {
   const router = useRouter();
-  const store = useDlhStore();
-  const officer =
-    store.officers.find((item) => item.id === officerId) ?? store.officers[0];
-  const [shift, setShift] = useState(officer.shift);
-  const [mobileAccess, setMobileAccess] = useState(officer.mobileAccess);
-  const [tracking, setTracking] = useState(officer.tracking);
+  const { data: officer } = useOfficer(officerId);
+  const updateOfficer = useUpdateOfficer();
+  const [shift, setShift] = useState("Pagi");
+  const [mobileAccess, setMobileAccess] = useState(true);
+  const [tracking, setTracking] = useState(true);
   const [saved, setSaved] = useState(false);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  if (!officer) return null;
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    updateDlhStore((draft) => {
-      const target = draft.officers.find((item) => item.id === officerId);
-      if (!target) return;
-      target.name = String(data.get("name"));
-      target.initials = target.name
-        .split(" ")
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
-      target.phone = String(data.get("phone"));
-      target.email = String(data.get("email"));
-      target.zone = String(data.get("zone"));
-      target.shift = shift;
-      target.mobileAccess = mobileAccess;
-      target.tracking = tracking;
+    await updateOfficer.mutateAsync({
+      id: officerId,
+      nama: String(data.get("name")),
+      no_hp: String(data.get("phone")),
     });
     setSaved(true);
   };
@@ -89,7 +82,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
                   Manajemen Petugas / Edit Profile
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] sm:text-2xl">
-                  {officerId} • {officer.name}
+                  {officerId} • {officer.nama}
                 </h2>
               </div>
               <span className="flex w-fit items-center gap-2 rounded-full border border-[#bcebd1] bg-[#e6f7ee] px-4 py-1.5 text-xs font-bold text-[#47705b] sm:ml-auto">
@@ -102,13 +95,13 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
               <aside className="space-y-4">
                 <section className="rounded-[22px] border border-[#bdcbbd] bg-white p-5 text-center">
                   <div className="mx-auto grid size-28 place-items-center rounded-full border-4 border-[#edf5f8] bg-gradient-to-br from-[#bcebd1] to-[#5da976] text-3xl font-extrabold text-white shadow-md">
-                    {officer.initials}
+                    {getOfficerInitials(officer.nama)}
                   </div>
                   <h3 className="mt-4 text-lg font-extrabold">
-                    {officer.name}
+                    {officer.nama}
                   </h3>
                   <p className="text-sm font-semibold text-[#667169]">
-                    Senior Field Officer
+                    Petugas Lapangan
                   </p>
                   <div className="mt-5 space-y-2 text-left">
                     <ProfileStat
@@ -152,7 +145,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
                       <input
                         name="name"
                         required
-                        defaultValue={officer.name}
+                        defaultValue={officer.nama}
                         className={inputClass}
                       />
                     </label>
@@ -171,7 +164,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
                         name="phone"
                         type="tel"
                         required
-                        defaultValue={officer.phone}
+                        defaultValue={officer.no_hp}
                         className={inputClass}
                       />
                     </label>
@@ -181,7 +174,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
                         name="email"
                         type="email"
                         required
-                        defaultValue={officer.email}
+                        defaultValue={officer.user?.email ?? "-"}
                         className={inputClass}
                       />
                     </label>
@@ -200,7 +193,7 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
                         <span className="relative block">
                           <select
                             name="zone"
-                            defaultValue={officer.zone}
+                            defaultValue=""
                             className={`${inputClass} appearance-none pr-11`}
                           >
                             <option>Zone A - Menteng</option>

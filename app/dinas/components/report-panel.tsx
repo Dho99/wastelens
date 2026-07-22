@@ -14,79 +14,63 @@ import {
     UserRound,
     X,
 } from "lucide-react";
-import type { DlhOfficer, DlhReport, DlhVehicle } from "@/lib/dlh-store";
-import { updateDlhStore } from "@/lib/dlh-store";
+import { useAssignReport } from "../hooks/useReports";
+import type { DinasReport, DinasOfficer, DinasVehicle } from "@/lib/services/dinas/types";
 import { shortReportId, wasteTypeLabel } from "@/app/dinas/lib/report-helpers";
 import { DropdownField } from "./dropdown-field";
 
 type Dropdown = "vehicle" | "officer" | null;
 
 interface Props {
-    report: DlhReport;
-    vehicles: DlhVehicle[];
-    officers: DlhOfficer[];
+    report: DinasReport;
+    vehicles: DinasVehicle[];
+    officers: DinasOfficer[];
     onClose: () => void;
 }
 
 export function ReportPanel({ report, vehicles, officers, onClose }: Props) {
     const router = useRouter();
+    const assignMutation = useAssignReport();
     const [dropdown, setDropdown] = useState<Dropdown>(null);
     const [vehicle, setVehicle] = useState("");
     const [officer, setOfficer] = useState("");
     const vehicleOptions = vehicles
-        .filter((item) => item.status === "Beroperasi")
         .map((item) => ({
             id: item.id,
-            name: `${item.type} • ${item.plate}`,
-            meta: `Kapasitas ${item.capacity} • ${item.area}`,
+            name: `${item.jenis} • ${item.jenis.split(" ")[0] || "N/A"}`,
+            meta: `Kapasitas ${item.kapasitas} kg`,
         }));
     const officerOptions = officers.map((item) => ({
         id: item.id,
-        initials: item.initials,
-        name: item.name,
-        meta: `${item.role} • ${item.zone}`,
+        initials: item.nama.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+        name: item.nama,
+        meta: "Petugas Lapangan",
     }));
     const displayId = shortReportId(report.id);
+    const category = report.priority_level === "TINGGI" || (report.priority_score != null && report.priority_score > 0.7) ? "BAHAYA" : "AMAN";
     const coordinates =
-        report.latitude !== undefined && report.longitude !== undefined
-            ? `${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`
-            : report.location;
+        report.lokasi_lat != null && report.lokasi_lng != null
+            ? `${report.lokasi_lat.toFixed(5)}, ${report.lokasi_lng.toFixed(5)}`
+            : report.address_text ?? "Koordinat tidak tersedia";
     const address =
-        report.address ??
-        [report.location, report.district].filter(Boolean).join(", ");
-    const wasteTypes = report.wasteTypes?.length
-        ? report.wasteTypes
+        report.address_text ??
+        (report.lokasi_lat != null ? `${report.lokasi_lat}, ${report.lokasi_lng}` : "Alamat belum tersedia");
+    const wasteTypes = report.waste_types?.length
+        ? report.waste_types
         : ["Sampah campuran"];
-    const sizeLabel = report.sizeCategory
-        ? wasteTypeLabel(report.sizeCategory)
-        : report.category === "BAHAYA"
+    const sizeLabel = report.kategori_ukuran
+        ? wasteTypeLabel(report.kategori_ukuran)
+        : category === "BAHAYA"
           ? "Besar"
           : "Sedang";
 
     const toggleDropdown = (next: Exclude<Dropdown, null>) =>
         setDropdown((current) => (current === next ? null : next));
     const assignFleet = () => {
-        updateDlhStore((draft) => {
-            const target = draft.reports.find((item) => item.id === report.id);
-            if (target) {
-                target.status = "Diproses";
-                target.assignedVehicleId = vehicle;
-                target.assignedOfficerId = officer;
-            }
-            const vehicleName =
-                draft.vehicles.find((item) => item.id === vehicle)?.plate ??
-                vehicle;
-            const officerName =
-                draft.officers.find((item) => item.id === officer)?.name ??
-                officer;
-            draft.notifications.unshift({
-                id: Date.now(),
-                title: "Armada berhasil ditugaskan",
-                message: `${vehicleName} dan ${officerName} ditugaskan untuk laporan #${report.id}.`,
-                time: "Baru saja",
-                type: "truck",
-                read: false,
-            });
+        assignMutation.mutate({
+            id: report.id,
+            petugasId: officer,
+            kendaraanId: vehicle,
         });
         router.push(
             `/dinas/assignments/${report.id}?vehicle=${encodeURIComponent(vehicle)}&officer=${encodeURIComponent(officer)}`,
@@ -102,7 +86,7 @@ export function ReportPanel({ report, vehicles, officers, onClose }: Props) {
                             Detail laporan
                         </p>
                         <span
-                            className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${report.status === "Menunggu" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
+                            className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${report.status === "WAITING" || report.status === "ANALYZED" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
                         >
                             {report.status}
                         </span>
@@ -115,11 +99,11 @@ export function ReportPanel({ report, vehicles, officers, onClose }: Props) {
                     </h2>
                     <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#66776e]">
                         <span className="inline-flex items-center gap-1">
-                            <UserRound className="size-3.5" /> {report.reporter}
+                            <UserRound className="size-3.5" /> {report.user?.name ?? "Tidak diketahui"}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                            <Clock3 className="size-3.5" /> {report.date}{" "}
-                            {report.year}, {report.time}
+                            <Clock3 className="size-3.5" /> {new Date(report.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}{" "}
+                            {new Date(report.createdAt).getFullYear().toString()}, {new Date(report.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"}
                         </span>
                     </p>
                 </div>
@@ -137,7 +121,7 @@ export function ReportPanel({ report, vehicles, officers, onClose }: Props) {
                 <div className="relative h-[294px] overflow-hidden rounded-[20px] border border-[#bcc8c1] bg-slate-200">
                     <Image
                         src={
-                            report.photoUrl ??
+                            report.foto_url ??
                             "/images/dlh-dashboard-reference.png"
                         }
                         alt={`Foto laporan ${report.id}`}
@@ -145,7 +129,7 @@ export function ReportPanel({ report, vehicles, officers, onClose }: Props) {
                         className="object-cover"
                         sizes="(max-width: 1024px) 100vw, 520px"
                         unoptimized={Boolean(
-                            report.photoUrl?.startsWith("data:"),
+                            report.foto_url?.startsWith("data:"),
                         )}
                     />
                     <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-[#147632] px-3 py-1 text-xs font-semibold text-white shadow-sm">
@@ -222,9 +206,9 @@ export function ReportPanel({ report, vehicles, officers, onClose }: Props) {
                                 Prioritas
                             </p>
                             <p className="mt-0.5 text-sm font-extrabold">
-                                {report.priorityLevel
-                                    ? wasteTypeLabel(report.priorityLevel)
-                                    : report.category === "BAHAYA"
+                                {report.priority_level
+                                    ? wasteTypeLabel(report.priority_level)
+                                    : category === "BAHAYA"
                                       ? "Tinggi"
                                       : "Normal"}
                             </p>

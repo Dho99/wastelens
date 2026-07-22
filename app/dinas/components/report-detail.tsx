@@ -15,7 +15,22 @@ import {
   X,
 } from "lucide-react";
 import { DlhShell } from "./dlh-shell";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useReport, useAssignReport } from "../hooks/useReports";
+import { useOfficers } from "../hooks/useOfficers";
+import { useVehicles } from "../hooks/useVehicles";
+import type { DinasReport } from "@/lib/services/dinas/types";
+
+const STATUS_DISPLAY: Record<string, string> = {
+  WAITING: "Menunggu",
+  PENDING: "Diproses",
+  SELESAI: "Selesai",
+};
+
+const STATUS_TO_API: Record<string, string> = {
+  Menunggu: "WAITING",
+  Diproses: "PENDING",
+  Selesai: "SELESAI",
+};
 
 const timeline = [
   ["Dilaporkan", "09:15 WIB"],
@@ -44,25 +59,35 @@ function LocationMap() {
   );
 }
 
+function fmt(iso: string) {
+  const d = new Date(iso);
+  return {
+    date: d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", timeZone: "UTC" }),
+    year: d.getFullYear().toString(),
+    time: d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " WIB",
+  };
+}
+
 export function ReportDetail({ reportId }: { reportId: string }) {
   const router = useRouter();
-  const store = useDlhStore();
-  const report = store.reports.find((item) => item.id === reportId) ?? store.reports[0];
-  const detail = { reporter: report.reporter, time: report.time, address: report.location, district: report.district };
-  const assignedOfficer = store.officers.find((item) => item.id === report.assignedOfficerId);
-  const assignedVehicle = store.vehicles.find((item) => item.id === report.assignedVehicleId);
+  const { data: report } = useReport(reportId);
+  const { data: officers } = useOfficers();
+  const { data: vehicles } = useVehicles();
+  const assignMutation = useAssignReport();
   const [updateOpen, setUpdateOpen] = useState(false);
-  const [status, setStatus] = useState(report.status);
-  const [notes, setNotes] = useState(report.notes ?? "");
+  const [status, setStatus] = useState("Menunggu");
+  const [notes, setNotes] = useState("");
   const [notice, setNotice] = useState("");
 
+  if (!report) return null;
+
+  const f = fmt(report.createdAt);
+  const detail = { reporter: report.user?.name ?? "-", time: f.time, address: report.address_text ?? `${report.lokasi_lat?.toFixed(4)}, ${report.lokasi_lng?.toFixed(4)}`, district: report.district ?? "" };
+  const assignedOfficer = officers?.find((item) => item.id === report.petugas_id);
+  const assignedVehicle = vehicles?.find((item) => item.id === report.kendaraan_id);
+
   const saveUpdate = () => {
-    updateDlhStore((draft) => {
-      const target = draft.reports.find((item) => item.id === reportId);
-      if (!target) return;
-      target.status = status;
-      target.notes = notes;
-    });
+    assignMutation.mutate({ id: reportId, status: STATUS_TO_API[status] ?? status });
     setUpdateOpen(false);
     setNotice(`Laporan berhasil diperbarui menjadi ${status}.`);
   };
@@ -95,12 +120,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <div className="flex items-center gap-4 rounded-[18px] border border-[#d5e0d8] bg-[#f8fcfa] p-4">
                 <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#d8f1e3] text-[#087529]">
-                  {assignedOfficer ? <span className="text-xs font-extrabold">{assignedOfficer.initials}</span> : <UserRound className="size-5" />}
+                  {assignedOfficer ? <span className="text-xs font-extrabold">{assignedOfficer.nama?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}</span> : <UserRound className="size-5" />}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-[#77837b]">Petugas</p>
-                  <p className="truncate font-extrabold">{assignedOfficer?.name ?? "Belum ditugaskan"}</p>
-                  <p className="truncate text-xs text-[#667169]">{assignedOfficer ? `${assignedOfficer.id} • ${assignedOfficer.phone}` : "Pilih petugas melalui dashboard peta"}</p>
+                  <p className="truncate font-extrabold">{assignedOfficer?.nama ?? "Belum ditugaskan"}</p>
+                  <p className="truncate text-xs text-[#667169]">{assignedOfficer ? `${assignedOfficer.id} • ${assignedOfficer.no_hp}` : "Pilih petugas melalui dashboard peta"}</p>
                 </div>
                 {assignedOfficer && <button type="button" onClick={() => router.push(`/dinas/logistics/officers/${assignedOfficer.id}`)} className="rounded-full border border-[#b8cabc] px-3 py-1.5 text-xs font-bold text-[#087529] hover:bg-white">Detail</button>}
               </div>
@@ -109,8 +134,8 @@ export function ReportDetail({ reportId }: { reportId: string }) {
                 <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#e2eff6] text-[#087529]"><Truck className="size-6" /></span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-[#77837b]">Kendaraan</p>
-                  <p className="truncate font-extrabold">{assignedVehicle ? `${assignedVehicle.type} • ${assignedVehicle.plate}` : "Belum ditugaskan"}</p>
-                  <p className="truncate text-xs text-[#667169]">{assignedVehicle ? `${assignedVehicle.id} • Kapasitas ${assignedVehicle.capacity}` : "Pilih kendaraan melalui dashboard peta"}</p>
+                  <p className="truncate font-extrabold">{assignedVehicle ? `${assignedVehicle.jenis} • ${assignedVehicle.id}` : "Belum ditugaskan"}</p>
+                  <p className="truncate text-xs text-[#667169]">{assignedVehicle ? `${assignedVehicle.id} • Kapasitas ${assignedVehicle.kapasitas}` : "Pilih kendaraan melalui dashboard peta"}</p>
                 </div>
                 {assignedVehicle && <button type="button" onClick={() => router.push(`/dinas/logistics/vehicles/${assignedVehicle.id}`)} className="rounded-full border border-[#b8cabc] px-3 py-1.5 text-xs font-bold text-[#087529] hover:bg-white">Detail</button>}
               </div>
@@ -121,10 +146,10 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             <section className="overflow-hidden rounded-[22px] border border-[#bdcdbf] bg-white shadow-sm">
               <div className="flex h-14 items-center gap-2 bg-[#e7f6fd] px-5"><Camera className="size-5" /><h2 className="text-lg font-extrabold">Foto Laporan Warga</h2></div>
               <div className="relative aspect-[1.55/1] min-h-[330px] overflow-hidden bg-slate-200 sm:aspect-[1.65/1]">
-                <Image src={report.photoUrl ?? "/images/dlh-dashboard-reference.png"} alt="Tumpukan sampah dari laporan warga" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 65vw" unoptimized={Boolean(report.photoUrl?.startsWith("data:"))} />
+                <Image src={report.foto_url ?? "/images/dlh-dashboard-reference.png"} alt="Tumpukan sampah dari laporan warga" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 65vw" unoptimized={Boolean(report.foto_url?.startsWith("data:"))} />
                 <div className="absolute bottom-6 left-6 rounded-2xl bg-white/80 px-5 py-3 shadow-lg backdrop-blur-sm">
                   <p className="text-[11px] font-extrabold tracking-wide text-[#647169]">TIMESTAMP</p>
-                  <p className="mt-1 text-sm font-semibold sm:text-base">{report.date} {report.year}, {report.time}</p>
+                  <p className="mt-1 text-sm font-semibold sm:text-base">{f.date} {f.year}, {f.time}</p>
                 </div>
               </div>
             </section>

@@ -13,20 +13,33 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { updateDlhStore, useDlhStore } from "@/lib/dlh-store";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAdmin, useUpdateAdmin, useChangePassword } from "../hooks/useAdmin";
+import { useReports } from "../hooks/useReports";
+import { useVehicles } from "../hooks/useVehicles";
+import { useSettings } from "../hooks/useSettings";
 
 export function AdminProfile() {
-  const store = useDlhStore();
-  const { name, email, passwordUpdatedAt } = store.admin;
+  const queryClient = useQueryClient();
+  const { data: admin, isLoading } = useAdmin();
+  const { data: reportsData } = useReports();
+  const { data: vehiclesData } = useVehicles();
+  const { data: settings } = useSettings();
+  const updateAdmin = useUpdateAdmin();
+  const changePassword = useChangePassword();
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [notice, setNotice] = useState("");
-  const completedReports = store.reports.filter(
-    (report) => report.status === "Selesai",
+  const reports = reportsData?.data ?? [];
+  const vehicles = vehiclesData ?? [];
+  const completedReports = reports.filter(
+    (report) => report.status === "SELESAI",
   ).length;
-  const operatingVehicles = store.vehicles.filter(
-    (vehicle) => vehicle.status === "Beroperasi",
-  ).length;
+  const operatingVehicles = vehicles.length;
+
+  if (isLoading || !admin) return null;
+
+  const { name, email, image } = admin;
 
   return (
       <>
@@ -44,16 +57,16 @@ export function AdminProfile() {
           </Link>
           <span className="relative ml-4 size-9 overflow-hidden rounded-full border-2 border-[#087529]">
             <Image
-              src={store.admin.photo ?? "/images/dlh-field-officer.png"}
+              src={image ?? "/images/dlh-field-officer.png"}
               alt="Profil Dinas"
               fill
               loading="eager"
               className="object-cover object-top"
               sizes="36px"
               unoptimized={Boolean(
-                store.admin.photo?.startsWith("data:")
-                  || store.admin.photo?.startsWith("/api/dinas/media/")
-                  || store.admin.photo?.includes("/svg"),
+                image?.startsWith("data:")
+                  || image?.startsWith("/api/dinas/media/")
+                  || image?.includes("/svg"),
               )}
             />
           </span>
@@ -83,16 +96,16 @@ export function AdminProfile() {
                 <div className="relative flex flex-col items-center gap-5 sm:flex-row">
                   <div className="relative size-32 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#e2eff6] shadow-md">
                     <Image
-                      src={store.admin.photo ?? "/images/dlh-field-officer.png"}
+                      src={image ?? "/images/dlh-field-officer.png"}
                       alt={name}
                       fill
                       loading="eager"
                       className="object-cover object-top"
                       sizes="128px"
                       unoptimized={Boolean(
-                        store.admin.photo?.startsWith("data:")
-                          || store.admin.photo?.startsWith("/api/dinas/media/")
-                          || store.admin.photo?.includes("/svg"),
+                        image?.startsWith("data:")
+                          || image?.startsWith("/api/dinas/media/")
+                          || image?.includes("/svg"),
                       )}
                     />
                   </div>
@@ -101,7 +114,7 @@ export function AdminProfile() {
                       {name}
                     </h2>
                     <p className="mt-1 text-sm text-[#667169]">
-                      {store.admin.position ?? "Kepala Bidang Operasional"} DLH
+                      Kepala Bidang Operasional DLH
                     </p>
                     <Link
                       href="/dinas/accounts/edit"
@@ -147,7 +160,7 @@ export function AdminProfile() {
                   <div>
                     <p className="text-sm font-bold">Kata Sandi</p>
                     <p className="text-xs text-[#667169]">
-                      Terakhir diubah {passwordUpdatedAt}
+                      Terakhir diubah baru saja
                     </p>
                   </div>
                   <Link
@@ -186,7 +199,7 @@ export function AdminProfile() {
                     akun dashboard.
                   </p>
                   <a
-                    href={`mailto:${store.settings.email}`}
+                    href={`mailto:${settings?.email ?? ""}`}
                     className="mt-5 flex h-11 items-center justify-center rounded-full bg-white text-sm font-bold text-[#087529]"
                   >
                     Hubungi Support
@@ -201,15 +214,18 @@ export function AdminProfile() {
       {editOpen && (
         <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm">
           <form
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
-              updateDlhStore((draft) => {
-                draft.admin.name = String(data.get("name"));
-                draft.admin.email = String(data.get("email"));
-              });
-              setEditOpen(false);
-              setNotice("Profil dinas berhasil diperbarui.");
+              try {
+                await updateAdmin.mutateAsync({
+                  name: String(data.get("name")),
+                });
+                setEditOpen(false);
+                setNotice("Profil dinas berhasil diperbarui.");
+              } catch {
+                setNotice("Gagal memperbarui profil dinas.");
+              }
             }}
             className="w-full max-w-md rounded-[24px] bg-white p-6 shadow-2xl"
           >
@@ -256,18 +272,24 @@ export function AdminProfile() {
       {passwordOpen && (
         <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm">
           <form
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
               if (data.get("newPassword") !== data.get("confirmPassword")) {
                 setNotice("Konfirmasi kata sandi tidak cocok.");
                 return;
               }
-              updateDlhStore((draft) => {
-                draft.admin.passwordUpdatedAt = "baru saja";
-              });
-              setPasswordOpen(false);
-              setNotice("Kata sandi berhasil diperbarui pada profil lokal.");
+              try {
+                await changePassword.mutateAsync({
+                  currentPassword: String(data.get("currentPassword")),
+                  newPassword: String(data.get("newPassword")),
+                });
+                queryClient.invalidateQueries({ queryKey: ["dinas-admin"] });
+                setPasswordOpen(false);
+                setNotice("Kata sandi berhasil diperbarui.");
+              } catch {
+                setNotice("Gagal memperbarui kata sandi.");
+              }
             }}
             className="w-full max-w-md rounded-[24px] bg-white p-6 shadow-2xl"
           >
