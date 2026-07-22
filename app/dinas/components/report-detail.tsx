@@ -354,9 +354,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
                             </h2>
                         </div>
                         <LeafletLocationMap
-                            lat={latitude}
-                            lng={longitude}
-                            popup={report.address ?? report.location}
+                            lat={report.lokasi_lat}
+                            lng={report.lokasi_lng}
+                            popup={
+                                report.address_text ??
+                                (report.road_name as string)
+                            }
                             zoom={15}
                             height="h-[230px] sm:h-[270px]"
                         />

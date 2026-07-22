@@ -20,4 +20,4 @@ export type ListResult<T> = {
   pagination: Pagination;
 };
 
-export type CreateUserPayload = Record<string, string>;
+export type CreateUserPayload = Record<string, string | boolean>;

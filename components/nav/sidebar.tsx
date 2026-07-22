@@ -14,7 +14,7 @@ export interface NavItem {
 
 const brandByRole: Record<string, { title: string; subtitle?: string }> = {
   dinas: { title: "DLH Dashboard", subtitle: "Government Portal" },
-  admin: { title: "Admin Panel" },
+  admin: { title: "WasteLens", subtitle: "SUPERADMIN CONSOLE" },
   kopdes: { title: "Kopdes Dashboard" },
 };
 

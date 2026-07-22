@@ -306,6 +306,8 @@ model Notifikasi {
   laporan     Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
   user        user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@map("NOTIFIKASI")
 }
 

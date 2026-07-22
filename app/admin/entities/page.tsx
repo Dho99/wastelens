@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { EntityUser, EntityDinas, EntityKopdes } from "../types/entities";
@@ -11,16 +12,12 @@ import {
     useEntityUsers,
     useDinasList,
     useKopdesList,
-    useCreateDinas,
     useUpdateDinas,
     useDeleteDinas,
-    useCreateKopdes,
     useUpdateKopdes,
     useDeleteKopdes,
 } from "../hooks/useEntities";
 import { useUpdateUserStatus } from "../hooks/useUsers";
-import AddDinasModal from "./components/AddDinasModal";
-import AddKopdesModal from "./components/AddKopdesModal";
 import EditUserModal from "./components/EditUserModal";
 import EditDinasModal from "./components/EditDinasModal";
 import EditKopdesModal from "./components/EditKopdesModal";
@@ -28,6 +25,7 @@ import DeleteConfirmModal from "./components/DeleteConfirmModal";
 import BlockUserModal from "./components/BlockUserModal";
 
 export default function ManajemenEntitasPage() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<"user" | "dinas" | "koperasi">(
         "user",
     );
@@ -37,18 +35,14 @@ export default function ManajemenEntitasPage() {
     const { data: dinas = [], isLoading: loadingDinas } = useDinasList();
     const { data: kopdes = [], isLoading: loadingKopdes } = useKopdesList();
     const { mutateAsync: updateStatus } = useUpdateUserStatus();
-    const { mutateAsync: createDinas } = useCreateDinas();
     const { mutateAsync: updateDinas } = useUpdateDinas();
     const { mutateAsync: deleteDinas } = useDeleteDinas();
-    const { mutateAsync: createKopdes } = useCreateKopdes();
     const { mutateAsync: updateKopdes } = useUpdateKopdes();
     const { mutateAsync: deleteKopdes } = useDeleteKopdes();
 
     const loading = loadingUsers && loadingDinas && loadingKopdes;
 
     // Modal state
-    const [addDinasModal, setAddDinasModal] = useState(false);
-    const [addKopdesModal, setAddKopdesModal] = useState(false);
     const [editUserModal, setEditUserModal] = useState<EntityUser | null>(null);
     const [editDinasModal, setEditDinasModal] = useState<EntityDinas | null>(null);
     const [editKopdesModal, setEditKopdesModal] = useState<EntityKopdes | null>(null);
@@ -145,16 +139,16 @@ export default function ManajemenEntitasPage() {
                 <div>
                     {activeTab === "dinas" && (
                         <button
-                            onClick={() => setAddDinasModal(true)}
-                            className="bg-[#1E7D38] hover:bg-[#18652d] text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all duration-200"
+                            onClick={() => router.push("/admin/entities/create/dinas")}
+                            className="bg-[#1E7D38] hover:bg-[#18652d] text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all duration-200 cursor-pointer"
                         >
                             <Plus className="w-4 h-4" /> Tambah Dinas
                         </button>
                     )}
                     {activeTab === "koperasi" && (
                         <button
-                            onClick={() => setAddKopdesModal(true)}
-                            className="bg-[#1E7D38] hover:bg-[#18652d] text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all duration-200"
+                            onClick={() => router.push("/admin/entities/create/koperasi")}
+                            className="bg-[#1E7D38] hover:bg-[#18652d] text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all duration-200 cursor-pointer"
                         >
                             <Plus className="w-4 h-4" /> Tambah Koperasi
                         </button>
@@ -237,17 +231,7 @@ export default function ManajemenEntitasPage() {
 
             {/* ── MODALS ───────────────────────────────────── */}
 
-            <AddDinasModal
-                open={addDinasModal}
-                onClose={() => { setAddDinasModal(false); }}
-                onSubmit={async (data) => { await createDinas(data); }}
-            />
 
-            <AddKopdesModal
-                open={addKopdesModal}
-                onClose={() => { setAddKopdesModal(false); }}
-                onSubmit={async (data) => { await createKopdes(data); }}
-            />
 
             <EditUserModal
                 user={editUserModal}

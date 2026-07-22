@@ -14,4 +14,30 @@ export type Report = {
 };
 
 export type ReportList = ListResult<Report>;
+
+export type TimelineStep = {
+  id: string;
+  label: string;
+  time: string;
+  completed: boolean;
+};
+
+export type ReportDetail = {
+  id: string;
+  reportNumber: string;
+  pelapor: string;
+  jamLaporan: string;
+  alamat: string;
+  fotoUrl: string;
+  timestampText: string;
+  estimasiPenangananText: string;
+  timelineSteps: TimelineStep[];
+  locationLat: number;
+  locationLng: number;
+  addressTitle: string;
+  addressSubtitle: string;
+  kategoriUkuran?: string;
+  status?: string;
+};
+
 export type { Pagination };
