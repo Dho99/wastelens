@@ -192,7 +192,7 @@ export function SidebarLayout({
           <span className="font-semibold text-sm">{brand.title}</span>
         </header>
 
-        <main className="flex-1">{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
       </div>
     </div>
   );
