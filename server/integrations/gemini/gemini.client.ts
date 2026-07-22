@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { geminiWasteAnalysisSchema } from "./gemini.schema";
 import type { GeminiWasteResult } from "./gemini.types";
+import { cleanAndParseJSON } from "@/server/integrations/ai/json-sanitizer";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
@@ -28,62 +29,73 @@ Rules:
 - Set confidence < 0.3 to trigger needsManualReview.
 - If confidence below threshold, set needsManualReview: true.`;
 
-async function imageUrlToBase64(imageUrl: string): Promise<{ data: string; mimeType: string }> {
-  const response = await fetch(imageUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.statusText}`);
-  }
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const contentType = response.headers.get("content-type") ?? "image/jpeg";
-  return { data: buffer.toString("base64"), mimeType: contentType };
+async function imageUrlToBase64(
+    imageUrl: string,
+): Promise<{ data: string; mimeType: string }> {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get("content-type") ?? "image/jpeg";
+    return { data: buffer.toString("base64"), mimeType: contentType };
 }
 
 export async function analyzeWasteImage(
-  imageInput: string,
-  mimeType: string = "image/jpeg",
-): Promise<GeminiWasteResult> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not configured");
-  }
+    imageInput: string,
+    mimeType: string = "image/jpeg",
+): Promise<GeminiWasteResult & { rawResponse?: string }> {
+    if (!GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY is not configured");
+    }
 
-  const isUrl = imageInput.startsWith("http");
-  let rawData: string;
-  let actualMime: string;
+    const isUrl = imageInput.startsWith("http");
+    let rawData: string;
+    let actualMime: string;
 
-  if (isUrl) {
-    const fetched = await imageUrlToBase64(imageInput);
-    rawData = fetched.data;
-    actualMime = fetched.mimeType;
-  } else {
-    rawData = imageInput.split(",")[1] ?? imageInput;
-    actualMime = mimeType;
-  }
+    if (isUrl) {
+        const fetched = await imageUrlToBase64(imageInput);
+        rawData = fetched.data;
+        actualMime = fetched.mimeType;
+    } else {
+        rawData = imageInput.split(",")[1] ?? imageInput;
+        actualMime = mimeType;
+    }
 
-  const interaction = await ai.interactions.create({
-    model: GEMINI_MODEL,
-    input: [
-      { type: "text", text: SYSTEM_PROMPT },
-      { type: "image", data: rawData, mime_type: actualMime },
-    ],
-  });
+    const interaction = await ai.interactions.create({
+        model: GEMINI_MODEL,
+        input: [
+            { type: "text", text: SYSTEM_PROMPT },
+            { type: "image", data: rawData, mime_type: actualMime },
+        ],
+    });
 
-  const rawText = interaction.output_text ?? "";
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    const rawText = interaction.output_text ?? "";
 
-  if (!jsonMatch) {
-    throw new Error("Gemini response did not contain valid JSON");
-  }
+    console.log("[Gemini] Raw response:", rawText);
 
-  const parsed: unknown = JSON.parse(jsonMatch[0]);
-  const validated = geminiWasteAnalysisSchema.parse(parsed);
+    let parsed: unknown;
+    try {
+        parsed = cleanAndParseJSON(rawText);
+    } catch (parseError) {
+        const message =
+            parseError instanceof Error ? parseError.message : "Unknown error";
+        console.error("[Gemini] JSON parse error:", message);
+        console.error("[Gemini] Raw response:", rawText.slice(0, 500));
+        throw new Error(`Gemini response JSON parse error: ${message}`);
+    }
 
-  return {
-    sizeCategory: validated.sizeCategory,
-    wasteTypes: validated.wasteTypes,
-    drainageRisk: validated.drainageRisk,
-    accessObstructionRisk: validated.accessObstructionRisk,
-    visualIndicators: validated.visualIndicators,
-    confidence: validated.confidence,
-    needsManualReview: validated.needsManualReview || validated.confidence < 0.3,
-  };
+    const validated = geminiWasteAnalysisSchema.parse(parsed);
+
+    return {
+        rawResponse: rawText,
+        sizeCategory: validated.sizeCategory,
+        wasteTypes: validated.wasteTypes,
+        drainageRisk: validated.drainageRisk,
+        accessObstructionRisk: validated.accessObstructionRisk,
+        visualIndicators: validated.visualIndicators,
+        confidence: validated.confidence,
+        needsManualReview:
+            validated.needsManualReview || validated.confidence < 0.3,
+    };
 }
