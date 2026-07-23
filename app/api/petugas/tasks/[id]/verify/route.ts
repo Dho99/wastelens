@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { grantVerificationReward } from "@/server/modules/rewards/reward.service";
+import { persistNotification } from "@/server/websocket/notify.service";
 import { triggerUserEvent } from "@/server/websocket/pusher.service";
 import {
   createReportVerifiedEvent,
@@ -144,14 +145,14 @@ export async function POST(
           rewardResult.status = "VERIFIED";
           rewardResult.jumlah = rewardData.jumlah;
 
-          await tx.notifikasi.create({
-            data: {
+          await persistNotification(
+            {
               user_id: laporan.user_id,
               laporan_id: id,
               pesan: `Laporan sampah Anda telah selesai ditangani oleh ${petugas.nama}. Koin +${rewardResult.jumlah} telah ditambahkan.`,
-              status_baca: false,
             },
-          });
+            tx,
+          );
         }
 
         return {
