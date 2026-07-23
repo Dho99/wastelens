@@ -3,6 +3,7 @@ import type { DinasReport, DinasVehicle, DinasOfficer } from "./types";
 
 export interface DashboardData {
   activeReports: DinasReport[];
+  assignedReports: DinasReport[];
   vehicles: DinasVehicle[];
   officers: DinasOfficer[];
 }

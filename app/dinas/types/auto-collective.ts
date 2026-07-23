@@ -45,6 +45,7 @@ export interface AutoCollectiveRoute {
   estimatedDistanceKm: number | null;
   estimatedDurationMinutes: number | null;
   routingSource: "OSRM" | "HAVERSINE";
+  routeGeometry: [number, number][];
   stops: AutoCollectiveStop[];
 }
 

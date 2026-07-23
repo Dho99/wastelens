@@ -45,6 +45,15 @@ export interface DinasOfficer {
   no_hp: string;
   user?: { id: string; name: string; email: string; image: string | null };
   _count?: { laporan: number };
+  laporan?: Array<{
+    id: string;
+    lokasi_lat: number;
+    lokasi_lng: number;
+    address_text: string | null;
+    district: string | null;
+    status: string;
+    route_order: number | null;
+  }>;
 }
 
 export interface DinasAdmin {

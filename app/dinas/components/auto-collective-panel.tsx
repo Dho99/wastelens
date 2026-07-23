@@ -77,6 +77,10 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
             stops: route.stops.filter((s) => s.reportId !== stopId),
             totalEstimatedLoad: route.totalEstimatedLoad - removedStop.estimatedLoadKg,
             remainingCapacity: route.remainingCapacity + removedStop.estimatedLoadKg,
+            routeGeometry: [],
+            estimatedDistanceKm: null,
+            estimatedDurationMinutes: null,
+            routingSource: "HAVERSINE" as const,
           };
         })
         .filter((route) => route.stops.length > 0);

@@ -11,6 +11,7 @@ import { AutoCollectiveModal } from "./auto-collective-modal";
 
 type MapCanvasProps = {
     reports: DinasReport[];
+    assignedReports: DinasReport[];
     reportOpen: boolean;
     selectedReportId: string | null;
     onOpenReport: (id: string) => void;
@@ -42,10 +43,11 @@ export function DlhDashboard() {
     const { data: dashboard } = useDashboardData();
     const activeReports = (dashboard?.activeReports ?? []).filter(
         (report) =>
-            (report.status === "WAITING") &&
+            (report.status === "ANALYZED" || report.status === "WAITING") &&
             !report.petugas_id &&
             !report.kendaraan_id,
     );
+    const assignedReports = dashboard?.assignedReports ?? [];
 
     const [selectedReportId, setSelectedReportId] = useState<string | null>(
         null,
@@ -86,6 +88,7 @@ export function DlhDashboard() {
                 <div className="relative flex min-h-0 flex-1 overflow-hidden bg-[#dcecf2]">
                     <MapCanvas
                         reports={activeReports}
+                        assignedReports={assignedReports}
                         reportOpen={reportOpen}
                         selectedReportId={selectedReportId}
                         onOpenReport={handleOpenReport}

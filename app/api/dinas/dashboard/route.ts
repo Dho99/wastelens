@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestDinas } from "@/lib/dinas-auth";
 import { prisma } from "@/lib/prisma";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export const dynamic = "force-dynamic";
 
@@ -11,14 +12,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Akses DLH tidak ditemukan", code: "AUTH" }, { status: 401 });
     }
 
-    const [activeReports, vehicles, officers] = await Promise.all([
+    const [activeReports, assignedReports, vehicles, officers] = await Promise.all([
       prisma.laporan.findMany({
         where: {
           dinas_id: dinas.id,
+          status: { in: [LAPORAN_STATUS.ANALYZED, LAPORAN_STATUS.WAITING] },
           petugas_id: null,
           kendaraan_id: null,
         },
         orderBy: { createdAt: "desc" },
+      }),
+      prisma.laporan.findMany({
+        where: {
+          dinas_id: dinas.id,
+          status: { in: [LAPORAN_STATUS.PENDING, LAPORAN_STATUS.DIJEMPUT] },
+          petugas_id: { not: null },
+          kendaraan_id: { not: null },
+          route_order: { not: null },
+        },
+        orderBy: [
+          { petugas_id: "asc" },
+          { kendaraan_id: "asc" },
+          { route_order: { sort: "asc", nulls: "last" } },
+          { createdAt: "asc" },
+        ],
       }),
       prisma.kendaraan.findMany({
         where: { dinas_id: dinas.id },
@@ -34,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { activeReports, vehicles, officers },
+      data: { activeReports, assignedReports, vehicles, officers },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";

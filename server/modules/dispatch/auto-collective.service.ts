@@ -195,6 +195,67 @@ async function computeOSRMDurations(
   }
 }
 
+async function computeRouteDetails(
+  stops: AutoCollectiveRoute["stops"],
+): Promise<Pick<AutoCollectiveRoute, "routeGeometry" | "estimatedDistanceKm" | "estimatedDurationMinutes" | "routingSource">> {
+  const fallbackGeometry = stops.map((stop) => [stop.lng, stop.lat] as [number, number]);
+  let fallbackDistanceKm = 0;
+
+  for (let index = 1; index < stops.length; index++) {
+    fallbackDistanceKm += haversineKm(
+      stops[index - 1].lat,
+      stops[index - 1].lng,
+      stops[index].lat,
+      stops[index].lng,
+    );
+  }
+
+  if (stops.length < 2) {
+    return {
+      routeGeometry: fallbackGeometry,
+      estimatedDistanceKm: 0,
+      estimatedDurationMinutes: 0,
+      routingSource: "HAVERSINE",
+    };
+  }
+
+  try {
+    const coordinates = stops.map((stop) => `${stop.lng},${stop.lat}`).join(";");
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`,
+      { signal: AbortSignal.timeout(AUTO_COLLECTIVE_CONFIG.osrmTimeoutMs) },
+    );
+    if (!response.ok) throw new Error("OSRM returned non-OK");
+
+    const data = await response.json() as {
+      code?: string;
+      routes?: Array<{
+        distance: number;
+        duration: number;
+        geometry: { coordinates: [number, number][] };
+      }>;
+    };
+    const osrmRoute = data.routes?.[0];
+    if (data.code !== "Ok" || !osrmRoute?.geometry.coordinates.length) {
+      throw new Error("OSRM returned an invalid route");
+    }
+
+    return {
+      routeGeometry: osrmRoute.geometry.coordinates,
+      estimatedDistanceKm: Math.round((osrmRoute.distance / 1000) * 10) / 10,
+      estimatedDurationMinutes: Math.max(1, Math.round(osrmRoute.duration / 60)),
+      routingSource: "OSRM",
+    };
+  } catch {
+    return {
+      routeGeometry: fallbackGeometry,
+      estimatedDistanceKm: Math.round(fallbackDistanceKm * 10) / 10,
+      estimatedDurationMinutes: Math.round((fallbackDistanceKm / 30) * 60),
+      routingSource: "HAVERSINE",
+    };
+  }
+}
+
 export async function buildCollectiveRoutes(
   eligibleReports: EligibleReport[],
   vehicles: AvailableVehicle[],
@@ -202,6 +263,7 @@ export async function buildCollectiveRoutes(
 ): Promise<AutoCollectivePreview> {
   const remaining = [...eligibleReports];
   const routes: AutoCollectiveRoute[] = [];
+  const unassignedReports: EligibleReport[] = [];
   const usedVehicleIds = new Set<string>();
   const usedOfficerIds = new Set<string>();
   let routeCounter = 0;
@@ -214,7 +276,13 @@ export async function buildCollectiveRoutes(
 
     const unusedVehicles = vehicles.filter((v) => !usedVehicleIds.has(v.id));
     const bestVehicle = selectBestVehicle(unusedVehicles, requiredLoad);
-    if (!bestVehicle) break;
+    if (!bestVehicle) {
+      // A high-priority oversized report must not prevent smaller reports from
+      // being considered for the remaining fleet.
+      unassignedReports.push(seed);
+      remaining.splice(0, 1);
+      continue;
+    }
 
     const unusedOfficers = officers.filter((o) => !usedOfficerIds.has(o.id));
     if (unusedOfficers.length === 0) break;
@@ -236,6 +304,7 @@ export async function buildCollectiveRoutes(
       estimatedDistanceKm: null,
       estimatedDurationMinutes: null,
       routingSource: "HAVERSINE",
+      routeGeometry: [[seed.lokasi_lng, seed.lokasi_lat]],
       stops: [{
         reportId: seed.id,
         lat: seed.lokasi_lat,
@@ -276,9 +345,6 @@ export async function buildCollectiveRoutes(
         currentOrigin,
         candidates.map((c) => ({ lat: c.lokasi_lat, lng: c.lokasi_lng })),
       );
-
-      const isOcrm = durations.length > 0 && durations[0] > 0;
-      route.routingSource = isOcrm ? "OSRM" : "HAVERSINE";
 
       const feasibleCandidates: Array<{ candidate: typeof candidates[0]; duration: number; index: number }> = [];
       for (let i = 0; i < candidates.length; i++) {
@@ -359,8 +425,14 @@ export async function buildCollectiveRoutes(
     routes.push(route);
   }
 
+  await Promise.all(
+    routes.map(async (route) => {
+      Object.assign(route, await computeRouteDetails(route.stops));
+    }),
+  );
+
   return {
     routes,
-    unassignedReports: remaining,
+    unassignedReports: [...unassignedReports, ...remaining],
   };
 }

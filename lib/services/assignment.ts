@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { findDinasByDistrict } from "./spatial";
-import type { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
+import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
 export const LOAD_ESTIMATES_KG: Record<string, number> = {
     SMALL: 25,
+    KECIL: 25,
     MEDIUM: 100,
+    SEDANG: 100,
     LARGE: 300,
+    BESAR: 300,
     UNCERTAIN: 0,
 } as const;
 
