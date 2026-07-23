@@ -1,19 +1,35 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import React from "react";
+import { Navbar } from "@/app/components/landing/Navbar";
+import { HeroSection } from "@/app/components/landing/HeroSection";
+import { ComparisonSection } from "@/app/components/landing/ComparisonSection";
+import { HowItWorksSection } from "@/app/components/landing/HowItWorksSection";
+import { OperatorDlhSection } from "@/app/components/landing/OperatorDlhSection";
+import { RoleTabsSection } from "@/app/components/landing/RoleTabsSection";
+import { Footer } from "@/app/components/landing/Footer";
 
-export default async function HomePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default function HomePage() {
+    return (
+        <main className="min-h-screen bg-white text-slate-900 antialiased selection:bg-[#15803d] selection:text-white">
+            {/* Sticky Navbar with Backdrop Blur */}
+            <Navbar />
 
-  console.log(session)
+            {/* Hero Section */}
+            <HeroSection />
 
-  if (!session) {
-    redirect("/login");
-  }
+            {/* Comparison Section: "Satu Platform, Dampak Nyata" */}
+            <ComparisonSection />
 
-  const role = (session.user as { role?: string }).role ?? "user";
-  redirect(`/${role}`);
+            {/* How It Works Section: "Cara Kerja WasteLens" */}
+            <HowItWorksSection />
+
+            {/* Operator DLH Section: "Pantau, Kelola, Tindak Cepat" */}
+            <OperatorDlhSection />
+
+            {/* Interactive 3-Role Tabbed Section: Warga, Operator DLH, Petugas */}
+            <RoleTabsSection />
+
+            {/* Landing Page Footer */}
+            <Footer />
+        </main>
+    );
 }
-
