@@ -1,4 +1,4 @@
-import { NotificationsPage } from "../components/secondary-pages";
+import { NotificationsPage } from "./components/notifications-page";
 
 export default function DinasNotificationsPage() {
   return <NotificationsPage />;

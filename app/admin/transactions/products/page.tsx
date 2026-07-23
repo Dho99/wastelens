@@ -67,7 +67,7 @@ export default function AdminProductRedemptionsPage() {
   const totalKoinDibelanjakan = items.reduce((acc, r) => acc + r.jumlah_koin, 0);
 
   return (
-    <div className="bg-[#FAF9F5] min-h-screen p-8 text-neutral-800 select-none pb-24">
+    <div className="bg-[#FAF9F5] p-8 text-neutral-800 select-none pb-24">
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-5 mb-6">
         <div>

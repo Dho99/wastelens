@@ -1,0 +1,3 @@
+-- Keep the database table aligned with the Notifikasi Prisma model.
+ALTER TABLE "NOTIFIKASI"
+ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

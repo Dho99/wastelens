@@ -1,4 +1,4 @@
-import { OfficerDetail } from "../../../components/officer-detail";
+import { OfficerDetail } from "./components/officer-detail";
 import { DlhShell } from "../../../components/dlh-shell";
 
 export default async function OfficerDetailPage({

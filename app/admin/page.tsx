@@ -64,7 +64,7 @@ export default function AdminDashboardPage() {
     ];
 
     return (
-        <div className="p-8 md:p-10 space-y-8 bg-[#f8fafc] min-h-screen text-[#0f172a] select-none">
+        <div className="p-8 md:p-10 space-y-8 bg-[#f8fafc] text-[#0f172a] select-none">
             {/* Header */}
             <div>
                 <h1 className="text-3xl md:text-4xl font-extrabold text-[#0f172a] tracking-tight">

@@ -4,7 +4,7 @@ import {
   getEligibleReports,
   getAvailableVehicles,
   getAvailableOfficers,
-  buildCollectiveRoutes,
+  buildMinimumVehicleRoutes,
 } from "@/server/modules/dispatch/auto-collective.service";
 import type { RegenerateRequest } from "@/app/dinas/types/auto-collective";
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const preview = await buildCollectiveRoutes(filteredReports, vehicles, officers);
+    const preview = await buildMinimumVehicleRoutes(filteredReports, vehicles, officers);
 
     const overriddenRoutes = preview.routes.map((route) => {
       const override = modOverrides.get(route.temporaryRouteId);

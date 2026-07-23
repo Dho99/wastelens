@@ -7,6 +7,8 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "tasik:seed": "tsx prisma/tasik-seed.ts"
     },
     "dependencies": {
@@ -15,6 +17,7 @@
         "@hookform/resolvers": "^5.4.0",
         "@mdi/js": "^7.4.47",
         "@mdi/react": "^1.6.1",
+        "@openrouter/sdk": "^1.0.12",
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.8.0",
         "@tanstack/react-query": "^5.101.2",
@@ -51,7 +54,8 @@
         "prisma": "^7.8.0",
         "tailwindcss": "^4",
         "tsx": "^4.23.1",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
     },
     "prisma": {
         "seed": "tsx prisma/seed.ts"

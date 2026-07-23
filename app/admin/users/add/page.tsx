@@ -151,7 +151,7 @@ export default function AddUserPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 space-y-6 bg-[#f8fafc] min-h-screen text-[#0f172a] select-none pb-24 max-w-6xl mx-auto">
+    <div className="p-6 md:p-10 space-y-6 bg-[#f8fafc] text-[#0f172a] select-none pb-24 max-w-6xl mx-auto">
       
       {/* Top Header Row with Back Button & Cancel Pill Button */}
       <div className="space-y-4">
