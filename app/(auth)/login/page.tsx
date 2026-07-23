@@ -35,7 +35,7 @@ export default function LoginPage() {
             return;
         }
 
-        router.push(from !== "/" ? from : "/");
+        router.push(from !== "/" ? from : "/user");
         router.refresh();
     }
 

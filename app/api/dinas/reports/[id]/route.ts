@@ -56,6 +56,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Laporan tidak ditemukan", code: "NOT_FOUND" }, { status: 404 });
     }
 
+    if (kendaraanId) {
+      const activeRoute = await prisma.dispatchRoute.findFirst({
+        where: {
+          dinas_id: dinas.id,
+          kendaraan_id: kendaraanId,
+          status: "IN_PROGRESS",
+        },
+        select: { id: true },
+      });
+      if (activeRoute) {
+        return NextResponse.json(
+          {
+            error:
+              "Kendaraan sedang menjalankan rute aktif. Pilih kendaraan lain atau masukkan laporan ke perencanaan berikutnya.",
+            code: "ROUTE_IN_PROGRESS",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const updateData: Record<string, unknown> = {};
     if (petugasId !== undefined) updateData.petugas_id = petugasId || null;
     if (kendaraanId !== undefined) updateData.kendaraan_id = kendaraanId || null;

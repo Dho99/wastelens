@@ -1,4 +1,4 @@
-import { ReportDetail } from "../../components/report-detail";
+import { ReportDetail } from "../components/report-detail";
 
 export default async function DinasReportDetailPage({
   params,

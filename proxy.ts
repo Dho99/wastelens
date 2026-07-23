@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 // Paths that don't require authentication
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/dinas"];
+const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/dinas", "/"];
 
 function isPublic(pathname: string): boolean {
     return PUBLIC_PATHS.some((p) => pathname.startsWith(p));

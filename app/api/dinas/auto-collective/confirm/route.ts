@@ -73,6 +73,13 @@ export async function POST(request: NextRequest) {
 
     const allStopIds = body.routes.flatMap((r) => r.stopIds);
 
+    if (allStopIds.length !== new Set(allStopIds).size) {
+      return NextResponse.json(
+        { error: "Terdapat stopId duplikat antar rute", code: "DEDUP" },
+        { status: 400 },
+      );
+    }
+
     const reports = await prisma.laporan.findMany({
       where: { id: { in: allStopIds } },
     });
@@ -111,6 +118,7 @@ export async function POST(request: NextRequest) {
 
     const allVehicleIds = body.routes.map((r) => r.kendaraanId);
     const uniqueVehicleIds = [...new Set(allVehicleIds)].sort();
+    const uniqueOfficerIds = [...new Set(body.routes.map((r) => r.petugasId))].sort();
 
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -126,6 +134,34 @@ export async function POST(request: NextRequest) {
             throw new ConfirmError(`Kendaraan ${vehicleId} tidak ditemukan`, "VEHICLE_NOT_FOUND", 404);
           }
           lockedVehicles.push(rows[0]);
+        }
+
+        for (const officerId of uniqueOfficerIds) {
+          const officerRows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
+            `SELECT id FROM "PETUGAS" WHERE id = $1::uuid AND dinas_id = $2::uuid FOR UPDATE`,
+            officerId,
+            dinas.id,
+          );
+          if (officerRows.length === 0) {
+            throw new ConfirmError(`Petugas ${officerId} tidak ditemukan`, "OFFICER_NOT_FOUND", 404);
+          }
+        }
+
+        for (const stopId of allStopIds) {
+          const reportRows = await tx.$queryRawUnsafe<Array<{ id: string; petugas_id: string | null; kendaraan_id: string | null; status: string }>>(
+            `SELECT id, petugas_id, kendaraan_id, status FROM "LAPORAN" WHERE id = $1::uuid FOR UPDATE`,
+            stopId,
+          );
+          if (reportRows.length === 0) {
+            throw new ConfirmError(`Laporan ${stopId} tidak ditemukan`, "REPORT_NOT_FOUND_IN_LOCK", 404);
+          }
+          const r = reportRows[0];
+          if (r.petugas_id || r.kendaraan_id) {
+            throw new ConfirmError(`Laporan ${stopId} sudah di-assign`, "REPORT_ALREADY_ASSIGNED_AT_LOCK", 409);
+          }
+          if (r.status !== "ANALYZED" && r.status !== "WAITING") {
+            throw new ConfirmError(`Laporan ${stopId} status tidak eligible: ${r.status}`, "REPORT_STATUS_INVALID_AT_LOCK", 409);
+          }
         }
 
         const vehicleMap = new Map(lockedVehicles.map((v) => [v.id, v]));
@@ -201,6 +237,18 @@ export async function POST(request: NextRequest) {
             }
           }
 
+          const { createDispatchRouteForAssignment } = await import(
+            "@/server/modules/dispatch/route-append.service"
+          );
+          const dispatchRouteId = await createDispatchRouteForAssignment(tx, {
+            dinasId: dinas.id,
+            petugasId: route.petugasId,
+            kendaraanId: route.kendaraanId,
+            stopIds: route.stopIds,
+            routeOrder: route.routeOrder,
+            totalLoadKg: totalLoad,
+          });
+
           const petugasUser = await tx.petugas.findUnique({
             where: { id: route.petugasId },
             select: { user_id: true },
@@ -218,7 +266,7 @@ export async function POST(request: NextRequest) {
           }
 
           assignedRoutes.push({
-            routeId: route.temporaryRouteId,
+            routeId: dispatchRouteId,
             petugasId: route.petugasId,
             kendaraanId: route.kendaraanId,
             stopCount: route.stopIds.length,

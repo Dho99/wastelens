@@ -80,6 +80,26 @@ export async function POST(
           data: { status: LAPORAN_STATUS.SELESAI },
         });
 
+        if (laporan.route_id) {
+          const remaining = await tx.laporan.count({
+            where: {
+              route_id: laporan.route_id,
+              status: { in: [LAPORAN_STATUS.PENDING, LAPORAN_STATUS.DIJEMPUT] },
+            },
+          });
+          if (remaining === 0) {
+            await tx.dispatchRoute.update({
+              where: { id: laporan.route_id },
+              data: { status: "COMPLETED" },
+            });
+          } else {
+            await tx.dispatchRoute.updateMany({
+              where: { id: laporan.route_id, status: { in: ["CONFIRMED", "DRAFT"] } },
+              data: { status: "IN_PROGRESS" },
+            });
+          }
+        }
+
         if (laporan.kendaraan_id) {
           const assignedLoad = (laporan as unknown as Record<string, unknown>).assigned_load_kg as number | null;
           const alreadyReleased = (laporan as unknown as Record<string, unknown>).load_released_at != null;

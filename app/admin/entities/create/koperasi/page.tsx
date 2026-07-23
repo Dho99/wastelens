@@ -89,7 +89,7 @@ export default function CreateKoperasiPage() {
     }
 
     return (
-        <div className="p-6 md:p-10 space-y-6 bg-[#f8fafc] min-h-screen text-[#0f172a] select-none pb-24 w-full mx-auto">
+        <div className="p-6 md:p-10 space-y-6 bg-[#f8fafc] text-[#0f172a] select-none pb-24 w-full mx-auto">
             {/* Top Header Row with Back Button */}
             <div className="space-y-4">
                 <button

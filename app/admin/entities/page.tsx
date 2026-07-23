@@ -84,7 +84,7 @@ export default function ManajemenEntitasPage() {
     );
 
     return (
-        <div className="bg-[#FAF9F5] min-h-screen p-8 text-neutral-800">
+        <div className="bg-[#FAF9F5] p-8 text-neutral-800">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-5 mb-6">
                 <div>
                     <h1 className="text-2xl font-black text-[#1E7D38] tracking-tight">

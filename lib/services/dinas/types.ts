@@ -37,6 +37,17 @@ export interface DinasVehicle {
   current_load: number;
 }
 
+export interface DinasDispatchRoute {
+  id: string;
+  petugas_id: string;
+  kendaraan_id: string;
+  status: string;
+  route_geometry: [number, number][] | null;
+  estimated_distance_km: number | null;
+  estimated_duration_minutes: number | null;
+  routing_source: string | null;
+}
+
 export interface DinasOfficer {
   id: string;
   dinas_id: string;

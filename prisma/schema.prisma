@@ -108,6 +108,7 @@ model Dinas {
   portal_state             DlhPortalState?
   media                    DlhMedia[]
   auto_collective_requests AutoCollectiveRequest[]
+  dispatch_routes          DispatchRoute[]
 
   @@map("DINAS")
 }
@@ -141,14 +142,15 @@ model DlhMedia {
 }
 
 model Petugas {
-  id       String    @id @default(uuid()) @db.Uuid
-  dinas_id String    @db.Uuid
-  user_id  String
-  nama     String
-  no_hp    String
-  laporan  Laporan[]
-  dinas    Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-  user     user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id             String          @id @default(uuid()) @db.Uuid
+  dinas_id       String          @db.Uuid
+  user_id        String
+  nama           String
+  no_hp          String
+  laporan        Laporan[]
+  dispatch_routes DispatchRoute[]
+  dinas          Dinas           @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  user           user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("PETUGAS")
 }
@@ -163,13 +165,14 @@ model AreaCakupan {
 }
 
 model Kendaraan {
-  id           String    @id @default(uuid()) @db.Uuid
-  dinas_id     String    @db.Uuid
-  jenis        String
-  kapasitas    Int
-  current_load Int
-  dinas        Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-  laporan      Laporan[]
+  id              String          @id @default(uuid()) @db.Uuid
+  dinas_id        String          @db.Uuid
+  jenis           String
+  kapasitas       Int
+  current_load    Int
+  dinas           Dinas           @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  laporan         Laporan[]
+  dispatch_routes DispatchRoute[]
 
   @@map("KENDARAAN")
 }
@@ -246,16 +249,19 @@ model Laporan {
 
   // Dispatch routing
   route_order Int?
+  route_id    String? @db.Uuid @map("route_id")
 
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
   petugas           Petugas?           @relation(fields: [petugas_id], references: [id])
   kendaraan         Kendaraan?         @relation(fields: [kendaraan_id], references: [id])
+  dispatch_route    DispatchRoute?     @relation(fields: [route_id], references: [id], onDelete: SetNull)
   foto              Foto[]
   transaksi_koin    TransaksiKoin[]
   verifikasi_pickup VerifikasiPickup[]
   notifikasi        Notifikasi[]
 
+  @@index([route_id])
   @@map("LAPORAN")
 }
 
@@ -350,6 +356,41 @@ enum LaporanStatus {
   DITOLAK
 
   @@map("LAPORAN_STATUS")
+}
+
+enum RouteStatus {
+  DRAFT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+
+  @@map("ROUTE_STATUS")
+}
+
+model DispatchRoute {
+  id                         String      @id @default(uuid()) @db.Uuid
+  dinas_id                   String      @db.Uuid
+  petugas_id                 String      @db.Uuid
+  kendaraan_id               String      @db.Uuid
+  status                     RouteStatus @default(CONFIRMED)
+  estimated_distance_km      Float?      @map("estimated_distance_km")
+  estimated_duration_minutes Int?        @map("estimated_duration_minutes")
+  total_load_kg              Int         @default(0) @map("total_load_kg")
+  route_geometry             Json?       @map("route_geometry")
+  routing_source             String?     @map("routing_source")
+  created_at                 DateTime    @default(now()) @map("created_at")
+  updated_at                 DateTime    @updatedAt @map("updated_at")
+
+  dinas      Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  petugas    Petugas   @relation(fields: [petugas_id], references: [id], onDelete: Restrict)
+  kendaraan  Kendaraan @relation(fields: [kendaraan_id], references: [id], onDelete: Restrict)
+  laporan    Laporan[]
+
+  @@index([dinas_id, status])
+  @@index([kendaraan_id, status])
+  @@index([petugas_id, status])
+  @@map("DISPATCH_ROUTE")
 }
 
 enum RedemptionStatus {

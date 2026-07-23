@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Akses DLH tidak ditemukan", code: "AUTH" }, { status: 401 });
     }
 
-    const [activeReports, assignedReports, vehicles, officers] = await Promise.all([
+    const [activeReports, assignedReports, vehicles, officers, dispatchRoutes] = await Promise.all([
       prisma.laporan.findMany({
         where: {
           dinas_id: dinas.id,
@@ -47,11 +47,27 @@ export async function GET(request: NextRequest) {
           _count: { select: { laporan: true } },
         },
       }),
+      prisma.dispatchRoute.findMany({
+        where: {
+          dinas_id: dinas.id,
+          status: { in: ["DRAFT", "CONFIRMED", "IN_PROGRESS"] },
+        },
+        select: {
+          id: true,
+          petugas_id: true,
+          kendaraan_id: true,
+          status: true,
+          route_geometry: true,
+          estimated_distance_km: true,
+          estimated_duration_minutes: true,
+          routing_source: true,
+        },
+      }),
     ]);
 
     return NextResponse.json({
       success: true,
-      data: { activeReports, assignedReports, vehicles, officers },
+      data: { activeReports, assignedReports, vehicles, officers, dispatchRoutes },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
