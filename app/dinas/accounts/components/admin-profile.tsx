@@ -84,7 +84,7 @@ export function AdminProfile() {
     return (
         <>
             <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
-                <main className="min-h-0 flex-1 overflow-y-auto bg-white p-4 sm:p-5">
+                <main className="min-h-0 flex-1 overflow-y-auto bg-[#f4fbff] p-4 sm:p-5">
                     <div className="mx-auto grid max-w-[1220px] items-start gap-5 lg:grid-cols-[minmax(0,2.4fr)_330px]">
                         <div className="space-y-5">
                             {notice && (

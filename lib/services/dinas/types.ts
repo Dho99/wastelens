@@ -79,7 +79,11 @@ export interface DinasAdmin {
 
 export interface DinasSettings {
   agency?: string;
+  province?: string;
+  provinceCode?: string;
   region?: string;
+  regionCode?: string;
+  districts?: string[];
   email?: string;
   phone?: string;
   autoDispatch?: boolean;
