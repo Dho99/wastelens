@@ -14,8 +14,14 @@ export async function GET(request: NextRequest) {
     const unreadOnly = searchParams.get("unreadOnly") === "true";
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 50);
     const markRead = searchParams.get("markRead");
+    const markAll = searchParams.get("markAll") === "true";
 
-    if (markRead) {
+    if (markAll) {
+      await prisma.notifikasi.updateMany({
+        where: { user_id: userId, status_baca: false },
+        data: { status_baca: true },
+      });
+    } else if (markRead) {
       await prisma.notifikasi.updateMany({
         where: { id: markRead, user_id: userId },
         data: { status_baca: true },
@@ -29,13 +35,14 @@ export async function GET(request: NextRequest) {
 
     const notifications = await prisma.notifikasi.findMany({
       where,
-      orderBy: { id: "desc" },
+      orderBy: { createdAt: "desc" },
       take: limit,
       select: {
         id: true,
         pesan: true,
         status_baca: true,
         laporan_id: true,
+        createdAt: true,
       },
     });
 

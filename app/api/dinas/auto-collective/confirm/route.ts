@@ -5,6 +5,9 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { LOAD_ESTIMATES_KG } from "@/lib/services/assignment";
 import type { ConfirmRequest } from "@/app/dinas/types/auto-collective";
 import { createHash } from "node:crypto";
+import { persistNotification, firePendingEvents } from "@/server/websocket/notify.service";
+import { createReportAssignedEvent } from "@/server/websocket/websocket.events";
+import type { PusherEvent } from "@/server/websocket/websocket.types";
 
 export const dynamic = "force-dynamic";
 
@@ -173,6 +176,7 @@ export async function POST(request: NextRequest) {
           stopCount: number;
         }> = [];
         const reportLoadMap = new Map<string, number>();
+        const pendingEvents: Array<{ userId: string; event: PusherEvent }> = [];
 
         for (const route of body.routes) {
           const totalLoad = route.stopIds.reduce((sum, stopId) => {
@@ -235,6 +239,25 @@ export async function POST(request: NextRequest) {
                 409,
               );
             }
+
+            const report = reports.find((r) => r.id === stopId);
+            if (report?.user_id) {
+              await persistNotification(
+                {
+                  user_id: report.user_id,
+                  laporan_id: stopId,
+                  pesan: "Laporan Anda telah dijadwalkan untuk dijemput.",
+                },
+                tx,
+              );
+              pendingEvents.push({
+                userId: report.user_id,
+                event: createReportAssignedEvent({
+                  laporanId: stopId,
+                  petugasId: route.petugasId,
+                }),
+              });
+            }
           }
 
           const { createDispatchRouteForAssignment } = await import(
@@ -255,13 +278,20 @@ export async function POST(request: NextRequest) {
           });
 
           if (petugasUser) {
-            await tx.notifikasi.create({
-              data: {
+            await persistNotification(
+              {
                 user_id: petugasUser.user_id,
                 laporan_id: route.stopIds[0],
                 pesan: `Rute pickup telah tersedia. ${route.stopIds.length} titik pickup ditugaskan kepada Anda. Segera periksa daftar tugas.`,
-                status_baca: false,
               },
+              tx,
+            );
+            pendingEvents.push({
+              userId: petugasUser.user_id,
+              event: createReportAssignedEvent({
+                laporanId: route.stopIds[0],
+                petugasId: route.petugasId,
+              }),
             });
           }
 
@@ -291,8 +321,10 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        return { assignedRoutes, responsePayload };
+        return { assignedRoutes, responsePayload, pendingEvents };
       });
+
+      firePendingEvents(result.pendingEvents);
 
       return NextResponse.json(result.responsePayload, { status: 200 });
     } catch (error: unknown) {
