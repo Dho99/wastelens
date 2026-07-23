@@ -1,5 +1,6 @@
-import { ChangeAdminPassword } from "../../components/change-admin-password";
+import { ChangeAdminPassword } from "./components/change-admin-password";
+import { DlhShell } from "../../components/dlh-shell";
 
 export default function ChangeAdminPasswordPage() {
-  return <ChangeAdminPassword />;
+  return <DlhShell hideHeader><ChangeAdminPassword /></DlhShell>;
 }

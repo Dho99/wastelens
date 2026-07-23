@@ -67,7 +67,7 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <div className="bg-[#FAF9F5] min-h-screen p-8 text-neutral-800 select-none pb-24">
+    <div className="bg-[#FAF9F5] p-8 text-neutral-800 select-none pb-24">
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-5 mb-6">
         <div>
@@ -258,8 +258,8 @@ export default function AdminReportsPage() {
                           </td>
                           <td className="py-3.5 text-right">
                             <button
-                              onClick={() => setSelectedReport(r)}
-                              className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 mx-auto"
+                              onClick={() => router.push(`/admin/reports/detail/${r.id}`)}
+                              className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 mx-auto cursor-pointer"
                               title="Lihat Detail Audit"
                             >
                               <Eye className="w-4 h-4" />

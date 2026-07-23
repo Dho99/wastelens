@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -30,13 +25,13 @@ model user {
   sessions session[]
   accounts account[]
 
-  dinas           Dinas[]
-  petugas         Petugas[]
-  laporan         Laporan[]
-  notifikasi      Notifikasi[]
-  transaksi_koin  TransaksiKoin[]
-  kopdes          Kopdes[]
-  penukaran       Penukaran[]
+  dinas            Dinas[]
+  petugas          Petugas[]
+  laporan          Laporan[]
+  notifikasi       Notifikasi[]
+  transaksi_koin   TransaksiKoin[]
+  kopdes           Kopdes[]
+  penukaran        Penukaran[]
   coin_transaction CoinTransaction[]
 
   isBanned      Boolean        @default(false)
@@ -50,8 +45,7 @@ model BannedReason {
   userId    String
   alasan    String
   createdAt DateTime @default(now())
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("banned_reason")
 }
@@ -65,8 +59,7 @@ model session {
   ipAddress String?
   userAgent String?
   userId    String
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
@@ -85,8 +78,7 @@ model account {
   password              String?
   createdAt             DateTime
   updatedAt             DateTime
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -102,19 +94,21 @@ model verification {
   @@map("verification")
 }
 
-// ─── Application models ───────────────────────────────────
 model Dinas {
   id         String @id @default(uuid()) @db.Uuid
   user_id    String
   nama_dinas String
   kontak     String
 
-  user         user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  petugas      Petugas[]
-  area_cakupan AreaCakupan[]
-  kendaraan    Kendaraan[]
-  laporan      Laporan[]
-  portal_state DlhPortalState?
+  user                     user                    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  petugas                  Petugas[]
+  area_cakupan             AreaCakupan[]
+  kendaraan                Kendaraan[]
+  laporan                  Laporan[]
+  portal_state             DlhPortalState?
+  media                    DlhMedia[]
+  auto_collective_requests AutoCollectiveRequest[]
+  dispatch_routes          DispatchRoute[]
 
   @@map("DINAS")
 }
@@ -131,16 +125,32 @@ model DlhPortalState {
   @@map("DLH_PORTAL_STATE")
 }
 
-model Petugas {
-  id       String @id @default(uuid()) @db.Uuid
-  dinas_id String @db.Uuid
-  user_id  String
-  nama     String
-  no_hp    String
+model DlhMedia {
+  id          String   @id @default(uuid()) @db.Uuid
+  dinas_id    String   @db.Uuid
+  uploaded_by String
+  kind        String   @default("profile")
+  mime_type   String
+  size_bytes  Int
+  data        Bytes
+  createdAt   DateTime @default(now())
 
-  dinas   Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-  user    user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  laporan Laporan[]
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@index([dinas_id, kind])
+  @@map("DLH_MEDIA")
+}
+
+model Petugas {
+  id             String          @id @default(uuid()) @db.Uuid
+  dinas_id       String          @db.Uuid
+  user_id        String
+  nama           String
+  no_hp          String
+  laporan        Laporan[]
+  dispatch_routes DispatchRoute[]
+  dinas          Dinas           @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  user           user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("PETUGAS")
 }
@@ -149,39 +159,46 @@ model AreaCakupan {
   id           String @id @default(uuid()) @db.Uuid
   dinas_id     String @db.Uuid
   nama_wilayah String
-
-  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  dinas        Dinas  @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
 
   @@map("AREA_CAKUPAN")
 }
 
 model Kendaraan {
-  id           String @id @default(uuid()) @db.Uuid
-  dinas_id     String @db.Uuid
-  jenis        String
-  kapasitas    Int
-  current_load Int
-
-  dinas   Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
-  laporan Laporan[]
+  id              String          @id @default(uuid()) @db.Uuid
+  dinas_id        String          @db.Uuid
+  jenis           String
+  kapasitas       Int
+  current_load    Int
+  dinas           Dinas           @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  laporan         Laporan[]
+  dispatch_routes DispatchRoute[]
 
   @@map("KENDARAAN")
 }
 
 model Laporan {
-  id                    String   @id @default(uuid()) @db.Uuid
+  id                    String        @id @default(uuid()) @db.Uuid
   user_id               String
-  dinas_id              String?  @db.Uuid
-  petugas_id            String?  @db.Uuid
-  kendaraan_id          String?  @db.Uuid
+  dinas_id              String?       @db.Uuid
+  petugas_id            String?       @db.Uuid
+  kendaraan_id          String?       @db.Uuid
   foto_url              String
   lokasi_lat            Float
   lokasi_lng            Float
   kategori_ukuran       String
   rekomendasi_kendaraan String?
-  status                String
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  status                LaporanStatus
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  // Correction oleh petugas/dinas terhadap hasil AI
+  corrected_kategori_ukuran         String?   @map("corrected_kategori_ukuran")
+  corrected_drainage_risk           Boolean?  @map("corrected_drainage_risk")
+  corrected_access_obstruction_risk Boolean?  @map("corrected_access_obstruction_risk")
+  corrected_by                      String?   @map("corrected_by")
+  corrected_at                      DateTime? @map("corrected_at")
+  correction_reason                 String?   @map("correction_reason")
 
   // Location enhancement
   lokasi_accuracy      Float?    @map("lokasi_accuracy")
@@ -226,15 +243,25 @@ model Laporan {
   client_request_id   String? @unique @map("client_request_id")
   estimated_load_unit Int?    @map("estimated_load_unit")
 
+  // Assignment load tracking
+  assigned_load_kg Int?      @map("assigned_load_kg")
+  load_released_at DateTime? @map("load_released_at")
+
+  // Dispatch routing
+  route_order Int?
+  route_id    String? @db.Uuid @map("route_id")
+
   user              user               @relation(fields: [user_id], references: [id])
   dinas             Dinas?             @relation(fields: [dinas_id], references: [id])
   petugas           Petugas?           @relation(fields: [petugas_id], references: [id])
   kendaraan         Kendaraan?         @relation(fields: [kendaraan_id], references: [id])
+  dispatch_route    DispatchRoute?     @relation(fields: [route_id], references: [id], onDelete: SetNull)
   foto              Foto[]
   transaksi_koin    TransaksiKoin[]
   verifikasi_pickup VerifikasiPickup[]
   notifikasi        Notifikasi[]
 
+  @@index([route_id])
   @@map("LAPORAN")
 }
 
@@ -245,8 +272,7 @@ model Foto {
   hash       String?
   mime_type  String? @map("mime_type")
   size_bytes Int?    @map("size_bytes")
-
-  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  laporan    Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
   @@map("FOTO")
 }
@@ -257,11 +283,12 @@ model TransaksiKoin {
   laporan_id String @db.Uuid
   jumlah     Int
   jenis      String
+  metadata   Json?
 
   user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
-  @@unique([laporan_id, jenis])
+  @@unique([laporan_id, jenis], name: "laporan_id_jenis", map: "uq_reward_laporan_jenis")
   @@map("TRANSAKSI_KOIN")
 }
 
@@ -271,8 +298,7 @@ model VerifikasiPickup {
   foto_sebelum String
   foto_sesudah String
   waktu        DateTime @default(now())
-
-  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  laporan      Laporan  @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
 
   @@map("VERIFIKASI_PICKUP")
 }
@@ -283,19 +309,20 @@ model Notifikasi {
   laporan_id  String  @db.Uuid
   pesan       String
   status_baca Boolean @default(false)
+  laporan     Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  user        user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  laporan Laporan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@map("NOTIFIKASI")
 }
 
 model Kopdes {
-  id        String  @id @default(uuid()) @db.Uuid
-  user_id   String
-  nama      String
-  alamat    String
-  isActive  Boolean @default(true) @map("is_active")
+  id       String  @id @default(uuid()) @db.Uuid
+  user_id  String
+  nama     String
+  alamat   String
+  isActive Boolean @default(true) @map("is_active")
 
   user      user        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   produk    Produk[]
@@ -320,6 +347,52 @@ model Produk {
   @@map("PRODUK")
 }
 
+enum LaporanStatus {
+  ANALYZED
+  WAITING
+  PENDING
+  DIJEMPUT
+  SELESAI
+  DITOLAK
+
+  @@map("LAPORAN_STATUS")
+}
+
+enum RouteStatus {
+  DRAFT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+
+  @@map("ROUTE_STATUS")
+}
+
+model DispatchRoute {
+  id                         String      @id @default(uuid()) @db.Uuid
+  dinas_id                   String      @db.Uuid
+  petugas_id                 String      @db.Uuid
+  kendaraan_id               String      @db.Uuid
+  status                     RouteStatus @default(CONFIRMED)
+  estimated_distance_km      Float?      @map("estimated_distance_km")
+  estimated_duration_minutes Int?        @map("estimated_duration_minutes")
+  total_load_kg              Int         @default(0) @map("total_load_kg")
+  route_geometry             Json?       @map("route_geometry")
+  routing_source             String?     @map("routing_source")
+  created_at                 DateTime    @default(now()) @map("created_at")
+  updated_at                 DateTime    @updatedAt @map("updated_at")
+
+  dinas      Dinas     @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+  petugas    Petugas   @relation(fields: [petugas_id], references: [id], onDelete: Restrict)
+  kendaraan  Kendaraan @relation(fields: [kendaraan_id], references: [id], onDelete: Restrict)
+  laporan    Laporan[]
+
+  @@index([dinas_id, status])
+  @@index([kendaraan_id, status])
+  @@index([petugas_id, status])
+  @@map("DISPATCH_ROUTE")
+}
+
 enum RedemptionStatus {
   PENDING
   REDEEMED
@@ -339,31 +412,31 @@ enum CoinTransactionType {
 }
 
 model Penukaran {
-  id                 String             @id @default(uuid()) @db.Uuid
-  user_id            String
-  produk_id          String             @db.Uuid
-  kopdes_id          String             @db.Uuid
-  quantity           Int                @default(1)
-  unit_coin_price    Int
-  jumlah_koin        Int
-  status             RedemptionStatus   @default(PENDING)
-  token_hash         String?            @unique
-  token_hint         String?
-  qr_payload         String?
-  idempotency_key    String?
-  expires_at         DateTime
-  redeemed_at        DateTime?
-  cancelled_at       DateTime?
-  expired_at         DateTime?
+  id                  String           @id @default(uuid()) @db.Uuid
+  user_id             String
+  produk_id           String           @db.Uuid
+  kopdes_id           String           @db.Uuid
+  quantity            Int              @default(1)
+  unit_coin_price     Int
+  jumlah_koin         Int
+  status              RedemptionStatus @default(PENDING)
+  token_hash          String?          @unique
+  token_hint          String?
+  qr_payload          String?
+  idempotency_key     String?
+  expires_at          DateTime
+  redeemed_at         DateTime?
+  cancelled_at        DateTime?
+  expired_at          DateTime?
   redeemed_by_user_id String?
   cancellation_reason String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
-  user              user               @relation(fields: [user_id], references: [id])
-  produk            Produk             @relation(fields: [produk_id], references: [id])
-  kopdes            Kopdes             @relation(fields: [kopdes_id], references: [id])
-  coin_transaction  CoinTransaction[]
+  user             user              @relation(fields: [user_id], references: [id])
+  produk           Produk            @relation(fields: [produk_id], references: [id])
+  kopdes           Kopdes            @relation(fields: [kopdes_id], references: [id])
+  coin_transaction CoinTransaction[]
 
   @@unique([user_id, idempotency_key])
   @@index([user_id, status])
@@ -373,17 +446,17 @@ model Penukaran {
 }
 
 model CoinTransaction {
-  id              String              @id @default(uuid()) @db.Uuid
-  user_id         String
-  redemption_id   String?             @db.Uuid
-  type            CoinTransactionType
-  amount          Int
-  balance_before  Int
-  balance_after   Int
-  description     String?
-  created_at      DateTime            @default(now())
+  id             String              @id @default(uuid()) @db.Uuid
+  user_id        String
+  redemption_id  String?             @db.Uuid
+  type           CoinTransactionType
+  amount         Int
+  balance_before Int
+  balance_after  Int
+  description    String?
+  created_at     DateTime            @default(now())
 
-  user      user      @relation(fields: [user_id], references: [id])
+  user      user       @relation(fields: [user_id], references: [id])
   penukaran Penukaran? @relation(fields: [redemption_id], references: [id])
 
   @@index([user_id, created_at])
@@ -414,4 +487,19 @@ model TemporaryUpload {
   usedAt        DateTime?
 
   @@map("TEMPORARY_UPLOAD")
+}
+
+model AutoCollectiveRequest {
+  id              String   @id @default(uuid()) @db.Uuid
+  dinas_id        String   @db.Uuid
+  idempotency_key String
+  request_hash    String
+  response_data   Json?
+  created_at      DateTime @default(now())
+
+  dinas Dinas @relation(fields: [dinas_id], references: [id], onDelete: Cascade)
+
+  @@unique([dinas_id, idempotency_key])
+  @@index([dinas_id, created_at])
+  @@map("AUTO_COLLECTIVE_REQUEST")
 }

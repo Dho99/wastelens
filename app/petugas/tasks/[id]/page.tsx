@@ -1,51 +1,52 @@
 "use client";
 
-import Icon from '@mdi/react';
+import Icon from "@mdi/react";
 import {
   mdiClipboardTextOutline,
   mdiMapMarker,
   mdiDirections,
   mdiImageOutline,
   mdiInformation,
-  mdiKey,
   mdiAlert,
   mdiCameraOutline,
-} from '@mdi/js';
-import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { useState, useRef, use } from 'react';
-import { useRouter } from 'next/navigation';
+  mdiTruckFast,
+  mdiScaleBalance,
+  mdiRecycle,
+} from "@mdi/js";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+import { useState, useRef, use } from "react";
+import { useRouter } from "next/navigation";
+import { useTaskDetail, type TaskDetailData } from "../../hooks/useTaskDetail";
 
 const LocationMap = dynamic(() => import("@/components/leaflet-location-map"), {
   ssr: false,
-  loading: () => <div className="h-48 w-full animate-pulse bg-neutral-100" />
+  loading: () => <div className="h-48 w-full animate-pulse bg-neutral-100" />,
 });
 
-const data = {
-  id: "#WL-1842",
-  status: "Menunggu Diproses",
-  pelapor: "Budi Santoso",
-  lokasi_lat: -6.1931,
-  lokasi_lng: 106.8336,
-  foto: [
-    {
-      url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=300&h=400&fit=crop",
-      label: "Tampak Depan"
-    },
-    {
-      url: "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=300&h=400&fit=crop",
-      label: "Tampak Samping"
-    }
-  ],
-  informasi_akses: "Gerbang samping terbuka pukul 06:00 - 18:00. Hubungi Pak RT jika gerbang terkunci (0812-3456-7890).",
-  catatan_khusus: "Gunakan sarung tangan karet ekstra. Terdapat limbah basah sisa katering warga yang mungkin bocor."
+const PRIORITY_LABEL: Record<string, string> = {
+  LOW: "Rendah",
+  MEDIUM: "Sedang",
+  HIGH: "Tinggi",
+  CRITICAL: "Kritis",
 };
 
-export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function formatLocation(task: TaskDetailData): string {
+  if (task.address_text) return task.address_text;
+  return `${task.lokasi_lat.toFixed(6)}, ${task.lokasi_lng.toFixed(6)}`;
+}
+
+export default function TaskDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const [cleaned, setCleaned] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: task, isLoading, isError, error, refetch } = useTaskDetail(id);
 
   const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,43 +60,87 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     reader.readAsDataURL(file);
   };
 
+  // --- Loading state ---
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pb-8 font-sans">
+        <div className="space-y-6 py-4">
+          <div className="h-8 w-40 animate-pulse rounded-full bg-neutral-100" />
+          <div className="h-64 animate-pulse rounded-2xl bg-neutral-100" />
+          <div className="h-48 animate-pulse rounded-2xl bg-neutral-100" />
+          <div className="h-40 animate-pulse rounded-2xl bg-neutral-100" />
+        </div>
+      </div>
+    );
+  }
+
+  // --- Error state ---
+  if (isError || !task) {
+    return (
+      <div className="min-h-screen pb-8 font-sans">
+        <div className="py-8 text-center">
+          <p className="text-sm font-medium text-red-800">
+            {error instanceof Error ? error.message : "Gagal memuat detail tugas"}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="mt-3 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const hasWarnings = task.drainage_risk || task.access_obstruction_risk;
+
   return (
     <div className="min-h-screen pb-8 font-sans">
-      <div className="py-4 space-y-6">
-
+      <div className="space-y-6 py-4">
         {/* Status Badge */}
-        <div className="inline-flex bg-primary/20 text-primary px-3 py-1.5 rounded-full items-center gap-1.5">
-          <Icon path={mdiClipboardTextOutline} className="w-4 h-4" />
-          <span className="text-sm font-medium">{data.status}</span>
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-3 py-1.5 text-primary">
+          <Icon path={mdiClipboardTextOutline} className="h-4 w-4" />
+          <span className="text-sm font-medium">{task.status_label}</span>
         </div>
 
         {/* Lokasi Penjemputan Section */}
         <section>
-          <h2 className="flex items-center gap-2 font-bold text-neutral-800 text-base mb-3">
-            <Icon path={mdiMapMarker} className="w-5 h-5 text-primary" />
+          <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-neutral-800">
+            <Icon path={mdiMapMarker} className="h-5 w-5 text-primary" />
             Lokasi Penjemputan
           </h2>
 
-          <div className="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
             <div className="p-4 pb-3">
-              <p className="text-[11px] text-primary font-bold uppercase mb-1 tracking-wider">Pelapor</p>
-              <p className="text-[14px] font-bold text-neutral-800 mb-0.5 leading-snug">
-                {data.pelapor}
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+                Pelapor
               </p>
-              <p className="text-sm text-neutral-500">
-                {data.lokasi_lat.toFixed(6)}, {data.lokasi_lng.toFixed(6)}
+              <p className="mb-0.5 text-[14px] font-bold leading-snug text-neutral-800">
+                {task.user?.name ?? "Tidak diketahui"}
               </p>
+              <p className="text-sm text-neutral-500">{formatLocation(task)}</p>
             </div>
 
             {/* Map */}
-            <div className="w-full relative">
-              <LocationMap lat={data.lokasi_lat} lng={data.lokasi_lng} height="h-48" popup="Lokasi Penjemputan" />
+            <div className="relative w-full">
+              <LocationMap
+                lat={task.lokasi_lat}
+                lng={task.lokasi_lng}
+                height="h-48"
+                popup="Lokasi Penjemputan"
+              />
 
               <button
-                className="absolute bottom-3 right-3 z-[1000] bg-white text-neutral-700 px-3.5 py-2 rounded-full shadow-md flex items-center gap-1.5 text-sm font-bold hover:bg-neutral-50 transition-colors border border-neutral-200"
-                onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${data.lokasi_lat},${data.lokasi_lng}`, '_blank')}
+                className="absolute bottom-3 right-3 z-[1000] flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-sm font-bold text-neutral-700 shadow-md transition-colors hover:bg-neutral-50"
+                onClick={() =>
+                  window.open(
+                    `https://www.google.com/maps/dir/?api=1&destination=${task.lokasi_lat},${task.lokasi_lng}`,
+                    "_blank",
+                  )
+                }
               >
-                <Icon path={mdiDirections} className="w-4 h-4 text-primary" />
+                <Icon path={mdiDirections} className="h-4 w-4 text-primary" />
                 Buka Navigasi
               </button>
             </div>
@@ -103,89 +148,154 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
         </section>
 
         {/* Foto Laporan Section */}
+        {task.foto.length > 0 && (
+          <section>
+            <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-neutral-800">
+              <Icon path={mdiImageOutline} className="h-5 w-5 text-primary" />
+              Foto Laporan
+            </h2>
+
+            <div className="grid grid-cols-2 gap-3">
+              {task.foto.map((f, i) => (
+                <div
+                  key={i}
+                  className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-neutral-200 shadow-sm"
+                >
+                  <Image
+                    src={f.url}
+                    alt={`Foto laporan ${i + 1}`}
+                    className="h-full w-full object-cover"
+                    width={300}
+                    height={400}
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
+                    <span className="text-[13px] font-medium text-white">
+                      Foto {i + 1}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Informasi Tugas */}
         <section>
-          <h2 className="flex items-center gap-2 font-bold text-neutral-800 text-base mb-3">
-            <Icon path={mdiImageOutline} className="w-5 h-5 text-primary" />
-            Foto Laporan
+          <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-neutral-800">
+            <Icon path={mdiInformation} className="h-5 w-5 text-primary" />
+            Informasi Tugas
           </h2>
 
-          <div className="grid grid-cols-2 gap-3">
-            {data.foto.map((foto, i) => (
-              <div key={i} className="w-full aspect-[4/5] relative rounded-2xl overflow-hidden shadow-sm border border-neutral-200">
-                <Image
-                  src={foto.url}
-                  alt={foto.label}
-                  className="w-full h-full object-cover"
-                  width={300}
-                  height={400}
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
-                  <span className="text-white text-[13px] font-medium">{foto.label}</span>
+          <div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            {/* Detail cards */}
+            <div className="grid grid-cols-2 gap-3">
+              {task.rekomendasi_kendaraan && (
+                <div className="rounded-xl bg-primary/10 p-3 flex gap-3">
+                  <div className="mt-0.5 shrink-0">
+                    <div className="flex items-center justify-center rounded-lg bg-primary/20 p-1.5">
+                      <Icon path={mdiTruckFast} className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-800 mb-1">Kendaraan</p>
+                    <p className="text-sm text-neutral-600">{task.rekomendasi_kendaraan}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Instruksi Petugas Section */}
-        <section>
-          <h2 className="flex items-center gap-2 font-bold text-neutral-800 text-base mb-3">
-            <Icon path={mdiInformation} className="w-5 h-5 text-primary" />
-            Instruksi Petugas
-          </h2>
-
-          <div className="bg-white border border-neutral-200 rounded-2xl shadow-sm p-4 space-y-4">
-
-            {/* Informasi Akses */}
-            <div className="bg-primary/10 rounded-xl p-3 flex gap-3">
-              <div className="mt-0.5 shrink-0">
-                <div className="bg-primary/20 p-1.5 rounded-lg flex items-center justify-center">
-                  <Icon path={mdiKey} className="w-5 h-5 text-primary" />
+              )}
+              <div className="rounded-xl bg-primary/10 p-3 flex gap-3">
+                <div className="mt-0.5 shrink-0">
+                  <div className="flex items-center justify-center rounded-lg bg-primary/20 p-1.5">
+                    <Icon path={mdiScaleBalance} className="h-5 w-5 text-primary" />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-neutral-800 mb-1">Informasi Akses</p>
-                <p className="text-sm text-neutral-600 leading-snug">
-                  {data.informasi_akses}
-                </p>
+                <div>
+                  <p className="text-sm font-medium text-neutral-800 mb-1">Ukuran</p>
+                  <p className="text-sm capitalize text-neutral-600">
+                    {task.kategori_ukuran}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Catatan Khusus */}
-            <div className="bg-accent/10 rounded-xl p-3 flex gap-3">
-              <div className="mt-0.5 shrink-0">
-                <div className="bg-accent/20 p-1.5 rounded-lg flex items-center justify-center">
-                  <Icon path={mdiAlert} className="w-5 h-5 text-accent" />
+            {/* Waste types */}
+            {task.waste_types.length > 0 && (
+              <div className="rounded-xl bg-primary/10 p-3 flex gap-3">
+                <div className="mt-0.5 shrink-0">
+                  <div className="flex items-center justify-center rounded-lg bg-primary/20 p-1.5">
+                    <Icon path={mdiRecycle} className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-neutral-800 mb-1">
+                    Jenis Sampah
+                  </p>
+                  <p className="text-sm text-neutral-600">
+                    {task.waste_types.join(", ")}
+                  </p>
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-neutral-800 mb-1">Catatan Khusus</p>
-                <p className="text-sm text-neutral-600 leading-snug">
-                  {data.catatan_khusus}
-                </p>
-              </div>
-            </div>
+            )}
 
+            {/* Priority */}
+            {task.priority_level && (
+              <div className="rounded-xl bg-primary/10 p-3 flex gap-3">
+                <div className="mt-0.5 shrink-0">
+                  <div className="flex items-center justify-center rounded-lg bg-primary/20 p-1.5">
+                    <Icon path={mdiAlert} className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-neutral-800 mb-1">Prioritas</p>
+                  <p className="text-sm text-neutral-600">
+                    {PRIORITY_LABEL[task.priority_level] ?? task.priority_level}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Risk warnings */}
+            {hasWarnings && (
+              <div className="rounded-xl bg-accent/10 p-3 flex gap-3">
+                <div className="mt-0.5 shrink-0">
+                  <div className="flex items-center justify-center rounded-lg bg-accent/20 p-1.5">
+                    <Icon path={mdiAlert} className="h-5 w-5 text-accent" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-neutral-800 mb-1">
+                    Peringatan
+                  </p>
+                  <ul className="list-inside list-disc text-sm text-neutral-600 space-y-0.5">
+                    {task.drainage_risk && (
+                      <li>Risiko drainase — perhatikan saluran air di sekitar</li>
+                    )}
+                    {task.access_obstruction_risk && (
+                      <li>Akses terbatas — mungkin ada hambatan di lokasi</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
         {/* Action Button */}
-        {
-          cleaned ?
-            <button
-              className="w-full bg-primary text-white font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-[15px] shadow-md mt-6 hover:bg-primary/90 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Icon path={mdiCameraOutline} className="w-5 h-5" />
-              Ambil Foto
-            </button> :
-            <button
-              className="w-full bg-accent text-white font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-[15px] shadow-md mt-6 hover:bg-accent/90 transition-colors"
-              onClick={() => setCleaned(true)}
-            >
-              Mulai Bersihkan
-            </button>
-        }
+        {cleaned ? (
+          <button
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-[15px] font-semibold text-white shadow-md transition-colors hover:bg-primary/90"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Icon path={mdiCameraOutline} className="h-5 w-5" />
+            Ambil Foto
+          </button>
+        ) : (
+          <button
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-3.5 text-[15px] font-semibold text-white shadow-md transition-colors hover:bg-accent/90"
+            onClick={() => setCleaned(true)}
+          >
+            Mulai Bersihkan
+          </button>
+        )}
 
         {/* Hidden camera input */}
         <input
@@ -196,7 +306,6 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
           onChange={handlePhotoCapture}
           className="hidden"
         />
-
       </div>
     </div>
   );

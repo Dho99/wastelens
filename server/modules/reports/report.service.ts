@@ -2,14 +2,16 @@ import { findUploadById, markAsUsed } from "@/server/modules/upload/upload.repos
 import { verifyLocation } from "@/server/modules/location/location-verification.service";
 import { reverseGeocode } from "@/server/modules/location/reverse-geocode.service";
 import { calculatePriority } from "@/server/modules/priority/priority.service";
+import { autoAssignDinas } from "@/lib/services/assignment";
 import {
   findReportByClientRequestId,
   countActiveReportsInRadius,
   createLaporan,
 } from "./report.repository";
 import type { SubmitReportInput, ReportResult, AddressFields } from "./report.types";
-import { createHash } from "node:crypto";
+import { prisma } from "@/lib/prisma";
 import { triggerUserEvent } from "@/server/websocket/pusher.service";
+import { notifyUser } from "@/server/websocket/notify.service";
 import { createReportCreatedEvent } from "@/server/websocket/websocket.events";
 
 const RADIUS_FOR_REPEAT_METERS = 100;
@@ -64,7 +66,7 @@ export async function createReport(
 
   const isAccepted =
     input.analysis.sizeCategory !== "UNCERTAIN" && input.analysis.confidence >= 0.3;
-  const status = isAccepted ? "ANALYZED" : "WAITING";
+  const baseStatus = isAccepted ? "ANALYZED" : "WAITING";
   const analysisProvider = input.analysis.needsManualReview ? "MANUAL_PENDING" : "GEMINI";
 
   const photoHash = upload.public_id;
@@ -83,13 +85,20 @@ export async function createReport(
     }
   }
 
+  const assignedDinas = addressFields?.district
+    ? await autoAssignDinas(addressFields.district)
+    : null;
+  const dinasId = assignedDinas?.dinas_id ?? null;
+  const finalStatus = dinasId ? "PENDING" : baseStatus;
+
   const laporan = await createLaporan({
     user_id: input.userId,
+    dinas_id: dinasId,
     foto_url: upload.secure_url,
     lokasi_lat: input.location.browser.latitude,
     lokasi_lng: input.location.browser.longitude,
     kategori_ukuran: input.analysis.sizeCategory,
-    status,
+    status: finalStatus,
     photo_hash: photoHash,
     photo_mime_type: upload.mime_type,
     photo_size_bytes: upload.size_bytes,
@@ -123,14 +132,31 @@ export async function createReport(
 
   await markAsUsed(input.temporaryImageId);
 
-  triggerUserEvent(
-    input.userId,
-    createReportCreatedEvent({ laporanId: laporan.id, status }),
-  );
+  const createdEvent = createReportCreatedEvent({
+    laporanId: laporan.id,
+    status: finalStatus,
+  });
+
+  triggerUserEvent(input.userId, createdEvent);
+
+  if (dinasId) {
+    const dinas = await prisma.dinas.findUnique({
+      where: { id: dinasId },
+      select: { user_id: true },
+    });
+    if (dinas?.user_id) {
+      await notifyUser({
+        userId: dinas.user_id,
+        laporanId: laporan.id,
+        pesan: "Laporan sampah baru masuk dan menunggu penanganan.",
+        event: createdEvent,
+      });
+    }
+  }
 
   return {
     reportId: laporan.id,
-    status,
+    status: finalStatus,
     priorityScore: priority.score,
     priorityLevel: priority.level,
     estimatedLoadUnit: priority.estimatedLoadUnit,

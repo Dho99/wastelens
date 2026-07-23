@@ -1,4 +1,5 @@
-import { AssignmentMonitoring } from "../../components/assignment-monitoring";
+import { AssignmentMonitoring } from "./components/assignment-monitoring";
+import { DlhShell } from "../../components/dlh-shell";
 
 export default async function AssignmentPage({
   params,
@@ -6,5 +7,5 @@ export default async function AssignmentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <AssignmentMonitoring reportId={id} />;
+  return <DlhShell hideHeader><AssignmentMonitoring reportId={id} /></DlhShell>;
 }

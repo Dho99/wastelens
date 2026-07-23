@@ -35,7 +35,7 @@ export default function LoginPage() {
             return;
         }
 
-        router.push(from !== "/" ? from : "/");
+        router.push(from !== "/" ? from : "/user");
         router.refresh();
     }
 
@@ -164,15 +164,6 @@ export default function LoginPage() {
                             className="font-medium text-primary hover:text-primary/90"
                         >
                             Daftar
-                        </Link>
-                    </p>
-                    <p className="text-center text-sm text-neutral-500">
-                        Pengelola Dinas Lingkungan Hidup?{" "}
-                        <Link
-                            href="/login/dinas"
-                            className="font-semibold text-primary hover:text-primary/90"
-                        >
-                            Masuk ke Portal DLH
                         </Link>
                     </p>
                 </div>

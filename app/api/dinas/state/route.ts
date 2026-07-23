@@ -3,6 +3,29 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { getRequestDinas } from "@/lib/dinas-auth";
 import { prisma } from "@/lib/prisma";
 import type { DlhState } from "@/lib/dlh-store";
+import { computeEstimatedLoadKg } from "@/server/modules/dispatch/auto-collective.service";
+import { LOAD_ESTIMATES_KG } from "@/lib/services/assignment";
+
+class StateUpdateError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly status: number = 409,
+  ) {
+    super(message);
+    this.name = "StateUpdateError";
+  }
+}
+
+interface DbReport {
+  kategori_ukuran: string;
+  corrected_kategori_ukuran: string | null;
+  drainage_risk: boolean | null;
+  access_obstruction_risk: boolean | null;
+  needs_manual_review: boolean | null;
+  estimated_load_unit: number | null;
+  route_order: number | null;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +55,14 @@ function databaseStatus(status: DlhState["reports"][number]["status"]) {
   return "PENDING";
 }
 
+function reportPhotoUrl(photoUrl: string | null | undefined) {
+  if (!photoUrl || photoUrl.startsWith("https://res.cloudinary.com/wastelens/")) {
+    return "/images/waste_bags_stack.png";
+  }
+
+  return photoUrl;
+}
+
 function mergeById<T extends { id: string }>(saved: T[] | undefined, database: T[]) {
   const databaseIds = new Set(database.map((item) => item.id));
   const savedMap = new Map((saved ?? []).map((item) => [item.id, item]));
@@ -48,7 +79,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Akses DLH tidak ditemukan", code: "AUTH" }, { status: 401 });
     }
 
-    const [state, reports, vehicles, officers] = await Promise.all([
+    const [state, reports, vehicles, officers, adminUser] = await Promise.all([
       prisma.dlhPortalState.findUnique({
         where: { dinas_id: dinas.id },
         select: { data: true, updatedAt: true },
@@ -64,6 +95,7 @@ export async function GET(request: NextRequest) {
         include: { user: { select: { email: true, status: true } }, _count: { select: { laporan: true } } },
         orderBy: { nama: "asc" },
       }),
+      prisma.user.findUnique({ where: { id: dinas.userId }, select: { name: true, email: true, image: true } }),
     ]);
 
     const saved = (state?.data && typeof state.data === "object" ? state.data : {}) as Partial<DlhState>;
@@ -76,13 +108,28 @@ export async function GET(request: NextRequest) {
       year: String(report.createdAt.getFullYear()),
       time: `${timeFormatter.format(report.createdAt).replace(".", ":")} WIB`,
       location: `${report.lokasi_lat.toFixed(5)}, ${report.lokasi_lng.toFixed(5)}`,
-      district: dinas.name,
-      category: report.kategori_ukuran.toLowerCase() === "large" ? "BAHAYA" : "AMAN",
+      district: report.district ?? dinas.name,
+      address: report.address_text ?? undefined,
+      latitude: report.lokasi_lat,
+      longitude: report.lokasi_lng,
+      wasteTypes: report.waste_types,
+      sizeCategory: report.kategori_ukuran,
+      priorityLevel: report.priority_level ?? undefined,
+      category: report.kategori_ukuran.toUpperCase() === "BESAR" ? "BAHAYA" : "AMAN",
       status: reportStatus(report.status),
       reporter: report.user.name,
-      photoUrl: report.foto[0]?.url ?? report.foto_url,
+      photoUrl: reportPhotoUrl(report.foto[0]?.url ?? report.foto_url),
       assignedOfficerId: report.petugas_id ?? undefined,
       assignedVehicleId: report.kendaraan_id ?? undefined,
+      estimatedLoadKg: computeEstimatedLoadKg({
+        kategori_ukuran: report.kategori_ukuran,
+        corrected_kategori_ukuran: (report as unknown as DbReport).corrected_kategori_ukuran ?? null,
+      }),
+      drainageRisk: report.drainage_risk ?? undefined,
+      accessObstructionRisk: report.access_obstruction_risk ?? undefined,
+      needsManualReview: report.needs_manual_review ?? undefined,
+      estimatedLoadUnit: report.estimated_load_unit ?? undefined,
+      routeOrder: (report as unknown as DbReport).route_order ?? undefined,
     }));
     const dbVehicles: DlhState["vehicles"] = vehicles.map((vehicle) => {
       const capacity = vehicle.kapasitas > 100 ? vehicle.kapasitas / 1000 : vehicle.kapasitas;
@@ -139,6 +186,13 @@ export async function GET(request: NextRequest) {
         ...(saved.accounts ?? []),
         ...dbAccounts.filter((account) => !(saved.accounts ?? []).some((savedAccount) => savedAccount.email.toLowerCase() === account.email.toLowerCase())),
       ],
+      admin: {
+        ...saved.admin,
+        name: saved.admin?.name ?? adminUser?.name ?? dinas.name,
+        email: saved.admin?.email ?? adminUser?.email ?? "",
+        passwordUpdatedAt: saved.admin?.passwordUpdatedAt ?? "Belum tersedia",
+        photo: adminUser?.image ?? saved.admin?.photo,
+      },
     };
 
     return NextResponse.json(
@@ -163,7 +217,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Format state DLH tidak valid", code: "VALIDATION" }, { status: 400 });
     }
 
-    const serialized = JSON.stringify(body.data);
+    const dlhData = body.data;
+
+    const serialized = JSON.stringify(dlhData);
     if (serialized.length > 7_500_000) {
       return NextResponse.json({ error: "Data DLH terlalu besar. Kurangi ukuran foto yang diunggah.", code: "PAYLOAD_TOO_LARGE" }, { status: 413 });
     }
@@ -182,20 +238,92 @@ export async function PUT(request: NextRequest) {
     ]);
     const ownedOfficerIds = new Set(ownedOfficers.map((item) => item.id));
     const ownedVehicleIds = new Set(ownedVehicles.map((item) => item.id));
-    const reportUpdates = body.data.reports
-      .filter((report) => UUID_PATTERN.test(report.id))
-      .map((report) => prisma.laporan.updateMany({
-        where: { id: report.id, dinas_id: dinas.id },
-        data: {
+
+    const assignmentReports = dlhData.reports.filter(
+      (report) => UUID_PATTERN.test(report.id) && report.assignedOfficerId && report.assignedVehicleId,
+    );
+
+    await prisma.$transaction(async (tx) => {
+      for (const report of assignmentReports) {
+        const existing = await tx.laporan.findUnique({
+          where: { id: report.id },
+          select: {
+            id: true,
+            petugas_id: true,
+            kendaraan_id: true,
+            assigned_load_kg: true,
+            kategori_ukuran: true,
+            corrected_kategori_ukuran: true,
+          },
+        });
+
+        if (!existing) continue;
+
+        const data: Record<string, unknown> = {
           status: databaseStatus(report.status),
-          petugas_id: report.assignedOfficerId && ownedOfficerIds.has(report.assignedOfficerId) ? report.assignedOfficerId : null,
-          kendaraan_id: report.assignedVehicleId && ownedVehicleIds.has(report.assignedVehicleId) ? report.assignedVehicleId : null,
-        },
-      }));
-    await Promise.all(reportUpdates);
+          petugas_id: ownedOfficerIds.has(report.assignedOfficerId!) ? report.assignedOfficerId : null,
+          kendaraan_id: ownedVehicleIds.has(report.assignedVehicleId!) ? report.assignedVehicleId : null,
+        };
+
+        if (!existing.petugas_id && data.petugas_id && !existing.assigned_load_kg) {
+          const effectiveSize = (existing.corrected_kategori_ukuran ?? existing.kategori_ukuran).toUpperCase();
+          const load = LOAD_ESTIMATES_KG[effectiveSize] ?? LOAD_ESTIMATES_KG.UNCERTAIN;
+          data.assigned_load_kg = load;
+          data.load_released_at = null;
+
+          if (data.kendaraan_id && load > 0) {
+            const vehicles = await tx.$queryRawUnsafe<Array<{ id: string; current_load: number; kapasitas: number }>>(
+              `SELECT id, current_load, kapasitas FROM "KENDARAAN" WHERE id = $1::uuid AND dinas_id = $2::uuid FOR UPDATE`,
+              data.kendaraan_id as string,
+              dinas.id,
+            );
+
+            if (vehicles.length === 0) {
+              throw new StateUpdateError("Kendaraan tidak ditemukan", "VEHICLE_NOT_FOUND", 404);
+            }
+
+            const vehicle = vehicles[0];
+            if (vehicle.current_load + load > vehicle.kapasitas) {
+              throw new StateUpdateError(
+                `Kapasitas kendaraan tidak mencukupi`,
+                "VEHICLE_CAPACITY_CHANGED",
+                409,
+              );
+            }
+
+            await tx.kendaraan.update({
+              where: { id: data.kendaraan_id as string },
+              data: { current_load: { increment: load } },
+            });
+          }
+        }
+
+        await tx.laporan.update({
+          where: { id: report.id },
+          data,
+        });
+      }
+
+      const nonAssignmentReports = dlhData.reports.filter(
+        (report) => UUID_PATTERN.test(report.id) && !report.assignedOfficerId && !report.assignedVehicleId,
+      );
+
+      for (const report of nonAssignmentReports) {
+        await tx.laporan.updateMany({
+          where: { id: report.id, dinas_id: dinas.id },
+          data: { status: databaseStatus(report.status) },
+        });
+      }
+    });
 
     return NextResponse.json({ success: true, updatedAt: state.updatedAt });
   } catch (error) {
+    if (error instanceof StateUpdateError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.status },
+      );
+    }
     const message = error instanceof Error ? error.message : "Gagal menyimpan data DLH";
     return NextResponse.json({ error: message, code: "INTERNAL" }, { status: 500 });
   }

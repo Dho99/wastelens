@@ -14,7 +14,7 @@ export interface NavItem {
 
 const brandByRole: Record<string, { title: string; subtitle?: string }> = {
   dinas: { title: "DLH Dashboard", subtitle: "Government Portal" },
-  admin: { title: "Admin Panel" },
+  admin: { title: "WasteLens", subtitle: "SUPERADMIN CONSOLE" },
   kopdes: { title: "Kopdes Dashboard" },
 };
 
@@ -56,7 +56,7 @@ export function SidebarLayout({
   const brand = brandByRole[userRole] ?? { title: "Sampah" };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-dvh overflow-hidden">
       {open && (
         <button
           type="button"
@@ -67,7 +67,7 @@ export function SidebarLayout({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[258px] flex-col border-r border-[#ccddd5] bg-[#e9f6fc] transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 flex h-full w-[258px] shrink-0 flex-col overflow-hidden border-r border-[#ccddd5] bg-[#e9f6fc] transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         <button
@@ -168,8 +168,8 @@ export function SidebarLayout({
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col min-w-0">
-        <header className="flex h-14 items-center gap-3 border-b border-[#d2ddd7] bg-white px-4 lg:hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[#d2ddd7] bg-white px-4 lg:hidden">
           <button
             onClick={() => setOpen(true)}
             className="rounded-lg p-1.5 hover:bg-neutral-100"
@@ -192,7 +192,7 @@ export function SidebarLayout({
           <span className="font-semibold text-sm">{brand.title}</span>
         </header>
 
-        <main className="flex-1">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</main>
       </div>
     </div>
   );

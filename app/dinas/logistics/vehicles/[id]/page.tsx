@@ -1,4 +1,5 @@
-import { VehicleDetail } from "../../../components/vehicle-detail";
+import { VehicleDetail } from "./components/vehicle-detail";
+import { DlhShell } from "../../../components/dlh-shell";
 
 export default async function VehicleDetailPage({
   params,
@@ -6,5 +7,5 @@ export default async function VehicleDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <VehicleDetail vehicleId={id} />;
+  return <DlhShell hideHeader><VehicleDetail vehicleId={id} /></DlhShell>;
 }

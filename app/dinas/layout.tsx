@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { SidebarLayout } from "@/components/nav/sidebar";
-import { Map, ClipboardList, Warehouse, UserCog } from "lucide-react";
+import { ClipboardList, Map, UserCog, Warehouse } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard Peta", href: "/dinas", icon: <Map /> },
@@ -20,7 +20,7 @@ export default async function DinasLayout({
     headers: await headers(),
   });
 
-  if (!session) redirect("/login/dinas");
+  if (!session) redirect("/login");
 
   const role = (session.user as { role?: string }).role;
   if (role !== "dinas") redirect(`/${role ?? "user"}`);

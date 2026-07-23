@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { LaporanStatus } from "@/lib/generated/prisma/enums";
 
 export async function findReportByClientRequestId(clientRequestId: string) {
   return prisma.laporan.findFirst({
@@ -41,11 +42,12 @@ type AddressInput = {
 export async function createLaporan(
   data: {
     user_id: string;
+    dinas_id?: string | null;
     foto_url: string;
     lokasi_lat: number;
     lokasi_lng: number;
     kategori_ukuran: string;
-    status: string;
+    status: LaporanStatus;
     photo_hash: string;
     photo_mime_type: string;
     photo_size_bytes: number;

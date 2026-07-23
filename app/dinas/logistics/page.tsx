@@ -1,4 +1,4 @@
-import { LogisticsManagement } from "../components/logistics-management";
+import { LogisticsManagement } from "./components/logistics-management";
 
 export default function DinasLogisticsPage() {
   return <LogisticsManagement />;

@@ -44,18 +44,19 @@ export default function ValidationPage() {
         }
 
         const result = {
-          sizeCategory: payload.analysis.sizeCategory,
-          wasteTypes: payload.analysis.wasteTypes,
-          drainageRisk: payload.analysis.drainageRisk,
-          obstructionRisk: payload.analysis.obstructionRisk,
-          confidence: payload.analysis.confidence,
-          needsManualReview: payload.analysis.needsManualReview,
-          visualIndicators: payload.analysis.visualIndicators ?? [],
+          sizeCategory: payload.data.sizeCategory,
+          wasteTypes: payload.data.wasteTypes,
+          drainageRisk: payload.data.drainageRisk,
+          obstructionRisk: payload.data.obstructionRisk,
+          confidence: payload.data.confidence,
+          needsManualReview: payload.data.needsManualReview,
+          visualIndicators: payload.data.visualIndicators ?? [],
         };
 
         localStorage.setItem("scan_meta", JSON.stringify({
           ...meta,
           classificationResult: result,
+          rawResponse: payload.data.rawResponse,
         }));
 
         router.push("/user/scan/location");

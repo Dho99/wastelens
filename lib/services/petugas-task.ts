@@ -10,6 +10,7 @@ export interface TaskItem {
   kategori_ukuran: string;
   rekomendasi_kendaraan: string | null;
   status: string;
+  route_order: number | null;
   createdAt: string;
   user: { nama: string } | null;
   kendaraan: { jenis: string } | null;
@@ -35,6 +36,27 @@ export async function getAssignedTasks(): Promise<TaskItem[]> {
   }
   const data = await res.json();
   return data.data ?? [];
+}
+
+export async function getAssignedTasksWithRoute(): Promise<{
+  tasks: TaskItem[];
+  route: {
+    id: string;
+    status: string;
+    routeGeometry: [number, number][] | null;
+    estimatedDistanceKm: number | null;
+    estimatedDurationMinutes: number | null;
+    routingSource: string | null;
+    totalLoadKg: number;
+  } | null;
+}> {
+  const res = await fetch("/api/petugas/tasks");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Gagal memuat tugas" }));
+    throw new Error(err.error ?? "Gagal memuat tugas");
+  }
+  const data = await res.json();
+  return { tasks: data.data ?? [], route: data.route ?? null };
 }
 
 export async function getTaskDetail(id: string): Promise<TaskDetail> {
