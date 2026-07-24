@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { ClientLayout } from "@/components/client-layout";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { PwaInstallPrompt } from "@/app/components/pwa/PwaInstallPrompt";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -17,8 +17,16 @@ export const metadata: Metadata = {
     manifest: "/manifest.json",
     icons: {
         icon: [
-            { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
-            { url: "/icons/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
+            {
+                url: "/icons/icon-192.svg",
+                sizes: "192x192",
+                type: "image/svg+xml",
+            },
+            {
+                url: "/icons/icon-512.svg",
+                sizes: "512x512",
+                type: "image/svg+xml",
+            },
         ],
         apple: "/icons/apple-touch-icon.svg",
     },
@@ -41,10 +49,13 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={`${manrope.className} h-full antialiased`}>
+        <html
+            lang="en"
+            className={`${manrope.className} ${manrope.variable} h-full antialiased`}
+        >
             <body className="min-h-full flex flex-col">
                 <ClientLayout>{children}</ClientLayout>
-                <PWAInstallPrompt />
+                <PwaInstallPrompt />
                 <Toaster position="top-center" richColors />
             </body>
         </html>
