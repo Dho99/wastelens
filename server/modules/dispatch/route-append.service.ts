@@ -8,6 +8,8 @@ import {
 } from "./auto-collective.service";
 import { haversineDistance } from "@/lib/services/spatial";
 import { RouteStatus } from "@/lib/generated/prisma/enums";
+import { notifyUser } from "@/server/websocket/notify.service";
+import { createReportAssignedEvent } from "@/server/websocket/websocket.events";
 
 export const ACTIVE_ROUTE_BLOCK_MESSAGE =
   "Kendaraan sedang menjalankan rute aktif. Pilih kendaraan lain atau masukkan laporan ke perencanaan berikutnya.";
@@ -413,7 +415,7 @@ export async function confirmAppendToRoute(
     throw err;
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const routeRows = await tx.$queryRawUnsafe<Array<{ id: string; status: RouteStatus; kendaraan_id: string; petugas_id: string }>>(
       `SELECT id, status, kendaraan_id, petugas_id FROM "DISPATCH_ROUTE" WHERE id = $1::uuid AND dinas_id = $2::uuid FOR UPDATE`,
       routeId,
@@ -440,6 +442,7 @@ export async function confirmAppendToRoute(
     const reportRows = await tx.$queryRawUnsafe<
       Array<{
         id: string;
+        user_id: string;
         petugas_id: string | null;
         kendaraan_id: string | null;
         route_id: string | null;
@@ -452,7 +455,7 @@ export async function confirmAppendToRoute(
         access_obstruction_risk: boolean | null;
       }>
     >(
-      `SELECT id, petugas_id, kendaraan_id, route_id, status, lokasi_lat, lokasi_lng, priority_score,
+      `SELECT id, user_id, petugas_id, kendaraan_id, route_id, status, lokasi_lat, lokasi_lng, priority_score,
               kategori_ukuran, corrected_kategori_ukuran, access_obstruction_risk
        FROM "LAPORAN" WHERE id = $1::uuid AND dinas_id = $2::uuid FOR UPDATE`,
       reportId,
@@ -626,8 +629,48 @@ export async function confirmAppendToRoute(
       routeGeometry: details.routeGeometry,
       estimatedDistanceKm: details.estimatedDistanceKm,
       estimatedDurationMinutes: details.estimatedDurationMinutes,
+      petugasId: routeLock.petugas_id,
+      reporterUserId: report.user_id,
+      reportId,
     };
   });
+
+  const petugas = await prisma.petugas.findUnique({
+    where: { id: result.petugasId },
+    select: { user_id: true },
+  });
+
+  if (petugas?.user_id) {
+    await notifyUser({
+      userId: petugas.user_id,
+      laporanId: result.reportId,
+      pesan: "Laporan baru ditambahkan ke rute pickup Anda. Segera periksa daftar tugas.",
+      event: createReportAssignedEvent({
+        laporanId: result.reportId,
+        petugasId: result.petugasId,
+      }),
+    });
+  }
+
+  if (result.reporterUserId) {
+    await notifyUser({
+      userId: result.reporterUserId,
+      laporanId: result.reportId,
+      pesan: "Laporan Anda telah dijadwalkan untuk dijemput.",
+      event: createReportAssignedEvent({
+        laporanId: result.reportId,
+        petugasId: result.petugasId,
+      }),
+    });
+  }
+
+  return {
+    routeId: result.routeId,
+    proposedOrder: result.proposedOrder,
+    routeGeometry: result.routeGeometry,
+    estimatedDistanceKm: result.estimatedDistanceKm,
+    estimatedDurationMinutes: result.estimatedDurationMinutes,
+  };
 }
 
 export async function createDispatchRouteForAssignment(

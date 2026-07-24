@@ -11,4 +11,8 @@ export const AUTO_COLLECTIVE_CONFIG = {
   osrmTimeoutMs: 5000,
   neighborHaversineRadiusKm: 10,
   neighborMaxDriveDurationMinutes: 60,
+  maxOptimizationIterations: 10,
+  enableTwoOpt: true,
+  enableCrossRouteOptimization: true,
+  enableRouteMerging: true,
 } as const;

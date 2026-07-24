@@ -18,7 +18,7 @@ export async function PATCH(
     const body = await _request.json();
 
     const existing = await prisma.notifikasi.findFirst({
-      where: { id, user_id: dinas.user_id },
+      where: { id, user_id: dinas.userId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Notifikasi tidak ditemukan", code: "NOT_FOUND" }, { status: 404 });
@@ -48,7 +48,7 @@ export async function DELETE(
     }
 
     const existing = await prisma.notifikasi.findFirst({
-      where: { id, user_id: dinas.user_id },
+      where: { id, user_id: dinas.userId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Notifikasi tidak ditemukan", code: "NOT_FOUND" }, { status: 404 });
