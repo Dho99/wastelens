@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getReports, getReport, assignReport, deleteReport } from "@/lib/services/dinas/reports";
-import type { DinasReport } from "@/lib/services/dinas/types";
 
 export function useReports(params?: { status?: string; page?: number }) {
   return useQuery({
