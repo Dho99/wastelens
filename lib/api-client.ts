@@ -41,13 +41,17 @@ export async function apiFetch<T>(
 
         const payload = (await response
             .json()
-            .catch(() => null)) as ApiResponse<T> | null;
+            .catch(() => null)) as
+            | (ApiResponse<T> & { error?: string; code?: string })
+            | null;
 
         if (!response.ok || !payload?.success) {
             throw new ApiError(
-                payload?.message ?? "Permintaan tidak dapat diproses",
+                payload?.message ??
+                    payload?.error ??
+                    "Permintaan tidak dapat diproses",
                 response.status,
-                payload?.errorCode,
+                payload?.errorCode ?? payload?.code,
             );
         }
 

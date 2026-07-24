@@ -9,6 +9,7 @@ export const auth = betterAuth({
     trustedOrigins: [
         "https://phosphorescently-stretchier-sharyl.ngrok-free.dev",
         "http://localhost:3000",
+        "https://wastelens-green.vercel.app",
     ],
     emailAndPassword: {
         enabled: true,

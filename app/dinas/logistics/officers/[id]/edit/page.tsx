@@ -1,4 +1,4 @@
-import { EditOfficerProfile } from "../../../../components/edit-officer-profile";
+import { EditOfficerProfile } from "./components/edit-officer-profile";
 import { DlhShell } from "../../../../components/dlh-shell";
 
 export default async function EditOfficerPage({

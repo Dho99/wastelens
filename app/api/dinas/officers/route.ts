@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const officer = await prisma.petugas.create({
       data: {
         dinas_id: dinas.id,
-        user_id: user_id ?? dinas.user_id,
+        user_id: user_id ?? dinas.userId,
         nama,
         no_hp: no_hp ?? "",
       },

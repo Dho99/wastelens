@@ -1,4 +1,4 @@
-import { AssignmentMonitoring } from "../../components/assignment-monitoring";
+import { AssignmentMonitoring } from "./components/assignment-monitoring";
 import { DlhShell } from "../../components/dlh-shell";
 
 export default async function AssignmentPage({

@@ -15,6 +15,14 @@
   box-shadow: 0 14px 36px rgb(20 55 36 / 24%);
 }
 
+.leaflet-container .dlh-report-popup {
+  font-family: var(--font-manrope), sans-serif;
+}
+
+.leaflet-container .dlh-report-popup .leaflet-popup-close-button {
+  font-family: var(--font-manrope), sans-serif;
+}
+
 .dlh-report-popup .leaflet-popup-content {
   width: auto !important;
   margin: 0;

@@ -20,6 +20,23 @@ export async function GET(
       include: {
         user: { select: { id: true, name: true, email: true, image: true } },
         _count: { select: { laporan: true } },
+        laporan: {
+          where: { status: { in: ["PENDING", "DIJEMPUT"] } },
+          select: {
+            id: true,
+            lokasi_lat: true,
+            lokasi_lng: true,
+            address_text: true,
+            district: true,
+            status: true,
+            route_order: true,
+          },
+          orderBy: [
+            { route_order: { sort: "asc", nulls: "last" } },
+            { createdAt: "asc" },
+          ],
+          take: 1,
+        },
       },
     });
     if (!officer) {

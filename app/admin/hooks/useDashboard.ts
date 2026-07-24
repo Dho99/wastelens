@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardSummary } from "../services/dashboard";
+import { getDashboardData } from "../services/dashboard";
 
 export function useDashboard() {
   return useQuery({
     queryKey: ["admin-dashboard"],
-    queryFn: getDashboardSummary,
+    queryFn: getDashboardData,
   });
 }

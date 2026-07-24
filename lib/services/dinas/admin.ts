@@ -5,7 +5,7 @@ export function getAdmin() {
   return apiFetch<DinasAdmin>("/api/dinas/admin");
 }
 
-export function updateAdmin(data: { name?: string; phoneNumber?: string }) {
+export function updateAdmin(data: { name?: string; phoneNumber?: string; image?: string }) {
   return apiFetch<DinasAdmin>("/api/dinas/admin", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

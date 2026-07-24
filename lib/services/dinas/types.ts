@@ -37,6 +37,17 @@ export interface DinasVehicle {
   current_load: number;
 }
 
+export interface DinasDispatchRoute {
+  id: string;
+  petugas_id: string;
+  kendaraan_id: string;
+  status: string;
+  route_geometry: [number, number][] | null;
+  estimated_distance_km: number | null;
+  estimated_duration_minutes: number | null;
+  routing_source: string | null;
+}
+
 export interface DinasOfficer {
   id: string;
   dinas_id: string;
@@ -45,6 +56,15 @@ export interface DinasOfficer {
   no_hp: string;
   user?: { id: string; name: string; email: string; image: string | null };
   _count?: { laporan: number };
+  laporan?: Array<{
+    id: string;
+    lokasi_lat: number;
+    lokasi_lng: number;
+    address_text: string | null;
+    district: string | null;
+    status: string;
+    route_order: number | null;
+  }>;
 }
 
 export interface DinasAdmin {

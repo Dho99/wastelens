@@ -11,12 +11,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Akses DLH tidak ditemukan", code: "AUTH" }, { status: 401 });
     }
 
-    const state = await prisma.dlhPortalState.findUnique({
-      where: { dinas_id: dinas.id },
-      select: { data: true },
-    });
+    const [state, dinasProfile] = await Promise.all([
+      prisma.dlhPortalState.findUnique({
+        where: { dinas_id: dinas.id },
+        select: { data: true },
+      }),
+      prisma.dinas.findUnique({
+        where: { id: dinas.id },
+        select: {
+          nama_dinas: true,
+          kontak: true,
+          user: { select: { email: true, phoneNumber: true } },
+          area_cakupan: { select: { nama_wilayah: true }, orderBy: { nama_wilayah: "asc" } },
+        },
+      }),
+    ]);
 
-    const settings = (state?.data as Record<string, unknown>)?.settings ?? {};
+    const savedSettings = ((state?.data as Record<string, unknown>)?.settings ?? {}) as Record<string, unknown>;
+    const defaults = {
+      agency: dinasProfile?.nama_dinas ?? dinas.name,
+      region: dinasProfile?.area_cakupan.map((area) => area.nama_wilayah).join(", ") ?? "",
+      email: dinasProfile?.user.email ?? "",
+      phone: dinasProfile?.kontak || dinasProfile?.user.phoneNumber || "",
+      autoDispatch: false,
+      emailAlert: false,
+      soundAlert: false,
+    };
+    const settings = { ...defaults, ...savedSettings };
 
     return NextResponse.json({ success: true, data: settings });
   } catch (error) {

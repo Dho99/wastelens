@@ -6,7 +6,9 @@ import {
     createReport,
     ReportError,
 } from "@/server/modules/reports/report.service";
+import { reverseGeocode } from "@/server/modules/location/reverse-geocode.service";
 import { triggerUserEvent } from "@/server/websocket/pusher.service";
+import { notifyUser } from "@/server/websocket/notify.service";
 import { createReportCreatedEvent } from "@/server/websocket/websocket.events";
 import { LAPORAN_STATUS } from "@/lib/constants/laporan-status";
 
@@ -130,7 +132,9 @@ async function handleLegacyPayload(
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        const { dinas_id, petugas_id } = await autoAssignDinas(lat, lng);
+        const address = await reverseGeocode(lat, lng);
+        const district = address?.district ?? null;
+        const { dinas_id, petugas_id } = await autoAssignDinas(district);
 
         const kendaraanResult = dinas_id
             ? await assignKendaraan(
@@ -169,13 +173,27 @@ async function handleLegacyPayload(
         return laporan;
     });
 
-    triggerUserEvent(
-        userId,
-        createReportCreatedEvent({
-            laporanId: result.id,
-            status: result.status,
-        }),
-    );
+    const createdEvent = createReportCreatedEvent({
+        laporanId: result.id,
+        status: result.status,
+    });
+
+    triggerUserEvent(userId, createdEvent);
+
+    if (result.dinas_id) {
+        const dinas = await prisma.dinas.findUnique({
+            where: { id: result.dinas_id },
+            select: { user_id: true },
+        });
+        if (dinas?.user_id) {
+            await notifyUser({
+                userId: dinas.user_id,
+                laporanId: result.id,
+                pesan: "Laporan sampah baru masuk dan menunggu penanganan.",
+                event: createdEvent,
+            });
+        }
+    }
 
     return NextResponse.json(
         { id: result.id, status: result.status },

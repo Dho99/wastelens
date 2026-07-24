@@ -45,6 +45,7 @@ export interface AutoCollectiveRoute {
   estimatedDistanceKm: number | null;
   estimatedDurationMinutes: number | null;
   routingSource: "OSRM" | "HAVERSINE";
+  routeGeometry: [number, number][];
   stops: AutoCollectiveStop[];
 }
 
@@ -94,6 +95,19 @@ export interface RegenerateRequest {
   };
 }
 
+export interface NeighborRequest {
+  reportId: string;
+  maxRadiusKm?: number;
+  maxDriveMinutes?: number;
+}
+
+export interface NeighborResponse {
+  sourceReportId: string;
+  neighborIds: string[];
+  totalCandidatesFound: number;
+  eligibleCount: number;
+}
+
 export interface AvailableVehicle {
   id: string;
   jenis: string;
@@ -105,4 +119,18 @@ export interface AvailableOfficer {
   id: string;
   nama: string;
   activeTaskCount: number;
+}
+
+export interface AssignmentResult {
+  route: AutoCollectiveRoute;
+  totalLoad: number;
+  stopsCount: number;
+}
+
+export interface OptimizationMetrics {
+  totalDistanceKm: number;
+  totalDurationMinutes: number;
+  totalCapacityUtilizationPercent: number;
+  vehicleCount: number;
+  unassignedCount: number;
 }

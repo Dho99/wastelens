@@ -1,4 +1,4 @@
-import { VehicleDetail } from "../../../components/vehicle-detail";
+import { VehicleDetail } from "./components/vehicle-detail";
 import { DlhShell } from "../../../components/dlh-shell";
 
 export default async function VehicleDetailPage({

@@ -7,12 +7,12 @@ import { QueryProvider } from "@/components/query-provider";
 import { RealtimeNotifications } from "@/components/realtime-notifications";
 
 export function ClientLayout({ children }: { children: ReactNode }) {
-    return (
-        <QueryProvider>
-            <TabBarProvider>
-                <RealtimeNotifications />
-                <ErrorBoundary>{children}</ErrorBoundary>
-            </TabBarProvider>
-        </QueryProvider>
-    );
+  return (
+    <QueryProvider>
+      <TabBarProvider>
+        <RealtimeNotifications />
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </TabBarProvider>
+    </QueryProvider>
+  );
 }

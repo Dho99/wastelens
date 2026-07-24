@@ -9,4 +9,10 @@ export const AUTO_COLLECTIVE_CONFIG = {
   distanceWeight: 0.65,
   priorityWeight: 0.35,
   osrmTimeoutMs: 5000,
+  neighborHaversineRadiusKm: 10,
+  neighborMaxDriveDurationMinutes: 60,
+  maxOptimizationIterations: 10,
+  enableTwoOpt: true,
+  enableCrossRouteOptimization: true,
+  enableRouteMerging: true,
 } as const;

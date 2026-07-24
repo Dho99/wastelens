@@ -76,7 +76,7 @@ export default function AdminUsersPage() {
     const activeUsersCount = users.filter((u) => u.status === "active").length;
 
     return (
-        <div className="bg-[#FAF9F5] min-h-screen p-8 text-neutral-850 select-none pb-24 relative">
+        <div className="bg-[#FAF9F5] p-8 text-neutral-850 select-none pb-24 relative">
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200/60 pb-5 mb-6 gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-gray-805 tracking-tight">
