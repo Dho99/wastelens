@@ -8,6 +8,9 @@ import { createHash } from "node:crypto";
 import { persistNotification, firePendingEvents } from "@/server/websocket/notify.service";
 import { createReportAssignedEvent } from "@/server/websocket/websocket.events";
 import type { PusherEvent } from "@/server/websocket/websocket.types";
+import { computeRouteDetails } from "@/server/modules/dispatch/auto-collective.service";
+import { createDispatchRouteForAssignment } from "@/server/modules/dispatch/route-append.service";
+import type { AutoCollectiveStop } from "@/app/dinas/types/auto-collective";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +37,13 @@ function hashBody(body: ConfirmRequest): string {
     })),
   });
   return createHash("sha256").update(canonical).digest("hex");
+}
+
+function isTransactionTimeout(error: unknown): boolean {
+  return (
+    (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2028")
+    || (error instanceof Error && error.message.includes("expired transaction"))
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -122,6 +132,33 @@ export async function POST(request: NextRequest) {
     const allVehicleIds = body.routes.map((r) => r.kendaraanId);
     const uniqueVehicleIds = [...new Set(allVehicleIds)].sort();
     const uniqueOfficerIds = [...new Set(body.routes.map((r) => r.petugasId))].sort();
+    const reportMap = new Map(reports.map((report) => [report.id, report]));
+
+    // Routing may call the external OSRM service and must never run while database
+    // rows are locked inside the interactive transaction.
+    const preparedRouteDetails = await Promise.all(
+      body.routes.map(async (route) => {
+        const stops = route.stopIds.flatMap((stopId): AutoCollectiveStop[] => {
+          const report = reportMap.get(stopId);
+          if (!report) return [];
+          const effectiveSize = (report.corrected_kategori_ukuran ?? report.kategori_ukuran).toUpperCase();
+          return [{
+            reportId: report.id,
+            lat: report.lokasi_lat,
+            lng: report.lokasi_lng,
+            address: report.address_text,
+            priorityLevel: report.priority_level,
+            priorityScore: report.priority_score,
+            estimatedLoadKg: LOAD_ESTIMATES_KG[effectiveSize] ?? LOAD_ESTIMATES_KG.UNCERTAIN,
+            sizeCategory: report.kategori_ukuran,
+            drainageRisk: report.drainage_risk,
+            accessObstructionRisk: report.access_obstruction_risk,
+            wasteTypes: report.waste_types,
+          }];
+        });
+        return computeRouteDetails(stops);
+      }),
+    );
 
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -178,7 +215,8 @@ export async function POST(request: NextRequest) {
         const reportLoadMap = new Map<string, number>();
         const pendingEvents: Array<{ userId: string; event: PusherEvent }> = [];
 
-        for (const route of body.routes) {
+        for (let routeIndex = 0; routeIndex < body.routes.length; routeIndex++) {
+          const route = body.routes[routeIndex];
           const totalLoad = route.stopIds.reduce((sum, stopId) => {
             const report = reports.find((r) => r.id === stopId);
             if (!report) return sum;
@@ -260,9 +298,6 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          const { createDispatchRouteForAssignment } = await import(
-            "@/server/modules/dispatch/route-append.service"
-          );
           const dispatchRouteId = await createDispatchRouteForAssignment(tx, {
             dinasId: dinas.id,
             petugasId: route.petugasId,
@@ -270,6 +305,7 @@ export async function POST(request: NextRequest) {
             stopIds: route.stopIds,
             routeOrder: route.routeOrder,
             totalLoadKg: totalLoad,
+            preparedRouteDetails: preparedRouteDetails[routeIndex],
           });
 
           const petugasUser = await tx.petugas.findUnique({
@@ -322,6 +358,9 @@ export async function POST(request: NextRequest) {
         });
 
         return { assignedRoutes, responsePayload, pendingEvents };
+      }, {
+        maxWait: 5_000,
+        timeout: 15_000,
       });
 
       firePendingEvents(result.pendingEvents);
@@ -359,6 +398,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: error.message, code: error.code },
           { status: error.status },
+        );
+      }
+
+      if (isTransactionTimeout(error)) {
+        return NextResponse.json(
+          {
+            error: "Konfirmasi rute memerlukan waktu terlalu lama. Silakan coba lagi.",
+            code: "TRANSACTION_TIMEOUT",
+          },
+          { status: 503 },
         );
       }
 

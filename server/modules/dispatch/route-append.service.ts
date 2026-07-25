@@ -682,49 +682,53 @@ export async function createDispatchRouteForAssignment(
     stopIds: string[];
     routeOrder: number[];
     totalLoadKg: number;
+    preparedRouteDetails?: Awaited<ReturnType<typeof computeRouteDetails>>;
   },
 ): Promise<string> {
-  const stops = await tx.laporan.findMany({
-    where: { id: { in: input.stopIds } },
-    select: {
-      id: true,
-      lokasi_lat: true,
-      lokasi_lng: true,
-      priority_score: true,
-      assigned_load_kg: true,
-      kategori_ukuran: true,
-      corrected_kategori_ukuran: true,
-      address_text: true,
-      priority_level: true,
-      drainage_risk: true,
-      access_obstruction_risk: true,
-      waste_types: true,
-    },
-  });
-
-  const byId = new Map(stops.map((s) => [s.id, s]));
-  const orderedStops: AutoCollectiveStop[] = [];
-  for (let i = 0; i < input.stopIds.length; i++) {
-    const raw = byId.get(input.stopIds[i]);
-    if (!raw) continue;
-    orderedStops.push({
-      reportId: raw.id,
-      lat: raw.lokasi_lat,
-      lng: raw.lokasi_lng,
-      address: raw.address_text,
-      priorityLevel: raw.priority_level,
-      priorityScore: raw.priority_score,
-      estimatedLoadKg:
-        raw.assigned_load_kg ??
-        (LOAD_ESTIMATES_KG[(raw.corrected_kategori_ukuran ?? raw.kategori_ukuran).toUpperCase()] ?? 0),
-      sizeCategory: raw.kategori_ukuran,
-      drainageRisk: raw.drainage_risk,
-      accessObstructionRisk: raw.access_obstruction_risk,
-      wasteTypes: raw.waste_types,
+  let details = input.preparedRouteDetails;
+  if (!details) {
+    const stops = await tx.laporan.findMany({
+      where: { id: { in: input.stopIds } },
+      select: {
+        id: true,
+        lokasi_lat: true,
+        lokasi_lng: true,
+        priority_score: true,
+        assigned_load_kg: true,
+        kategori_ukuran: true,
+        corrected_kategori_ukuran: true,
+        address_text: true,
+        priority_level: true,
+        drainage_risk: true,
+        access_obstruction_risk: true,
+        waste_types: true,
+      },
     });
-  }
 
-  const details = await computeRouteDetails(orderedStops);
+    const byId = new Map(stops.map((s) => [s.id, s]));
+    const orderedStops: AutoCollectiveStop[] = [];
+    for (let i = 0; i < input.stopIds.length; i++) {
+      const raw = byId.get(input.stopIds[i]);
+      if (!raw) continue;
+      orderedStops.push({
+        reportId: raw.id,
+        lat: raw.lokasi_lat,
+        lng: raw.lokasi_lng,
+        address: raw.address_text,
+        priorityLevel: raw.priority_level,
+        priorityScore: raw.priority_score,
+        estimatedLoadKg:
+          raw.assigned_load_kg ??
+          (LOAD_ESTIMATES_KG[(raw.corrected_kategori_ukuran ?? raw.kategori_ukuran).toUpperCase()] ?? 0),
+        sizeCategory: raw.kategori_ukuran,
+        drainageRisk: raw.drainage_risk,
+        accessObstructionRisk: raw.access_obstruction_risk,
+        wasteTypes: raw.waste_types,
+      });
+    }
+
+    details = await computeRouteDetails(orderedStops);
+  }
 
   const created = await tx.dispatchRoute.create({
     data: {
