@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   X,
   Loader2,
@@ -25,11 +25,13 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<AutoCollectivePreview | null>(null);
   const [error, setError] = useState("");
+  const [errorSource, setErrorSource] = useState<"preview" | "confirm">("preview");
   const [confirming, setConfirming] = useState(false);
   const [confirmResult, setConfirmResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   const fetchPreviewCore = useCallback(async () => {
     const res = await fetch("/api/dinas/auto-collective/preview", {
@@ -45,8 +47,18 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
   useEffect(() => {
     let cancelled = false;
     fetchPreviewCore()
-      .then((result) => { if (!cancelled) setPreview(result); })
-      .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : "Gagal memuat"); })
+      .then((result) => {
+        if (!cancelled) {
+          idempotencyKeyRef.current = null;
+          setPreview(result);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setErrorSource("preview");
+          setError(err instanceof Error ? err.message : "Gagal memuat");
+        }
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [fetchPreviewCore]);
@@ -56,8 +68,10 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
     setError("");
     try {
       const data = await fetchPreviewCore();
+      idempotencyKeyRef.current = null;
       setPreview(data);
     } catch (err) {
+      setErrorSource("preview");
       setError(err instanceof Error ? err.message : "Gagal memuat");
     } finally {
       setLoading(false);
@@ -84,6 +98,7 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
           };
         })
         .filter((route) => route.stops.length > 0);
+      idempotencyKeyRef.current = null;
       setPreview({ ...preview, routes: updatedRoutes });
     },
     [preview],
@@ -109,8 +124,10 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Gagal regenerate");
+      idempotencyKeyRef.current = null;
       setPreview(data.data);
     } catch (err) {
+      setErrorSource("preview");
       setError(err instanceof Error ? err.message : "Gagal regenerate");
     } finally {
       setLoading(false);
@@ -122,7 +139,9 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
     setConfirming(true);
     setError("");
     try {
-      const idempotencyKey = `auto-collective-${Date.now()}`;
+      const idempotencyKey = idempotencyKeyRef.current
+        ?? `auto-collective-${crypto.randomUUID()}`;
+      idempotencyKeyRef.current = idempotencyKey;
       const routes = preview.routes.map((route) => ({
         temporaryRouteId: route.temporaryRouteId,
         petugasId: route.petugasId!,
@@ -139,6 +158,7 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
       const data = await res.json();
 
       if (!res.ok) {
+        setErrorSource("confirm");
         setError(data.error ?? "Konfirmasi gagal");
         return;
       }
@@ -154,6 +174,7 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
         window.location.reload();
       }, 1500);
     } catch (err) {
+      setErrorSource("confirm");
       setError(err instanceof Error ? err.message : "Konfirmasi gagal");
     } finally {
       setConfirming(false);
@@ -240,10 +261,10 @@ export function AutoCollectivePanel({ onClose, selectedPickupIds = [] }: Props) 
               <AlertTriangle className="mx-auto size-8 text-red-400" />
               <p className="mt-2 text-sm font-medium text-red-800">{error}</p>
               <button
-                onClick={loadPreview}
+                onClick={errorSource === "confirm" ? handleConfirm : loadPreview}
                 className="mt-3 rounded-full bg-red-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-red-700"
               >
-                Coba Lagi
+                {errorSource === "confirm" ? "Ulangi Konfirmasi" : "Coba Lagi"}
               </button>
             </div>
           )}
