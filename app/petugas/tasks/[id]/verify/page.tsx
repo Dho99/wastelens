@@ -15,6 +15,7 @@ import {
 } from "@mdi/js";
 import { useTaskDetail } from "../../../hooks/useTaskDetail";
 import { completeTask } from "@/lib/services/petugas-task";
+import { getPhoto, removePhoto } from "@/lib/photo-store";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -37,53 +38,56 @@ export default function VerifyPage({
 
   const { data: task, isLoading, isError, error, refetch } = useTaskDetail(id);
 
-  const [fotoSesudah, setFotoSesudah] = useState<string | null>(null);
-  const [fotoSesudahBase64, setFotoSesudahBase64] = useState("");
+  const [fotoSesudahUrl, setFotoSesudahUrl] = useState<string | null>(null);
+  const [fotoSesudahFile, setFotoSesudahFile] = useState<File | null>(null);
+  const fotoSesudahUrlRef = useRef<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("foto_sesudah");
-    if (stored) {
-      setFotoSesudah(stored);
-      setFotoSesudahBase64(stored.split(",")[1] ?? "");
-      sessionStorage.removeItem("foto_sesudah");
+    const file = getPhoto("foto_sesudah");
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setFotoSesudahUrl(url);
+      setFotoSesudahFile(file);
+      fotoSesudahUrlRef.current = url;
+      removePhoto("foto_sesudah");
     }
+    return () => {
+      if (fotoSesudahUrlRef.current) {
+        URL.revokeObjectURL(fotoSesudahUrlRef.current);
+      }
+    };
   }, []);
 
   const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setFotoSesudah(dataUrl);
-      setFotoSesudahBase64(dataUrl.split(",")[1] ?? "");
-    };
-    reader.readAsDataURL(file);
+    // Revoke previous object URL
+    if (fotoSesudahUrlRef.current) {
+      URL.revokeObjectURL(fotoSesudahUrlRef.current);
+    }
+
+    const url = URL.createObjectURL(file);
+    setFotoSesudahUrl(url);
+    setFotoSesudahFile(file);
+    fotoSesudahUrlRef.current = url;
   };
 
   const uploadPhoto = async (): Promise<string> => {
-    // Convert base64 to Blob, then upload to Cloudinary via the upload API
-    const byteString = atob(fotoSesudahBase64);
-    const mimeMatch = fotoSesudah?.match(/^data:(image\/\w+);base64,/);
-    const mimeType = mimeMatch?.[1] ?? "image/jpeg";
+    if (!fotoSesudahFile) throw new Error("Tidak ada foto");
 
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    const blob = new Blob([ab], { type: mimeType });
-
-    const formData = new FormData();
-    formData.append("photo", blob, `verify-${id}.jpg`);
+    const arrayBuffer = await fotoSesudahFile.arrayBuffer();
 
     const res = await fetch("/api/laporan/upload", {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": fotoSesudahFile.type || "image/jpeg",
+        "X-Filename": fotoSesudahFile.name || `verify-${id}.jpg`,
+      },
+      body: arrayBuffer,
     });
 
     if (!res.ok) {
@@ -91,12 +95,12 @@ export default function VerifyPage({
       throw new Error(err.error ?? "Gagal mengunggah foto");
     }
 
-    const uploadResult = await res.json();
-    return uploadResult.data?.secureUrl ?? "";
+    const result = await res.json();
+    return result.data?.secureUrl ?? "";
   };
 
   const handleSubmit = async () => {
-    if (!fotoSesudahBase64) return;
+    if (!fotoSesudahFile) return;
     setSubmitting(true);
     setSubmitError("");
 
@@ -226,9 +230,9 @@ export default function VerifyPage({
               <Icon path={mdiCheckCircle} className="h-[14px] w-[14px]" />
             </div>
             <div className="relative flex-1">
-              {fotoSesudah ? (
+              {fotoSesudahUrl ? (
                 <Image
-                  src={fotoSesudah}
+                  src={fotoSesudahUrl}
                   alt="Sesudah"
                   fill
                   className="object-cover"
@@ -334,7 +338,7 @@ export default function VerifyPage({
         <div className="flex flex-col gap-4 pt-2">
           <button
             onClick={handleSubmit}
-            disabled={!fotoSesudahBase64 || submitting}
+            disabled={!fotoSesudahFile || submitting}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-[15px] font-semibold text-white shadow-lg transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {submitting ? "Memproses..." : "Verifikasi Selesai"}

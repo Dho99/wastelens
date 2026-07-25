@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -18,6 +19,19 @@ import {
 } from "lucide-react";
 import { useOfficer, useUpdateOfficer } from "../../../../../hooks/useOfficers";
 
+const LeafletLocationMap = dynamic(
+  () => import("@/components/leaflet-location-map"),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-[180px] animate-pulse bg-[#dfeaed]"
+        aria-label="Memuat peta wilayah petugas"
+      />
+    ),
+  },
+);
+
 const inputClass =
   "mt-1.5 h-11 w-full rounded-full border-2 border-[#bdcbbd] bg-[#f5fbfe] px-4 text-sm font-normal outline-none focus:border-[#087529]";
 
@@ -35,6 +49,14 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
   const [saved, setSaved] = useState(false);
 
   if (!officer) return null;
+
+  const assignedReport = officer.laporan?.[0];
+  const areaLatitude = assignedReport?.lokasi_lat ?? -6.1754;
+  const areaLongitude = assignedReport?.lokasi_lng ?? 106.8272;
+  const areaLabel =
+    assignedReport?.address_text ??
+    assignedReport?.district ??
+    "Jakarta Pusat";
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -223,7 +245,11 @@ export function EditOfficerProfile({ officerId }: { officerId: string }) {
                         <input type="hidden" name="shift" value={shift} />
                       </fieldset>
                     </div>
-                    <AreaMap />
+                    <AreaMap
+                      lat={areaLatitude}
+                      lng={areaLongitude}
+                      label={areaLabel}
+                    />
                   </div>
                 </section>
 
@@ -332,23 +358,33 @@ function Toggle({
   );
 }
 
-function AreaMap() {
+function AreaMap({
+  lat,
+  lng,
+  label,
+}: {
+  lat: number;
+  lng: number;
+  label: string;
+}) {
   return (
-      <>
-    <div className="relative min-h-[150px] overflow-hidden rounded-[20px] border border-[#bdcbbd] bg-[#dfeaed]">
-      <div className="absolute -left-6 top-10 h-5 w-[120%] -rotate-6 bg-white/80" />
-      <div className="absolute left-[30%] -top-5 h-[130%] w-5 rotate-[24deg] bg-white/75" />
-      <div className="absolute inset-[28%_18%] rounded-[35%] bg-[#75aa7b]/55" />
-      <span className="absolute right-3 top-3 rounded-full bg-[#087529] px-3 py-1 text-[10px] font-extrabold text-white">
+    <div className="relative isolate h-[180px] overflow-hidden rounded-[20px] border border-[#bdcbbd] bg-[#dfeaed]">
+      <LeafletLocationMap
+        lat={lat}
+        lng={lng}
+        popup={label}
+        zoom={14}
+        height="h-[180px]"
+      />
+      <span className="pointer-events-none absolute right-3 top-3 z-[500] rounded-full bg-[#087529] px-3 py-1 text-[10px] font-extrabold text-white shadow-md">
         LOKASI AKTIF
       </span>
-      <div className="absolute inset-x-0 bottom-0 bg-slate-800/55 px-4 py-3 text-white">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[500] bg-slate-800/70 px-4 py-2.5 text-white">
         <p className="text-[10px] font-bold uppercase tracking-wide">
-          Visualisasi Area
+          Peta Wilayah
         </p>
-        <p className="text-sm font-extrabold">Menteng, Jakarta Pusat</p>
+        <p className="truncate text-sm font-extrabold">{label}</p>
       </div>
     </div>
-      </>
   );
 }

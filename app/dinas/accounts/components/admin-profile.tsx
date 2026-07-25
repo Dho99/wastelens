@@ -23,6 +23,7 @@ import {
 import { useReports } from "../../hooks/useReports";
 import { useVehicles } from "../../hooks/useVehicles";
 import { useSettings } from "../../hooks/useSettings";
+import { StatCard } from "./stat-card";
 
 export function AdminProfile() {
     const queryClient = useQueryClient();
@@ -84,7 +85,7 @@ export function AdminProfile() {
     return (
         <>
             <div className="flex min-w-0 flex-1 flex-col bg-[#f4fbff]">
-                <main className="min-h-0 flex-1 overflow-y-auto bg-white p-4 sm:p-5">
+                <main className="min-h-0 flex-1 overflow-y-auto bg-[#f4fbff] p-4 sm:p-5">
                     <div className="mx-auto grid max-w-[1220px] items-start gap-5 lg:grid-cols-[minmax(0,2.4fr)_330px]">
                         <div className="space-y-5">
                             {notice && (
@@ -384,41 +385,6 @@ export function AdminProfile() {
                     </form>
                 </div>
             )}
-        </>
-    );
-}
-
-function StatCard({
-    icon,
-    tone,
-    value,
-    label,
-    trend,
-}: {
-    icon: React.ReactNode;
-    tone: "green" | "amber";
-    value: string;
-    label: string;
-    trend: string;
-}) {
-    return (
-        <>
-            <div className="rounded-[24px] border border-[#d4ded7] bg-white p-5 shadow-sm">
-                <div className="flex items-start">
-                    <span
-                        className={`grid size-11 place-items-center rounded-xl [&_svg]:size-5 ${tone === "green" ? "bg-[#bcebd1] text-[#47705b]" : "bg-[#ffd9ae] text-[#795000]"}`}
-                    >
-                        {icon}
-                    </span>
-                    <span
-                        className={`ml-auto text-xs font-bold ${tone === "green" ? "text-[#087529]" : "text-[#956100]"}`}
-                    >
-                        {trend}
-                    </span>
-                </div>
-                <p className="mt-4 text-3xl font-extrabold">{value}</p>
-                <p className="mt-1 text-sm text-[#667169]">{label}</p>
-            </div>
         </>
     );
 }

@@ -211,7 +211,7 @@ export function OfficerDetail({ officerId }: { officerId: string }) {
                         </div>
 
                         <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(350px,0.9fr)_minmax(0,1.3fr)]">
-                            <section className="overflow-hidden rounded-[22px] border border-[#bdcbbd] bg-white">
+                            <section className="isolate overflow-hidden rounded-[22px] border border-[#bdcbbd] bg-white">
                                 <div className="relative h-[270px] bg-[#dfeaed]">
                                     <LeafletLocationMap
                                         lat={officerLatitude}

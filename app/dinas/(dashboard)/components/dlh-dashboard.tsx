@@ -91,7 +91,7 @@ export function DlhDashboard() {
         } finally {
             setExpandingNeighbors(false);
         }
-    }, []);
+    }, [setExpandingNeighbors, setSelectedPickupIds]);
 
     const handleOpenReport = (id: string) => {
         setSelectedReportId(id);
