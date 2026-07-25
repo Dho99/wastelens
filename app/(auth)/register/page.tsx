@@ -42,7 +42,7 @@ export default function RegisterPage() {
             return;
         }
 
-        router.push("/");
+        router.push("/user");
         router.refresh();
     }
 
