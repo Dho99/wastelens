@@ -18,6 +18,7 @@ import dynamic from "next/dynamic";
 import { useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import { useTaskDetail, type TaskDetailData } from "../../hooks/useTaskDetail";
+import { setPhoto } from "@/lib/photo-store";
 
 const LocationMap = dynamic(() => import("@/components/leaflet-location-map"), {
   ssr: false,
@@ -52,12 +53,8 @@ export default function TaskDetailPage({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      sessionStorage.setItem("foto_sesudah", reader.result as string);
-      router.push(`/petugas/tasks/${id}/verify`);
-    };
-    reader.readAsDataURL(file);
+    setPhoto("foto_sesudah", file);
+    router.push(`/petugas/tasks/${id}/verify`);
   };
 
   // --- Loading state ---
