@@ -94,10 +94,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 # Copy public assets
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy Prisma schema & migrations for runtime
+# Copy Prisma schema & migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Install prisma CLI + tsx for runtime migrate + seed
+# -------------------------------------------------------------
+# [Penting!] Copy prisma.config.ts agar terbaca di Stage Runner
+# -------------------------------------------------------------
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Install prisma CLI + tsx untuk runtime migrate + seed
 RUN npm install prisma tsx
 
 # Copy entrypoint
