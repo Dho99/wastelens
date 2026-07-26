@@ -159,7 +159,7 @@ export default function TaskDetailPage({
                   className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-neutral-200 shadow-sm"
                 >
                   <Image
-                    src={f.url}
+                    src={f.url || "/images/waste_bags_stack.png"}
                     alt={`Foto laporan ${i + 1}`}
                     className="h-full w-full object-cover"
                     width={300}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTabBar } from "@/components/nav/tab-bar-context";
@@ -35,11 +36,12 @@ export default function FallbackPage() {
           <div className="flex items-center gap-3">
             {/* User Avatar with Circular Green Border */}
             <div className="relative w-10 h-10 rounded-full border-2 border-[#1E7D38] p-[1.5px] flex items-center justify-center bg-white shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
                 alt="User Profile"
-                className="w-full h-full rounded-full object-cover"
+                fill
+                className="rounded-full object-cover"
+                sizes="40px"
               />
             </div>
             <span className="text-xl font-extrabold text-[#1E7D38] tracking-tight">

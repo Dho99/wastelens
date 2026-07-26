@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 interface ProductVisualProps {
@@ -15,11 +16,12 @@ export const ProductVisual: React.FC<ProductVisualProps> = ({
     <div className="px-4 mb-4">
       <div className="relative aspect-square w-full rounded-[32px] overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
         {imageUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
+          <Image
             src={imageUrl}
             alt={productName}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-semibold">

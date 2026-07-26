@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
     Hexagon,
@@ -12,8 +12,10 @@ import {
     Heart,
 } from "lucide-react";
 import { PhoneMockup } from "./PhoneMockup";
+import { DemoVideoModal } from "./DemoVideoModal";
 
 export function HeroSection() {
+    const [showDemo, setShowDemo] = useState(false);
     return (
         <section
             id="home"
@@ -56,7 +58,7 @@ export function HeroSection() {
                         <div className="flex flex-wrap items-center gap-4 pt-1">
                             {/* Primary Orange CTA */}
                             <Link
-                                href="/user/report"
+                                href="/user"
                                 className="bg-[#f97316] hover:bg-[#ea580c] text-white font-extrabold text-xs md:text-sm px-7 py-3.5 rounded-full flex items-center gap-2.5 shadow-md shadow-orange-500/20 hover:scale-[1.02] transition-all cursor-pointer"
                             >
                                 <span>Mulai Lapor Sekarang</span>
@@ -68,11 +70,7 @@ export function HeroSection() {
                             {/* Secondary Demo CTA */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    const el =
-                                        document.getElementById("cara-kerja");
-                                    el?.scrollIntoView({ behavior: "smooth" });
-                                }}
+                                onClick={() => setShowDemo(true)}
                                 className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/90 font-extrabold text-xs md:text-sm px-6 py-3.5 rounded-full flex items-center gap-2.5 shadow-2xs hover:scale-[1.02] transition-all cursor-pointer"
                             >
                                 <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
@@ -152,6 +150,11 @@ export function HeroSection() {
                     </div>
                 </div>
             </div>
+
+            <DemoVideoModal
+                isOpen={showDemo}
+                onClose={() => setShowDemo(false)}
+            />
         </section>
     );
 }

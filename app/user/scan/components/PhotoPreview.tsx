@@ -1,6 +1,7 @@
 "use client";
 
-import { ImageIcon } from "lucide-react";
+import NextImage from "next/image";
+import { Camera, ImageIcon } from "lucide-react";
 
 type Props = {
   photoUrl: string;
@@ -11,13 +12,20 @@ type Props = {
 export function PhotoPreview({ photoUrl, onReplace, fileName }: Props) {
   return (
     <div className="space-y-3">
-      <div className="relative rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photoUrl}
-          alt="Preview foto sampah"
-          className="w-full h-56 object-cover"
-        />
+      <div className="relative h-56 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
+        {photoUrl ? (
+          <NextImage
+            src={photoUrl}
+            alt="Preview foto sampah"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Camera className="w-8 h-8 text-gray-300" />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
       </div>
       <div className="flex items-center justify-between">

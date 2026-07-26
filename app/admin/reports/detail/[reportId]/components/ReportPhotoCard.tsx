@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
 import { Camera } from "lucide-react";
+import Image from "next/image";
+import React from "react";
 
 export interface ReportPhotoCardProps {
   fotoUrl: string;
@@ -24,12 +25,19 @@ export function ReportPhotoCard({
 
       {/* Photo Container with Timestamp Overlay */}
       <div className="relative w-full h-[330px] rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shadow-inner group">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={fotoUrl}
-          alt="Foto Laporan Warga"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {fotoUrl ? (
+          <Image
+            src={fotoUrl}
+            alt="Foto Laporan Warga"
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-100">
+            <Camera className="w-8 h-8 text-slate-300" />
+          </div>
+        )}
 
         {/* Glassmorphism Timestamp Badge */}
         <div className="absolute bottom-4 left-4 z-10 bg-white/85 backdrop-blur-md border border-white/60 rounded-xl px-4 py-2.5 shadow-md max-w-[90%]">

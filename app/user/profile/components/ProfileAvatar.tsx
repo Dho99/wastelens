@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React, { useState } from "react";
 
 const PLACEHOLDER =
@@ -24,11 +25,12 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       {/* Circle Photo Container */}
       <div className="relative w-28 h-28 mb-5">
         <div className="w-full h-full rounded-full border border-gray-150 p-1 flex items-center justify-center bg-gray-50 shadow-inner overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={imgSrc}
             alt={name}
-            className="w-full h-full rounded-full object-cover"
+            width={112}
+            height={112}
+            className="rounded-full object-cover"
             onError={() => setImgSrc(PLACEHOLDER)}
           />
         </div>

@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import { ClientLayout } from "@/components/client-layout";
 import { PwaInstallPrompt } from "@/app/components/pwa/PwaInstallPrompt";
 import { Toaster } from "sonner";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -51,6 +52,12 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${manrope.className} ${manrope.variable} h-full antialiased`}>
             <body className="min-h-full flex flex-col">
+                <NextTopLoader
+                    color="#2E7D32"
+                    height={3}
+                    showSpinner={false}
+                    shadow="0 0 10px #2E7D32,0 0 5px #2E7D32"
+                />
                 <ClientLayout>{children}</ClientLayout>
                 <PwaInstallPrompt />
                 <Toaster position="top-center" richColors />

@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/auth-client";
+import { signIn, googleSignin } from "@/lib/auth-client";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeClosed } from "lucide-react";
 
@@ -145,6 +145,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             disabled={loading}
+                            onClick={googleSignin}
                             className="w-full rounded-full px-4 py-2.5 text-sm font-semibold cursor-pointer border border-neutral-300 flex items-center justify-center gap-2"
                         >
                             <Image
