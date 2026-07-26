@@ -24,8 +24,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 
-RUN npx prisma generate --schema=prisma/schema.prisma
+RUN npx prisma generate
 
 RUN npm run build
 
@@ -39,7 +40,6 @@ RUN apk add --no-cache libc6-compat
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
-ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 
 WORKDIR /app
 
