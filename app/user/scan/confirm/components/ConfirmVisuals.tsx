@@ -1,3 +1,5 @@
+import { Camera } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 interface ConfirmVisualsProps {
@@ -11,12 +13,19 @@ export const ConfirmVisuals: React.FC<ConfirmVisualsProps> = ({
     <div className="px-4 mb-4">
       <div className="bg-white border border-gray-100 rounded-3xl p-3 shadow-sm">
         <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={citizenPhotoUrl}
-            alt="Original Capture"
-            className="w-full h-full object-cover"
-          />
+          {citizenPhotoUrl ? (
+            <Image
+              src={citizenPhotoUrl}
+              alt="Original Capture"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Camera className="w-8 h-8 text-gray-300" />
+            </div>
+          )}
 
           {/* Original Foto Green Badge */}
           <div className="absolute top-3 left-3 bg-[#287A38]/90 backdrop-blur-sm text-white text-[9px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm uppercase tracking-wider">

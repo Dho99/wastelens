@@ -206,13 +206,19 @@ export default function VerifyPage({
               LAPORAN WARGA
             </div>
             <div className="relative flex-1">
-              <Image
-                src={fotoSebelum}
-                alt="Sebelum"
-                fill
-                className="object-cover"
-                sizes="50vw"
-              />
+              {fotoSebelum ? (
+                <Image
+                  src={fotoSebelum}
+                  alt="Sebelum"
+                  fill
+                  className="object-cover"
+                  sizes="50vw"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Icon path={mdiCameraOutline} className="h-8 w-8 text-neutral-300" />
+                </div>
+              )}
             </div>
             <div className="absolute inset-x-0 bottom-0 bg-black/40 py-2.5 text-center backdrop-blur-[2px]">
               <span className="text-[13px] font-semibold text-white">

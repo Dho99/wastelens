@@ -1,3 +1,5 @@
+import { Store } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 import { NearestPartner } from "../../services/dashboardService";
 
@@ -24,12 +26,19 @@ export const NearestPartners: React.FC<NearestPartnersProps> = ({
           >
             {/* Store Image Header with overlay tag */}
             <div className="relative h-44 w-full bg-gray-50 overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={partner.imageUrl}
-                alt={partner.name}
-                className="w-full h-full object-cover"
-              />
+              {partner.imageUrl ? (
+                <Image
+                  src={partner.imageUrl}
+                  alt={partner.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Store className="w-8 h-8 text-gray-300" />
+                </div>
+              )}
 
               {/* Distance Tag */}
               <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-full py-1.5 px-3 flex items-center gap-1.5 shadow-sm">

@@ -7,34 +7,18 @@ import { Leaf } from "lucide-react";
 export function Footer() {
     const footerSections = [
         {
-            title: "Produk",
+            title: "Fitur",
             links: [
                 { name: "Cara Kerja", href: "#cara-kerja" },
                 { name: "Solusi", href: "#solusi" },
-                { name: "Reward", href: "#reward" },
+                { name: "Operator DLH", href: "#operator-dlh" },
+                { name: "Fitur Peran", href: "#fitur-peran" },
             ],
         },
         {
-            title: "Perusahaan",
+            title: "Navigasi",
             links: [
-                { name: "Tentang Kami", href: "#tentang" },
-                { name: "Karir", href: "#karir" },
-                { name: "Berita", href: "#berita" },
-            ],
-        },
-        {
-            title: "Bantuan",
-            links: [
-                { name: "FAQ", href: "#faq" },
-                { name: "Pusat Bantuan", href: "#bantuan" },
-                { name: "Kontak", href: "#kontak" },
-            ],
-        },
-        {
-            title: "Legal",
-            links: [
-                { name: "Syarat & Ketentuan", href: "#syarat" },
-                { name: "Kebijakan Privasi", href: "#privasi" },
+                { name: "Beranda", href: "#home" },
             ],
         },
     ];
@@ -136,7 +120,7 @@ export function Footer() {
                     </div>
 
                     {/* Right Navigation Links Columns (4 Columns) */}
-                    <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-8">
+                    <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8">
                         {footerSections.map((sec) => (
                             <div key={sec.title} className="space-y-3">
                                 <h4 className="text-xs font-black text-[#0f291e] tracking-tight uppercase">

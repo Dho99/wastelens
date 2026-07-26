@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useHistory } from "./hooks/useHistory";
@@ -280,13 +281,14 @@ export default function HistoryPage() {
                                     {/* Left: image & content */}
                                     <div className="flex gap-4 items-center min-w-0 flex-1">
                                         {/* Image frame wrapper */}
-                                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#EBEFFB] border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-inner">
+                                        <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-[#EBEFFB] border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-inner">
                                             {item.foto?.[0]?.url ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
+                                                <Image
                                                     src={item.foto[0].url}
                                                     alt="Laporan Sampah"
-                                                    className="w-full h-full object-cover"
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="64px"
                                                 />
                                             ) : (
                                                 // Blue picture icon placeholder

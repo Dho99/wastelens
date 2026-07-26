@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 
 export interface LeaderboardEntry {
@@ -20,10 +21,11 @@ const AvatarWithFallback: React.FC<{ src: string; alt: string; className: string
   const fallbackUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={error ? fallbackUrl : src}
+    <Image
+      src={error ? fallbackUrl : src || fallbackUrl}
       alt={alt}
+      width={64}
+      height={64}
       onError={() => setError(true)}
       className={className}
     />

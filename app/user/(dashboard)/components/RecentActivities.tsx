@@ -1,3 +1,5 @@
+import { ImageIcon } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 import { RecentActivity } from "../types/dashboard";
 
@@ -48,13 +50,20 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                         >
                             <div className="flex items-center gap-3">
                                 {/* Image thumbnail */}
-                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={activity.imageUrl}
-                                        alt={activity.location}
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 relative">
+                                    {activity.imageUrl ? (
+                                        <Image
+                                            src={activity.imageUrl}
+                                            alt={activity.location}
+                                            fill
+                                            className="object-cover"
+                                            sizes="56px"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <ImageIcon className="w-5 h-5 text-gray-300" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Details */}
