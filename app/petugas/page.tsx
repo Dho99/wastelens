@@ -234,7 +234,7 @@ function TaskCard({
                         </span>
                     )}
                     <Image
-                        src={task.foto_url}
+                        src={task.foto_url || "/images/waste_bags_stack.png"}
                         alt="Sampah"
                         className="h-full w-full object-cover"
                         width={200}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -50,11 +51,12 @@ export function TabBarLayout({
       <header className="flex h-16 items-center justify-between bg-transparent px-5 py-4 mt-2">
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full border-2 border-[#1E7D38] p-[1.5px] flex items-center justify-center bg-white shadow-sm">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={userImage}
               alt={userName || "User Profile"}
-              className="w-full h-full rounded-full object-cover"
+              fill
+              className="rounded-full object-cover"
+              sizes="40px"
             />
           </div>
           <span className="text-xl font-extrabold text-[#1E7D38] tracking-tight">

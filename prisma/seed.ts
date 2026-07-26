@@ -7,6 +7,21 @@ import { LAPORAN_STATUS } from "../lib/constants/laporan-status";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
+const PLACEHOLDER_IMAGES = [
+  "https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1621451537084-482c73073a0f?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1594398901394-4e349f0ad5e8?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1563213126-a4273aed2016?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&auto=format&fit=crop&q=80",
+];
+
 async function main() {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 86400000);
@@ -604,8 +619,7 @@ async function main() {
         data: {
             user_id: userId("warga1@wastelens.com"),
             dinas_id: dinas1.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan1.jpg",
+            foto_url: PLACEHOLDER_IMAGES[0],
             lokasi_lat: -6.9175,
             lokasi_lng: 107.6191,
             kategori_ukuran: "SEDANG",
@@ -624,8 +638,7 @@ async function main() {
             dinas_id: dinas1.id,
             petugas_id: petugas1Record.id,
             kendaraan_id: kendaraan1.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan2.jpg",
+            foto_url: PLACEHOLDER_IMAGES[1],
             lokasi_lat: -6.9217,
             lokasi_lng: 107.6072,
             kategori_ukuran: "BESAR",
@@ -649,8 +662,7 @@ async function main() {
             dinas_id: dinas2.id,
             petugas_id: petugas2Record.id,
             kendaraan_id: kendaraan3.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan3.jpg",
+            foto_url: PLACEHOLDER_IMAGES[2],
             lokasi_lat: -7.2575,
             lokasi_lng: 112.7521,
             kategori_ukuran: "KECIL",
@@ -669,8 +681,7 @@ async function main() {
         data: {
             user_id: userId("warga2@wastelens.com"),
             dinas_id: null,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan4.jpg",
+            foto_url: PLACEHOLDER_IMAGES[3],
             lokasi_lat: -7.2658,
             lokasi_lng: 112.7456,
             kategori_ukuran: "SEDANG",
@@ -692,8 +703,7 @@ async function main() {
             dinas_id: dinas1.id,
             petugas_id: petugas1Record.id,
             kendaraan_id: kendaraan2.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan5.jpg",
+            foto_url: PLACEHOLDER_IMAGES[4],
             lokasi_lat: -6.9147,
             lokasi_lng: 107.6269,
             kategori_ukuran: "BESAR",
@@ -712,8 +722,7 @@ async function main() {
         data: {
             user_id: userId("warga2@wastelens.com"),
             dinas_id: dinas2.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan6.jpg",
+            foto_url: PLACEHOLDER_IMAGES[5],
             lokasi_lat: -7.2733,
             lokasi_lng: 112.7542,
             kategori_ukuran: "BESAR",
@@ -737,8 +746,7 @@ async function main() {
         data: {
             user_id: userId("warga1@wastelens.com"),
             dinas_id: null,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan7.jpg",
+            foto_url: PLACEHOLDER_IMAGES[6],
             lokasi_lat: -6.8936,
             lokasi_lng: 107.6136,
             kategori_ukuran: "KECIL",
@@ -759,8 +767,7 @@ async function main() {
         data: {
             user_id: userId("warga2@wastelens.com"),
             dinas_id: null,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan8.jpg",
+            foto_url: PLACEHOLDER_IMAGES[7],
             lokasi_lat: -7.3007,
             lokasi_lng: 112.7351,
             kategori_ukuran: "SEDANG",
@@ -784,8 +791,7 @@ async function main() {
         data: {
             user_id: userId("warga1@wastelens.com"),
             dinas_id: dinas1.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan9.jpg",
+            foto_url: PLACEHOLDER_IMAGES[8],
             lokasi_lat: -6.9314,
             lokasi_lng: 107.6517,
             kategori_ukuran: "BESAR",
@@ -810,8 +816,7 @@ async function main() {
         data: {
             user_id: userId("warga2@wastelens.com"),
             dinas_id: dinas2.id,
-            foto_url:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan10.jpg",
+            foto_url: PLACEHOLDER_IMAGES[9],
             lokasi_lat: -7.2894,
             lokasi_lng: 112.7154,
             kategori_ukuran: "SEDANG",
@@ -833,7 +838,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan1.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan1.jpg",
+            url: PLACEHOLDER_IMAGES[0],
             hash: "a1b2c3d4e5f6",
             mime_type: "image/jpeg",
             size_bytes: 2_450_000,
@@ -843,7 +848,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan2.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan2.jpg",
+            url: PLACEHOLDER_IMAGES[1],
             hash: "b2c3d4e5f6a1",
             mime_type: "image/jpeg",
             size_bytes: 3_120_000,
@@ -853,7 +858,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan3.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan3.jpg",
+            url: PLACEHOLDER_IMAGES[2],
             hash: "c3d4e5f6a1b2",
             mime_type: "image/jpeg",
             size_bytes: 1_890_000,
@@ -863,7 +868,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan4.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan4.jpg",
+            url: PLACEHOLDER_IMAGES[3],
             mime_type: "image/png",
             size_bytes: 4_100_000,
         },
@@ -872,7 +877,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan5.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan5.jpg",
+            url: PLACEHOLDER_IMAGES[4],
             hash: "d4e5f6a1b2c3",
             mime_type: "image/jpeg",
             size_bytes: 2_780_000,
@@ -882,7 +887,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan6.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan6.jpg",
+            url: PLACEHOLDER_IMAGES[5],
             hash: "e5f6a1b2c3d4",
             mime_type: "image/jpeg",
             size_bytes: 3_400_000,
@@ -892,7 +897,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan7.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan7.jpg",
+            url: PLACEHOLDER_IMAGES[6],
             mime_type: "image/png",
             size_bytes: 1_200_000,
         },
@@ -901,7 +906,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan8.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan8.jpg",
+            url: PLACEHOLDER_IMAGES[7],
             hash: "f6a1b2c3d4e5",
             mime_type: "image/jpeg",
             size_bytes: 2_650_000,
@@ -911,7 +916,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan9.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan9.jpg",
+            url: PLACEHOLDER_IMAGES[8],
             hash: "a1b2c3d4e5f7",
             mime_type: "image/jpeg",
             size_bytes: 3_800_000,
@@ -921,7 +926,7 @@ async function main() {
     await prisma.foto.create({
         data: {
             laporan_id: laporan10.id,
-            url: "https://res.cloudinary.com/wastelens/image/upload/laporan10.jpg",
+            url: PLACEHOLDER_IMAGES[9],
             mime_type: "image/png",
             size_bytes: 2_100_000,
         },
@@ -965,7 +970,7 @@ async function main() {
                     dinas_id: dinasTasik.id,
                     petugas_id: isEligible ? null : petugas?.id,
                     kendaraan_id: isEligible ? null : pick(KENDARAAN_TSK_LIST).id,
-                    foto_url: `https://res.cloudinary.com/wastelens/image/upload/tasik/${kecKey.toLowerCase()}_laporan${i + 1}.jpg`,
+                    foto_url: pick(PLACEHOLDER_IMAGES),
                     lokasi_lat: lat,
                     lokasi_lng: lng,
                     kategori_ukuran: ukuran,
@@ -1002,7 +1007,7 @@ async function main() {
             await prisma.foto.create({
                 data: {
                     laporan_id: laporanTsk.id,
-                    url: `https://res.cloudinary.com/wastelens/image/upload/tasik/${kecKey.toLowerCase()}_laporan${i + 1}.jpg`,
+                    url: pick(PLACEHOLDER_IMAGES),
                     hash: `tasik_${kecKey.toLowerCase()}_${i + 1}_${Math.random().toString(36).slice(2, 8)}`,
                     mime_type: "image/jpeg",
                     size_bytes: Math.floor(rand(800_000, 4_000_000)),
@@ -1064,20 +1069,16 @@ async function main() {
     await prisma.verifikasiPickup.create({
         data: {
             laporan_id: laporan3.id,
-            foto_sebelum:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan3_sebelum.jpg",
-            foto_sesudah:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan3_sesudah.jpg",
+            foto_sebelum: PLACEHOLDER_IMAGES[0],
+            foto_sesudah: PLACEHOLDER_IMAGES[4],
         },
     });
 
     await prisma.verifikasiPickup.create({
         data: {
             laporan_id: laporan5.id,
-            foto_sebelum:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan5_sebelum.jpg",
-            foto_sesudah:
-                "https://res.cloudinary.com/wastelens/image/upload/laporan5_sesudah.jpg",
+            foto_sebelum: PLACEHOLDER_IMAGES[1],
+            foto_sesudah: PLACEHOLDER_IMAGES[4],
         },
     });
 
@@ -1197,8 +1198,7 @@ async function main() {
             user_id: userId("warga1@wastelens.com"),
             provider: "cloudinary",
             public_id: "temp/warga1_upload1",
-            secure_url:
-                "https://res.cloudinary.com/wastelens/image/upload/temp/warga1_upload1.jpg",
+            secure_url: PLACEHOLDER_IMAGES[10],
             resource_type: "image",
             mime_type: "image/jpeg",
             size_bytes: 1_800_000,
@@ -1212,8 +1212,7 @@ async function main() {
             user_id: userId("warga1@wastelens.com"),
             provider: "cloudinary",
             public_id: "temp/warga1_upload2",
-            secure_url:
-                "https://res.cloudinary.com/wastelens/image/upload/temp/warga1_upload2.jpg",
+            secure_url: PLACEHOLDER_IMAGES[11],
             resource_type: "image",
             mime_type: "image/jpeg",
             size_bytes: 2_100_000,

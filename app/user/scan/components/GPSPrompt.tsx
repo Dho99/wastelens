@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 interface GPSPromptProps {
@@ -48,12 +49,12 @@ export const GPSPrompt: React.FC<GPSPromptProps> = ({
 
       {/* 2. Map Background with Blur Overlay */}
       <div className="relative flex-1 w-full bg-gray-50 flex items-center justify-center p-5">
-        {/* Mock Map Image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=80"
           alt="Map Background"
-          className="absolute inset-0 w-full h-full object-cover blur-[2px] opacity-40 select-none pointer-events-none"
+          fill
+          className="object-cover blur-[2px] opacity-40 select-none pointer-events-none"
+          sizes="100vw"
         />
 
         {/* 3. Popup Location Modal Dialog */}

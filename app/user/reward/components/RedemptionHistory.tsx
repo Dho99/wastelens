@@ -1,3 +1,5 @@
+import { Package } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 import { RedemptionRecord } from "../services/rewardService";
 
@@ -44,13 +46,20 @@ export const RedemptionHistory: React.FC<RedemptionHistoryProps> = ({
             >
               <div className="flex items-center gap-3.5 flex-1 min-w-0">
                 {/* Product Thumbnail */}
-                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={record.imageUrl}
-                    alt={record.title}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100 relative">
+                  {record.imageUrl ? (
+                    <Image
+                      src={record.imageUrl}
+                      alt={record.title}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-5 h-5 text-gray-300" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Details */}

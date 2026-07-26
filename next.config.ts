@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    /* config options here */
+    output: "standalone",
     allowedDevOrigins: ["phosphorescently-stretchier-sharyl.ngrok-free.dev"],
     logging: {
         fetches: {

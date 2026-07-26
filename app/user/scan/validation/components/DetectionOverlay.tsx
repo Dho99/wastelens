@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 export const DetectionOverlay: React.FC = () => {
@@ -12,12 +13,12 @@ export const DetectionOverlay: React.FC = () => {
 
   return (
     <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-gray-100 shadow-inner">
-      {/* Background Image of Littered Pavement matching design */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={photoUrl}
         alt="Littered pavement"
-        className="w-full h-full object-cover"
+        fill
+        className="object-cover"
+        sizes="(max-width: 768px) 100vw, 50vw"
       />
 
       {/* Viewfinder corner notches matching the camera box overlay */}
