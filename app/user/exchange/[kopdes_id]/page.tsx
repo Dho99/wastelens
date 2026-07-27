@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -283,9 +284,11 @@ function ProdukContent({ params }: { params: Promise<{ kopdes_id: string }> }) {
           </p>
         </div>
 
-        <div className="flex justify-center">
-          <img src={qrDataUrl} alt="QR Code" className="size-64" />
-        </div>
+        {qrDataUrl && (
+          <div className="flex justify-center">
+            <Image src={qrDataUrl} alt="QR Code" width={256} height={256} unoptimized />
+          </div>
+        )}
 
         <div className="text-center">
           <p className="text-lg font-bold tabular-nums">{countdown}</p>

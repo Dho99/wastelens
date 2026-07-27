@@ -1,3 +1,5 @@
+import { Package } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 import { ProductItem } from "../services/storeDetailService";
 
@@ -33,13 +35,20 @@ export const ProductsGrid: React.FC<ProductsGridProps> = ({
               }`}
             >
               {/* Image box */}
-              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={prod.imageUrl}
-                  alt={prod.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 relative">
+                {prod.imageUrl ? (
+                  <Image
+                    src={prod.imageUrl}
+                    alt={prod.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="w-6 h-6 text-gray-300" />
+                  </div>
+                )}
               </div>
 
               {/* Description */}

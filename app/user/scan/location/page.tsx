@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTabBar } from "@/components/nav/tab-bar-context";
@@ -121,10 +122,12 @@ export default function LocationPermissionPage() {
     <ErrorBoundary>
       <div className="relative min-h-screen max-w-screen-sm mx-auto w-full bg-[#FAF9F5] flex flex-col justify-between overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none select-none">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=80"
             alt="Maps backdrop"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="100vw"
           />
         </div>
 

@@ -16,6 +16,12 @@ export const auth = betterAuth({
         // Use nama as the user's display name field
         autoSignIn: true,
     },
+    socialProviders: {
+        google: {
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        },
+    },
     user: {
         additionalFields: {
             saldo_koin: {

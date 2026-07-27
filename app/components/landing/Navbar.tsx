@@ -3,17 +3,21 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Leaf, Menu, X } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
 
 export function Navbar() {
     const [activeTab, setActiveTab] = useState("Home");
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+    const { data: session } = useSession();
+    const isAuthenticated = !!session;
+
     const navLinks = [
         { name: "Home", href: "#home" },
         { name: "Cara Kerja", href: "#cara-kerja" },
         { name: "Solusi", href: "#solusi" },
-        { name: "Reward", href: "#reward" },
-        { name: "FAQ", href: "#faq" },
+        { name: "Operator DLH", href: "#operator-dlh" },
+        { name: "Fitur Peran", href: "#fitur-peran" },
     ];
 
     return (
@@ -55,14 +59,16 @@ export function Navbar() {
 
                 {/* Action Buttons Right */}
                 <div className="hidden lg:flex items-center gap-3">
+                    {!isAuthenticated && (
+                        <Link
+                            href="/login"
+                            className="bg-[#edf7f2] hover:bg-[#e1f2e8] text-[#15803d] border border-emerald-200/60 rounded-xl px-5 py-2 text-xs font-extrabold transition-all shadow-2xs"
+                        >
+                            Masuk
+                        </Link>
+                    )}
                     <Link
-                        href="/login"
-                        className="bg-[#edf7f2] hover:bg-[#e1f2e8] text-[#15803d] border border-emerald-200/60 rounded-xl px-5 py-2 text-xs font-extrabold transition-all shadow-2xs"
-                    >
-                        Masuk
-                    </Link>
-                    <Link
-                        href="/login"
+                        href={isAuthenticated ? "/user" : "/login"}
                         className="bg-[#15803d] hover:bg-[#0f602e] text-white rounded-xl px-5 py-2 text-xs font-extrabold transition-all shadow-sm hover:shadow-md"
                     >
                         Coba Sekarang
@@ -114,10 +120,10 @@ export function Navbar() {
                             Masuk
                         </Link>
                         <Link
-                            href="/login"
+                            href={isAuthenticated ? "/user" : "/login"}
                             className="w-full text-center bg-[#15803d] text-white rounded-xl py-2.5 text-xs font-extrabold shadow-sm"
                         >
-                            Coba Sekarang
+                            Lapor Sekarang
                         </Link>
                     </div>
                 </div>

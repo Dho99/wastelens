@@ -1,3 +1,5 @@
+import { Package } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 interface RedemptionCardProps {
@@ -27,9 +29,14 @@ export const RedemptionCard: React.FC<RedemptionCardProps> = ({
         
         {/* Item Top Info */}
         <div className="flex gap-4 items-center">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imageUrl} alt={itemName} className="w-full h-full object-cover" />
+          <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
+            {imageUrl ? (
+              <Image src={imageUrl} alt={itemName} fill className="object-cover" sizes="64px" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Package className="w-6 h-6 text-gray-300" />
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">

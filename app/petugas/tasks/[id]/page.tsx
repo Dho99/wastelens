@@ -18,6 +18,7 @@ import dynamic from "next/dynamic";
 import { useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import { useTaskDetail, type TaskDetailData } from "../../hooks/useTaskDetail";
+import { setPhoto } from "@/lib/photo-store";
 
 const LocationMap = dynamic(() => import("@/components/leaflet-location-map"), {
   ssr: false,
@@ -52,12 +53,8 @@ export default function TaskDetailPage({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      sessionStorage.setItem("foto_sesudah", reader.result as string);
-      router.push(`/petugas/tasks/${id}/verify`);
-    };
-    reader.readAsDataURL(file);
+    setPhoto("foto_sesudah", file);
+    router.push(`/petugas/tasks/${id}/verify`);
   };
 
   // --- Loading state ---
@@ -162,7 +159,7 @@ export default function TaskDetailPage({
                   className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-neutral-200 shadow-sm"
                 >
                   <Image
-                    src={f.url}
+                    src={f.url || "/images/waste_bags_stack.png"}
                     alt={`Foto laporan ${i + 1}`}
                     className="h-full w-full object-cover"
                     width={300}
