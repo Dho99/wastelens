@@ -1,0 +1,375 @@
+erDiagram
+
+    USER {
+        string id PK
+        string name
+        string email UK
+        boolean emailVerified
+        string image "nullable"
+        datetime createdAt
+        datetime updatedAt
+        string address "nullable"
+        string phoneNumber "nullable"
+        int saldo_koin
+        string status
+        string role
+        boolean isBanned
+    }
+
+    BANNED_REASON {
+        uuid id PK
+        string userId FK
+        string alasan
+        datetime createdAt
+    }
+
+    SESSION {
+        string id PK
+        datetime expiresAt
+        string token UK
+        datetime createdAt
+        datetime updatedAt
+        string ipAddress "nullable"
+        string userAgent "nullable"
+        string userId FK
+    }
+
+    ACCOUNT {
+        string id PK
+        string accountId
+        string providerId
+        string userId FK
+        string accessToken "nullable"
+        string refreshToken "nullable"
+        string idToken "nullable"
+        datetime accessTokenExpiresAt "nullable"
+        datetime refreshTokenExpiresAt "nullable"
+        string scope "nullable"
+        string password "nullable"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    VERIFICATION {
+        string id PK
+        string identifier
+        string value
+        datetime expiresAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    DINAS {
+        uuid id PK
+        string user_id FK
+        string nama_dinas
+        string kontak
+    }
+
+    DLH_PORTAL_STATE {
+        uuid id PK
+        uuid dinas_id FK,UK
+        json data
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    DLH_MEDIA {
+        uuid id PK
+        uuid dinas_id FK
+        string uploaded_by
+        string kind
+        string mime_type
+        int size_bytes
+        bytes data
+        datetime createdAt
+    }
+
+    PETUGAS {
+        uuid id PK
+        uuid dinas_id FK
+        string user_id FK
+        string nama
+        string no_hp
+    }
+
+    AREA_CAKUPAN {
+        uuid id PK
+        uuid dinas_id FK
+        string nama_wilayah
+    }
+
+    KENDARAAN {
+        uuid id PK
+        uuid dinas_id FK
+        string jenis
+        int kapasitas
+        int current_load
+    }
+
+    LAPORAN {
+        uuid id PK
+        string user_id FK
+        uuid dinas_id FK "nullable"
+        uuid petugas_id FK "nullable"
+        uuid kendaraan_id FK "nullable"
+        string foto_url
+        float lokasi_lat
+        float lokasi_lng
+        string kategori_ukuran
+        string rekomendasi_kendaraan "nullable"
+        LaporanStatus status
+        datetime createdAt
+        datetime updatedAt
+
+        string corrected_kategori_ukuran "nullable"
+        boolean corrected_drainage_risk "nullable"
+        boolean corrected_access_obstruction_risk "nullable"
+        string corrected_by "nullable"
+        datetime corrected_at "nullable"
+        string correction_reason "nullable"
+
+        float lokasi_accuracy "nullable"
+        float lokasi_confirmed_lat "nullable"
+        float lokasi_confirmed_lng "nullable"
+        float lokasi_device_lat "nullable"
+        float lokasi_device_lng "nullable"
+        datetime lokasi_captured_at "nullable"
+        float lokasi_exif_lat "nullable"
+        float lokasi_exif_lng "nullable"
+        string_array risk_flags
+
+        string address_text "nullable"
+        string road_name "nullable"
+        string district "nullable"
+        string city "nullable"
+        string province "nullable"
+        string country "nullable"
+
+        string photo_hash "nullable"
+        string photo_mime_type "nullable"
+        int photo_size_bytes "nullable"
+
+        string_array waste_types
+        boolean drainage_risk "nullable"
+        boolean access_obstruction_risk "nullable"
+        string_array visual_indicators
+        float confidence "nullable"
+        boolean needs_manual_review "nullable"
+        string analysis_provider "nullable"
+        datetime analysed_at "nullable"
+
+        float priority_score "nullable"
+        string priority_level "nullable"
+        string priority_weight_version "nullable"
+
+        string client_request_id UK "nullable"
+        int estimated_load_unit "nullable"
+
+        int assigned_load_kg "nullable"
+        datetime load_released_at "nullable"
+
+        int route_order "nullable"
+        uuid route_id FK "nullable"
+    }
+
+    FOTO {
+        uuid id PK
+        uuid laporan_id FK
+        string url
+        string hash "nullable"
+        string mime_type "nullable"
+        int size_bytes "nullable"
+    }
+
+    TRANSAKSI_KOIN {
+        uuid id PK
+        string user_id FK
+        uuid laporan_id FK
+        int jumlah
+        string jenis
+        json metadata "nullable"
+    }
+
+    VERIFIKASI_PICKUP {
+        uuid id PK
+        uuid laporan_id FK
+        string foto_sebelum
+        string foto_sesudah
+        datetime waktu
+    }
+
+    NOTIFIKASI {
+        uuid id PK
+        string user_id FK
+        uuid laporan_id FK
+        string pesan
+        boolean status_baca
+        datetime createdAt
+    }
+
+    KOPDES {
+        uuid id PK
+        string user_id FK
+        string nama
+        string alamat
+        boolean isActive
+    }
+
+    PRODUK {
+        uuid id PK
+        uuid kopdes_id FK
+        string nama_barang
+        int harga_koin
+        int stok
+        boolean isActive
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    DISPATCH_ROUTE {
+        uuid id PK
+        uuid dinas_id FK
+        uuid petugas_id FK
+        uuid kendaraan_id FK
+        RouteStatus status
+        float estimated_distance_km "nullable"
+        int estimated_duration_minutes "nullable"
+        int total_load_kg
+        json route_geometry "nullable"
+        string routing_source "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    PENUKARAN {
+        uuid id PK
+        string user_id FK
+        uuid produk_id FK
+        uuid kopdes_id FK
+        int quantity
+        int unit_coin_price
+        int jumlah_koin
+        RedemptionStatus status
+        string token_hash UK "nullable"
+        string token_hint "nullable"
+        string qr_payload "nullable"
+        string idempotency_key "nullable"
+        datetime expires_at
+        datetime redeemed_at "nullable"
+        datetime cancelled_at "nullable"
+        datetime expired_at "nullable"
+        string redeemed_by_user_id "nullable"
+        string cancellation_reason "nullable"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    COIN_TRANSACTION {
+        uuid id PK
+        string user_id FK
+        uuid redemption_id FK "nullable"
+        CoinTransactionType type
+        int amount
+        int balance_before
+        int balance_after
+        string description "nullable"
+        datetime created_at
+    }
+
+    TEMPORARY_UPLOAD {
+        uuid id PK
+        string user_id
+        string provider
+        string public_id
+        string secure_url
+        string resource_type
+        string mime_type
+        int size_bytes
+        TemporaryUploadStatus status
+        datetime createdAt
+        datetime expiresAt
+        datetime usedAt "nullable"
+    }
+
+    AUTO_COLLECTIVE_REQUEST {
+        uuid id PK
+        uuid dinas_id FK
+        string idempotency_key
+        string request_hash
+        json response_data "nullable"
+        datetime created_at
+    }
+
+    %% =====================================================
+    %% RELASI AUTENTIKASI DAN USER
+    %% =====================================================
+
+    USER ||--o{ SESSION : "memiliki"
+    USER ||--o{ ACCOUNT : "memiliki"
+    USER ||--o{ BANNED_REASON : "memiliki alasan pemblokiran"
+
+    %% =====================================================
+    %% RELASI USER DENGAN ORGANISASI DAN AKTOR
+    %% =====================================================
+
+    USER ||--o{ DINAS : "mengelola"
+    USER ||--o{ PETUGAS : "terdaftar sebagai"
+    USER ||--o{ KOPDES : "mengelola"
+
+    %% =====================================================
+    %% RELASI DINAS
+    %% =====================================================
+
+    DINAS ||--o{ PETUGAS : "memiliki"
+    DINAS ||--o{ AREA_CAKUPAN : "mencakup"
+    DINAS ||--o{ KENDARAAN : "memiliki"
+    DINAS ||--o{ LAPORAN : "menangani"
+    DINAS ||--o| DLH_PORTAL_STATE : "memiliki portal state"
+    DINAS ||--o{ DLH_MEDIA : "memiliki media"
+    DINAS ||--o{ AUTO_COLLECTIVE_REQUEST : "menerima permintaan"
+    DINAS ||--o{ DISPATCH_ROUTE : "membuat rute"
+
+    %% =====================================================
+    %% RELASI LAPORAN
+    %% =====================================================
+
+    USER ||--o{ LAPORAN : "membuat"
+    PETUGAS o|--o{ LAPORAN : "ditugaskan menangani"
+    KENDARAAN o|--o{ LAPORAN : "digunakan mengangkut"
+    DISPATCH_ROUTE o|--o{ LAPORAN : "memuat"
+
+    LAPORAN ||--o{ FOTO : "memiliki"
+    LAPORAN ||--o{ TRANSAKSI_KOIN : "menghasilkan"
+    LAPORAN ||--o{ VERIFIKASI_PICKUP : "diverifikasi"
+    LAPORAN ||--o{ NOTIFIKASI : "memicu"
+
+    %% =====================================================
+    %% RELASI DISPATCH
+    %% =====================================================
+
+    PETUGAS ||--o{ DISPATCH_ROUTE : "menjalankan"
+    KENDARAAN ||--o{ DISPATCH_ROUTE : "digunakan pada"
+
+    %% =====================================================
+    %% RELASI NOTIFIKASI DAN KOIN
+    %% =====================================================
+
+    USER ||--o{ NOTIFIKASI : "menerima"
+    USER ||--o{ TRANSAKSI_KOIN : "menerima"
+
+    %% =====================================================
+    %% RELASI KOPDES DAN PENUKARAN
+    %% =====================================================
+
+    KOPDES ||--o{ PRODUK : "menyediakan"
+    KOPDES ||--o{ PENUKARAN : "memproses"
+    PRODUK ||--o{ PENUKARAN : "ditukarkan dalam"
+    USER ||--o{ PENUKARAN : "melakukan"
+
+    %% =====================================================
+    %% RELASI LEDGER KOIN
+    %% =====================================================
+
+    USER ||--o{ COIN_TRANSACTION : "memiliki transaksi"
+    PENUKARAN o|--o{ COIN_TRANSACTION : "menghasilkan"

@@ -1,47 +1,255 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WasteLens
 
-## Getting Started
+**WasteLens** adalah platform pelaporan dan pengelolaan sampah berbasis foto yang
+menghubungkan warga, Dinas Lingkungan Hidup (DLH), dan petugas lapangan dalam
+satu sistem terpadu. Warga memotret tumpukan sampah, AI mengklasifikasikan
+ukuran dan merekomendasikan kendaraan penjemputan, petugas menerima rute
+pengangkutan yang dioptimalkan, dan DLH memantau seluruh proses dari dasbor
+terpusat — dari laporan masuk hingga verifikasi penjemputan.
 
-Create the environment file and apply the database migrations first:
+Setiap laporan yang tervalidasi memberi warga koin yang dapat ditukarkan dengan
+produk kebutuhan sehari-hari di koperasi desa (Kopdes) mitra.
+
+---
+
+## Teknologi yang Digunakan
+
+| Lapisan          | Teknologi                                                      |
+| ---------------- | -------------------------------------------------------------- |
+| **Framework**    | Next.js 16 (App Router, standalone output)                     |
+| **UI Library**   | React 19, Tailwind CSS 4                                       |
+| **Bahasa**       | TypeScript 5.9                                                 |
+| **Database**     | PostgreSQL 17                                                  |
+| **ORM**          | Prisma 7 (PostgreSQL adapter)                                  |
+| **Autentikasi**  | better-auth (email/password + Google OAuth)                    |
+| **AI / Vision**  | Google Gemini, Groq, OpenRouter (klasifikasi gambar sampah)    |
+| **Peta & Rute**  | Leaflet + React-Leaflet, OpenStreetMap, OSRM                  |
+| **Real-time**    | Pusher (notifikasi & pembaruan status)                         |
+| **Upload Gambar**| Cloudinary                                                     |
+| **Form Handling**| React Hook Form + Zod                                           |
+| **State Mgmt**   | TanStack React Query                                            |
+| **Testing**      | Vitest, Playwright                                              |
+| **Deploy**       | Docker + docker-compose, Vercel (standalone)                    |
+| **QR Code**      | qrcode, jsQR                                                   |
+| **Spreadsheet**  | xlsx (ekspor data)                                              |
+
+---
+
+## Cara Instalasi
+
+### Prasyarat
+
+- Node.js ≥ 20
+- PostgreSQL ≥ 17 (dapat dijalankan via Docker)
+- Akun Cloudinary (untuk upload gambar)
+- API key Google Gemini / Groq / OpenRouter (untuk klasifikasi AI)
+
+### 1. Clone repositori
+
+```bash
+git clone https://github.com/username/wastelens.git
+cd wastelens
+```
+
+### 2. Konfigurasi environment
+
+Salin template environment dan isi variabel yang diperlukan:
 
 ```bash
 cp .env.example .env
+```
+
+### 3. Jalankan database PostgreSQL
+
+Jika menggunakan Docker:
+
+```bash
+docker compose up -d postgres
+```
+
+Atau gunakan PostgreSQL lokal yang sudah berjalan.
+
+### 4. Install dependensi
+
+```bash
+npm install
+```
+
+### 5. Terapkan migrasi database
+
+```bash
 npx prisma migrate deploy
 ```
 
-The DLH portal stores its shared operational state in PostgreSQL. Without a valid
-`DATABASE_URL`, the portal remains usable from its browser cache and displays an
-offline synchronization status.
+### 6. (Opsional) Seed data awal
 
-First, run the development server:
+```bash
+npx prisma db seed
+```
+
+Untuk data wilayah Tasikmalaya:
+
+```bash
+npm run tasik:seed
+```
+
+### 7. Jalankan server development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cara Penggunaan
 
-## Learn More
+### Peran Pengguna
 
-To learn more about Next.js, take a look at the following resources:
+WasteLens memiliki lima peran utama:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Warga (`user`)** — Melaporkan sampah via foto, mengumpulkan koin, menukarkan
+  koin di Kopdes.
+- **Admin (`admin`)** — Mengelola pengguna, memantau transaksi koin, melihat
+  laporan dan entitas.
+- **Operator DLH (`dinas`)** — Dasbor DLH untuk memantau laporan, menugaskan
+  petugas, mengelola rute pengangkutan, kendaraan, dan area cakupan.
+- **Petugas Lapangan (`petugas`)** — Menerima tugas penjemputan, melihat rute
+  teroptimasi, melakukan verifikasi pickup (foto sebelum & sesudah).
+- **Kopdes (`kopdes`)** — Mengelola produk dan memproses penukaran koin warga.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Alur Kerja Utama
 
-## Deploy on Vercel
+1. **Warga** memotret tumpukan sampah melalui aplikasi.
+2. **AI** (Gemini/Groq/OpenRouter) menganalisis foto: mendeteksi kategori
+   ukuran sampah (small/medium/large), merekomendasikan kendaraan
+   (pickup/tossa/truck), dan menilai risiko drainase serta akses.
+3. **Laporan** masuk ke dasbor DLH dengan status `ANALYZED`.
+4. **Operator DLH** meninjau laporan, mengoreksi jika perlu, dan menugaskan ke
+   petugas + kendaraan melalui sistem dispatch.
+5. **Sistem** membuat rute pengangkutan teroptimasi menggunakan OSRM.
+6. **Petugas** menerima rute di aplikasi mobile, menjemput sampah, dan
+   melakukan verifikasi pickup (foto sebelum & sesudah).
+7. **Warga** menerima koin reward yang dapat ditukarkan di Kopdes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Menjalankan dengan Docker (Production)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker compose up -d
+```
+
+Ini akan menjalankan PostgreSQL, menjalankan migrasi, seed, dan memulai aplikasi
+di port 3000.
+
+---
+
+## Struktur Folder
+
+```
+wastelens/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Halaman login & register
+│   ├── admin/                    # Dasbor & panel admin
+│   │   ├── entities/             # Kelola entitas (dinas, kopdes)
+│   │   ├── reports/              # Lihat laporan detail
+│   │   ├── transactions/         # Transaksi koin & produk
+│   │   └── users/                # Manajemen pengguna
+│   ├── api/                      # Route handlers API
+│   │   ├── admin/                # Endpoint admin
+│   │   ├── auth/                 # Endpoint autentikasi
+│   │   ├── dinas/                # Endpoint operator DLH
+│   │   ├── internal/             # Internal API (non-publik)
+│   │   ├── kopdes/               # Endpoint koperasi desa
+│   │   ├── laporan/              # CRUD laporan sampah
+│   │   ├── leaderboard/          # Peringkat warga
+│   │   ├── notifikasi/           # Push notification
+│   │   ├── penukaran/            # Penukaran koin → produk
+│   │   ├── petugas/              # Endpoint petugas lapangan
+│   │   ├── pusher/               # Real-time event auth
+│   │   ├── redemptions/          # Status penukaran
+│   │   ├── regions/              # Data wilayah
+│   │   └── user/                 # Endpoint warga
+│   ├── components/               # Komponen landing page
+│   │   └── landing/              # Hero, Comparison, HowItWorks, dll.
+│   ├── dinas/                    # Portal operator DLH
+│   │   ├── accounts/             # Kelola akun petugas
+│   │   ├── assignments/          # Penugasan laporan
+│   │   ├── logistics/            # Kendaraan & rute
+│   │   ├── reports/              # Pantau laporan
+│   │   └── settings/             # Konfigurasi dinas
+│   ├── kopdes/                   # Portal koperasi desa
+│   ├── petugas/                  # Aplikasi petugas lapangan
+│   │   ├── tasks/                # Tugas penjemputan
+│   │   └── history/              # Riwayat tugas
+│   ├── user/                     # Aplikasi warga
+│   │   ├── exchange/             # Penukaran koin
+│   │   ├── scan/                 # Scan QR penukaran
+│   │   ├── history/              # Riwayat laporan
+│   │   ├── profile/              # Profil & saldo koin
+│   │   └── community/            # Komunitas
+│   ├── hooks/                    # React hooks (Pusher, notifikasi)
+│   ├── layout.tsx                # Root layout
+│   ├── page.tsx                  # Landing page
+│   └── globals.css               # Global styles
+├── components/                   # Shared components
+│   ├── nav/                      # Sidebar, tab-bar
+│   ├── notifications/            # Komponen notifikasi
+│   ├── leaflet-location-map.tsx  # Peta lokasi
+│   ├── leaflet-routing-map.tsx   # Peta rute
+│   └── query-provider.tsx        # React Query provider
+├── lib/                          # Library & utility
+│   ├── services/                 # Business logic
+│   │   ├── vision.ts             # Klasifikasi AI (Gemini/Groq/OpenRouter)
+│   │   ├── qr.ts                 # Generate & decode QR code
+│   │   ├── spatial.ts            # Geocoding & jarak
+│   │   ├── route-optimization.ts # Optimasi rute OSRM
+│   │   ├── assignment.ts         # Logika penugasan
+│   │   └── user-notifications.ts # Push notifikasi
+│   ├── generated/prisma/         # Generated Prisma client
+│   ├── auth.ts                   # Konfigurasi better-auth
+│   ├── auth-client.ts            # Client auth hooks
+│   ├── prisma.ts                 # Prisma client singleton
+│   ├── api-client.ts             # API client utilities
+│   └── constants/                # Konstanta aplikasi
+├── server/                       # Server-side modules
+│   ├── integrations/             # Integrasi eksternal
+│   │   ├── ai/                   # Router AI (Gemini/Groq/OpenRouter)
+│   │   ├── cloudinary/           # Upload & manajemen gambar
+│   │   ├── gemini/               # Google Gemini integration
+│   │   ├── groq/                 # Groq integration
+│   │   ├── openrouter/           # OpenRouter integration
+│   │   ├── osm/                  # OpenStreetMap / OSRM
+│   │   └── supabase/             # Supabase integration
+│   ├── modules/                  # Domain modules
+│   │   ├── dispatch/             # Dispatch & routing
+│   │   ├── location/             # Geocoding & lokasi
+│   │   ├── priority/             # Prioritas laporan
+│   │   ├── redemption/           # Logika penukaran
+│   │   ├── reports/              # Pipeline laporan
+│   │   ├── rewards/              # Sistem koin reward
+│   │   └── upload/               # Upload pipeline
+│   └── websocket/                # Pusher service & events
+├── prisma/                       # Database
+│   ├── schema.prisma             # Schema Prisma
+│   ├── seed.ts                   # Data seed
+│   ├── tasik-seed.ts             # Seed data Tasikmalaya
+│   └── migrations/               # Migration history
+├── public/                       # Static assets
+│   ├── sw.js                     # Service worker (PWA)
+│   └── icons/                    # App icons
+├── docker-compose.yml            # Docker Compose (postgres + app)
+├── Dockerfile                    # Multi-stage Docker build
+├── entrypoint.sh                 # Container entrypoint
+├── vitest.config.ts              # Konfigurasi Vitest
+├── tsconfig.json                 # Konfigurasi TypeScript
+├── next.config.ts                # Konfigurasi Next.js
+├── package.json                  # Dependensi & script
+└── README.md                     # Dokumen ini
+```
+
+---
+
+## Lisensi
+
+Proyek ini bersifat privat. Hak cipta dilindungi.
