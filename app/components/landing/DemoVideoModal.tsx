@@ -52,17 +52,21 @@ export function DemoVideoModal({
 
                 <div className="px-6 pb-6">
                     <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-200">
-                        <iframe
-                            src={`https://drive.google.com/file/d/${DRIVE_FILE_ID}/preview`}
+                        <video
+                            src={`https://drive.google.com/uc?export=download&id=1dUCd8aiLBiZVVvwoCXikiNTLGDqVEDI8`}
                             className="absolute inset-0 w-full h-full"
-                            allow="autoplay; encrypted-media; fullscreen"
-                            allowFullScreen
+                            // allow="autoplay; encrypted-media; fullscreen"
+                            // allowFullScreen
                             title="Video Demo WasteLens"
                         />
                     </div>
-                    <p className="mt-3 text-xs font-medium text-slate-400 text-center">
-                        Ganti <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">DRIVE_FILE_ID</code> dengan ID file Google Drive yang sesuai
-                    </p>
+                    {/* <p className="mt-3 text-xs font-medium text-slate-400 text-center">
+                        Ganti{" "}
+                        <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">
+                            DRIVE_FILE_ID
+                        </code>{" "}
+                        dengan ID file Google Drive yang sesuai
+                    </p> */}
                 </div>
             </div>
         </div>

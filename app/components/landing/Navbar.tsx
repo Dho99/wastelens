@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Leaf, Menu, X } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 
@@ -25,9 +26,13 @@ export function Navbar() {
             <div className="container w-full mx-auto py-3.5 flex items-center justify-between px-6 md:px-12">
                 {/* Brand Logo */}
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-9 h-9 rounded-full bg-[#15803d] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
-                        <Leaf className="w-5 h-5 fill-white stroke-none" />
-                    </div>
+                    <Image
+                        src="/wastelens-logo.png"
+                        alt="WasteLens"
+                        width={36}
+                        height={36}
+                        className="rounded-full group-hover:scale-105 transition-transform"
+                    />
                     <span className="font-extrabold text-xl text-[#0f291e] tracking-tight">
                         WasteLens
                     </span>

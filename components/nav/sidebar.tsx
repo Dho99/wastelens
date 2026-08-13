@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -79,19 +80,28 @@ export function SidebarLayout({
           <X className="size-5" />
         </button>
 
-        <div className="px-[18px] pt-[23px]">
-          <Link
-            href={`/${userRole}`}
-            onClick={() => setOpen(false)}
-            className="block text-[23px] font-extrabold tracking-[-0.04em] text-[#086a28]"
-          >
-            {brand.title}
-          </Link>
-          {brand.subtitle && (
-            <p className="mt-1 text-[12px] text-[#738077]">
-              {brand.subtitle}
-            </p>
-          )}
+        <div className="px-[18px] pt-[23px] flex items-center gap-3">
+          <Image
+            src="/wastelens-logo.png"
+            alt="WasteLens"
+            width={32}
+            height={32}
+            className="rounded-full shrink-0"
+          />
+          <div>
+            <Link
+              href={`/${userRole}`}
+              onClick={() => setOpen(false)}
+              className="block text-[23px] font-extrabold tracking-[-0.04em] text-[#086a28]"
+            >
+              {brand.title}
+            </Link>
+            {brand.subtitle && (
+              <p className="mt-1 text-[12px] text-[#738077]">
+                {brand.subtitle}
+              </p>
+            )}
+          </div>
         </div>
 
         <nav className="mt-5 flex-1 space-y-2 px-2">

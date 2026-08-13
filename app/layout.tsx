@@ -19,17 +19,17 @@ export const metadata: Metadata = {
     icons: {
         icon: [
             {
-                url: "/icons/icon-192.svg",
+                url: "/icons/logo-wastelens.svg",
                 sizes: "192x192",
                 type: "image/svg+xml",
             },
             {
-                url: "/icons/icon-512.svg",
+                url: "/icons/logo-wastelens.svg",
                 sizes: "512x512",
                 type: "image/svg+xml",
             },
         ],
-        apple: "/icons/apple-touch-icon.svg",
+        apple: "/icons/logo-wastelens.svg",
     },
     appleWebApp: {
         capable: true,

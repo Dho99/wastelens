@@ -48,7 +48,14 @@ export default function LoginPage() {
             <div className="flex min-h-screen items-center justify-center px-4 bg-white/80 backdrop-blur py-8">
                 <div className="w-full max-w-lg space-y-6">
                     <div className="text-center">
-                        <h1 className="mt-4 text-xl font-bold text-primary mb-2">
+                        <Image
+                            src="/wastelens-logo.png"
+                            alt="WasteLens"
+                            width={64}
+                            height={64}
+                            className="mx-auto mb-3"
+                        />
+                        <h1 className="text-xl font-bold text-primary mb-2">
                             WasteLens
                         </h1>
                         <div className="w-14 h-1 bg-primary rounded-full m-auto mb-8" />

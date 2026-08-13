@@ -10,7 +10,9 @@ import { useAdmin } from "../hooks/useAdmin";
 function DashboardHeader() {
     const { data: notifications } = useNotifications();
     const { data: admin } = useAdmin();
-    const unreadCount = (notifications ?? []).filter((n) => !n.status_baca).length;
+    const unreadCount = (notifications ?? []).filter(
+        (n) => !n.status_baca,
+    ).length;
     const initials = (admin?.name ?? "Admin Dinas")
         .split(/\s+/)
         .filter(Boolean)
@@ -53,14 +55,22 @@ function DashboardHeader() {
                 >
                     {admin?.image ? (
                         <Image
-                            src={admin.image}
+                            src={
+                                // admin.image ||
+                                "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                            }
                             alt={admin.name}
                             fill
                             className="object-cover object-top"
                             sizes="36px"
-                            unoptimized={admin.image.startsWith("data:") || admin.image.startsWith("/api/dinas/media/")}
+                            unoptimized={
+                                admin.image.startsWith("data:") ||
+                                admin.image.startsWith("/api/dinas/media/")
+                            }
                         />
-                    ) : initials}
+                    ) : (
+                        initials
+                    )}
                 </Link>
             </div>
         </header>
