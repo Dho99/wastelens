@@ -4,7 +4,6 @@ import {
   findExistingReward,
   createRewardTransaction,
   updateUserSaldoKoin,
-  createNotification,
 } from "./reward.repository";
 import type { RewardInput, RewardResult } from "./reward.types";
 

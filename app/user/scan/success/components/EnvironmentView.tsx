@@ -1,3 +1,5 @@
+import { Mountain } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 interface EnvironmentViewProps {
@@ -12,12 +14,19 @@ export const EnvironmentView: React.FC<EnvironmentViewProps> = ({
   return (
     <div className="px-4 mb-5">
       <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={landscapeImageUrl}
-          alt="Clean environment"
-          className="w-full h-full object-cover"
-        />
+        {landscapeImageUrl ? (
+          <Image
+            src={landscapeImageUrl}
+            alt="Clean environment"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+            <Mountain className="w-8 h-8 text-gray-300" />
+          </div>
+        )}
 
         {/* Location overlay tag at bottom-left */}
         <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur-[2px] rounded-full py-1 px-3 flex items-center gap-1.5 shadow-sm border border-white/10 select-none">

@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/auth-client";
+import { signIn, googleSignin } from "@/lib/auth-client";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeClosed } from "lucide-react";
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
             return;
         }
 
-        router.push(from !== "/" ? from : "/");
+        router.push(from !== "/" ? from : "/user");
         router.refresh();
     }
 
@@ -48,7 +48,14 @@ export default function LoginPage() {
             <div className="flex min-h-screen items-center justify-center px-4 bg-white/80 backdrop-blur py-8">
                 <div className="w-full max-w-lg space-y-6">
                     <div className="text-center">
-                        <h1 className="mt-4 text-xl font-bold text-primary mb-2">
+                        <Image
+                            src="/wastelens-logo.png"
+                            alt="WasteLens"
+                            width={64}
+                            height={64}
+                            className="mx-auto mb-3"
+                        />
+                        <h1 className="text-xl font-bold text-primary mb-2">
                             WasteLens
                         </h1>
                         <div className="w-14 h-1 bg-primary rounded-full m-auto mb-8" />
@@ -145,6 +152,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             disabled={loading}
+                            onClick={googleSignin}
                             className="w-full rounded-full px-4 py-2.5 text-sm font-semibold cursor-pointer border border-neutral-300 flex items-center justify-center gap-2"
                         >
                             <Image

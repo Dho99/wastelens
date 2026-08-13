@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 import { HistoryGroup, HistoryRedeemItem } from "../services/historyListService";
 
@@ -71,12 +72,13 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                   <div className="flex items-center gap-4 flex-grow min-w-0 pr-2">
                     {/* Thumbnail Image Box */}
                     {item.imageUrl ? (
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100 relative">
+                        <Image
                           src={item.imageUrl}
                           alt={item.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
                         />
                       </div>
                     ) : (

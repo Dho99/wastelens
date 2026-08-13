@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -56,7 +57,7 @@ export function SidebarLayout({
   const brand = brandByRole[userRole] ?? { title: "Sampah" };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-dvh overflow-hidden">
       {open && (
         <button
           type="button"
@@ -67,7 +68,7 @@ export function SidebarLayout({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[258px] flex-col border-r border-[#ccddd5] bg-[#e9f6fc] transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 flex h-full w-[258px] shrink-0 flex-col overflow-hidden border-r border-[#ccddd5] bg-[#e9f6fc] transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         <button
@@ -79,19 +80,28 @@ export function SidebarLayout({
           <X className="size-5" />
         </button>
 
-        <div className="px-[18px] pt-[23px]">
-          <Link
-            href={`/${userRole}`}
-            onClick={() => setOpen(false)}
-            className="block text-[23px] font-extrabold tracking-[-0.04em] text-[#086a28]"
-          >
-            {brand.title}
-          </Link>
-          {brand.subtitle && (
-            <p className="mt-1 text-[12px] text-[#738077]">
-              {brand.subtitle}
-            </p>
-          )}
+        <div className="px-[18px] pt-[23px] flex items-center gap-3">
+          <Image
+            src="/wastelens-logo.png"
+            alt="WasteLens"
+            width={32}
+            height={32}
+            className="rounded-full shrink-0"
+          />
+          <div>
+            <Link
+              href={`/${userRole}`}
+              onClick={() => setOpen(false)}
+              className="block text-[23px] font-extrabold tracking-[-0.04em] text-[#086a28]"
+            >
+              {brand.title}
+            </Link>
+            {brand.subtitle && (
+              <p className="mt-1 text-[12px] text-[#738077]">
+                {brand.subtitle}
+              </p>
+            )}
+          </div>
         </div>
 
         <nav className="mt-5 flex-1 space-y-2 px-2">
@@ -168,8 +178,8 @@ export function SidebarLayout({
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col min-w-0">
-        <header className="flex h-14 items-center gap-3 border-b border-[#d2ddd7] bg-white px-4 lg:hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[#d2ddd7] bg-white px-4 lg:hidden">
           <button
             onClick={() => setOpen(true)}
             className="rounded-lg p-1.5 hover:bg-neutral-100"
@@ -192,7 +202,7 @@ export function SidebarLayout({
           <span className="font-semibold text-sm">{brand.title}</span>
         </header>
 
-        <main className="flex flex-1 flex-col">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</main>
       </div>
     </div>
   );

@@ -9,7 +9,9 @@ import {
   createLaporan,
 } from "./report.repository";
 import type { SubmitReportInput, ReportResult, AddressFields } from "./report.types";
+import { prisma } from "@/lib/prisma";
 import { triggerUserEvent } from "@/server/websocket/pusher.service";
+import { notifyUser } from "@/server/websocket/notify.service";
 import { createReportCreatedEvent } from "@/server/websocket/websocket.events";
 
 const RADIUS_FOR_REPEAT_METERS = 100;
@@ -130,10 +132,27 @@ export async function createReport(
 
   await markAsUsed(input.temporaryImageId);
 
-  triggerUserEvent(
-    input.userId,
-    createReportCreatedEvent({ laporanId: laporan.id, status: finalStatus }),
-  );
+  const createdEvent = createReportCreatedEvent({
+    laporanId: laporan.id,
+    status: finalStatus,
+  });
+
+  triggerUserEvent(input.userId, createdEvent);
+
+  if (dinasId) {
+    const dinas = await prisma.dinas.findUnique({
+      where: { id: dinasId },
+      select: { user_id: true },
+    });
+    if (dinas?.user_id) {
+      await notifyUser({
+        userId: dinas.user_id,
+        laporanId: laporan.id,
+        pesan: "Laporan sampah baru masuk dan menunggu penanganan.",
+        event: createdEvent,
+      });
+    }
+  }
 
   return {
     reportId: laporan.id,

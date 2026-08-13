@@ -1,3 +1,5 @@
+import { Package } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 interface RedeemedItemCardProps {
@@ -15,13 +17,20 @@ export const RedeemedItemCard: React.FC<RedeemedItemCardProps> = ({
         <div className="px-4 mb-4">
             <div className="bg-white border border-gray-100 rounded-3xl p-3.5 shadow-sm flex items-center gap-4">
                 {/* Left Image */}
-                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={imageUrl}
-                        alt={itemName}
-                        className="w-full h-full object-cover"
-                    />
+                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100 relative">
+                    {imageUrl ? (
+                        <Image
+                            src={imageUrl}
+                            alt={itemName}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-6 h-6 text-gray-300" />
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Info */}

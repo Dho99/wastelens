@@ -5,6 +5,12 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { LOAD_ESTIMATES_KG } from "@/lib/services/assignment";
 import type { ConfirmRequest } from "@/app/dinas/types/auto-collective";
 import { createHash } from "node:crypto";
+import { persistNotification, firePendingEvents } from "@/server/websocket/notify.service";
+import { createReportAssignedEvent } from "@/server/websocket/websocket.events";
+import type { PusherEvent } from "@/server/websocket/websocket.types";
+import { computeRouteDetails } from "@/server/modules/dispatch/auto-collective.service";
+import { createDispatchRouteForAssignment } from "@/server/modules/dispatch/route-append.service";
+import type { AutoCollectiveStop } from "@/app/dinas/types/auto-collective";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +26,24 @@ class ConfirmError extends Error {
 }
 
 function hashBody(body: ConfirmRequest): string {
-  const canonical = JSON.stringify(body, Object.keys(body).sort());
+  const canonical = JSON.stringify({
+    idempotencyKey: body.idempotencyKey,
+    routes: body.routes.map((route) => ({
+      temporaryRouteId: route.temporaryRouteId,
+      petugasId: route.petugasId,
+      kendaraanId: route.kendaraanId,
+      stopIds: route.stopIds,
+      routeOrder: route.routeOrder,
+    })),
+  });
   return createHash("sha256").update(canonical).digest("hex");
+}
+
+function isTransactionTimeout(error: unknown): boolean {
+  return (
+    (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2028")
+    || (error instanceof Error && error.message.includes("expired transaction"))
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -64,6 +86,13 @@ export async function POST(request: NextRequest) {
 
     const allStopIds = body.routes.flatMap((r) => r.stopIds);
 
+    if (allStopIds.length !== new Set(allStopIds).size) {
+      return NextResponse.json(
+        { error: "Terdapat stopId duplikat antar rute", code: "DEDUP" },
+        { status: 400 },
+      );
+    }
+
     const reports = await prisma.laporan.findMany({
       where: { id: { in: allStopIds } },
     });
@@ -102,6 +131,34 @@ export async function POST(request: NextRequest) {
 
     const allVehicleIds = body.routes.map((r) => r.kendaraanId);
     const uniqueVehicleIds = [...new Set(allVehicleIds)].sort();
+    const uniqueOfficerIds = [...new Set(body.routes.map((r) => r.petugasId))].sort();
+    const reportMap = new Map(reports.map((report) => [report.id, report]));
+
+    // Routing may call the external OSRM service and must never run while database
+    // rows are locked inside the interactive transaction.
+    const preparedRouteDetails = await Promise.all(
+      body.routes.map(async (route) => {
+        const stops = route.stopIds.flatMap((stopId): AutoCollectiveStop[] => {
+          const report = reportMap.get(stopId);
+          if (!report) return [];
+          const effectiveSize = (report.corrected_kategori_ukuran ?? report.kategori_ukuran).toUpperCase();
+          return [{
+            reportId: report.id,
+            lat: report.lokasi_lat,
+            lng: report.lokasi_lng,
+            address: report.address_text,
+            priorityLevel: report.priority_level,
+            priorityScore: report.priority_score,
+            estimatedLoadKg: LOAD_ESTIMATES_KG[effectiveSize] ?? LOAD_ESTIMATES_KG.UNCERTAIN,
+            sizeCategory: report.kategori_ukuran,
+            drainageRisk: report.drainage_risk,
+            accessObstructionRisk: report.access_obstruction_risk,
+            wasteTypes: report.waste_types,
+          }];
+        });
+        return computeRouteDetails(stops);
+      }),
+    );
 
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -119,6 +176,34 @@ export async function POST(request: NextRequest) {
           lockedVehicles.push(rows[0]);
         }
 
+        for (const officerId of uniqueOfficerIds) {
+          const officerRows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
+            `SELECT id FROM "PETUGAS" WHERE id = $1::uuid AND dinas_id = $2::uuid FOR UPDATE`,
+            officerId,
+            dinas.id,
+          );
+          if (officerRows.length === 0) {
+            throw new ConfirmError(`Petugas ${officerId} tidak ditemukan`, "OFFICER_NOT_FOUND", 404);
+          }
+        }
+
+        for (const stopId of allStopIds) {
+          const reportRows = await tx.$queryRawUnsafe<Array<{ id: string; petugas_id: string | null; kendaraan_id: string | null; status: string }>>(
+            `SELECT id, petugas_id, kendaraan_id, status FROM "LAPORAN" WHERE id = $1::uuid FOR UPDATE`,
+            stopId,
+          );
+          if (reportRows.length === 0) {
+            throw new ConfirmError(`Laporan ${stopId} tidak ditemukan`, "REPORT_NOT_FOUND_IN_LOCK", 404);
+          }
+          const r = reportRows[0];
+          if (r.petugas_id || r.kendaraan_id) {
+            throw new ConfirmError(`Laporan ${stopId} sudah di-assign`, "REPORT_ALREADY_ASSIGNED_AT_LOCK", 409);
+          }
+          if (r.status !== "ANALYZED" && r.status !== "WAITING") {
+            throw new ConfirmError(`Laporan ${stopId} status tidak eligible: ${r.status}`, "REPORT_STATUS_INVALID_AT_LOCK", 409);
+          }
+        }
+
         const vehicleMap = new Map(lockedVehicles.map((v) => [v.id, v]));
 
         const assignedRoutes: Array<{
@@ -128,8 +213,10 @@ export async function POST(request: NextRequest) {
           stopCount: number;
         }> = [];
         const reportLoadMap = new Map<string, number>();
+        const pendingEvents: Array<{ userId: string; event: PusherEvent }> = [];
 
-        for (const route of body.routes) {
+        for (let routeIndex = 0; routeIndex < body.routes.length; routeIndex++) {
+          const route = body.routes[routeIndex];
           const totalLoad = route.stopIds.reduce((sum, stopId) => {
             const report = reports.find((r) => r.id === stopId);
             if (!report) return sum;
@@ -190,7 +277,36 @@ export async function POST(request: NextRequest) {
                 409,
               );
             }
+
+            const report = reports.find((r) => r.id === stopId);
+            if (report?.user_id) {
+              await persistNotification(
+                {
+                  user_id: report.user_id,
+                  laporan_id: stopId,
+                  pesan: "Laporan Anda telah dijadwalkan untuk dijemput.",
+                },
+                tx,
+              );
+              pendingEvents.push({
+                userId: report.user_id,
+                event: createReportAssignedEvent({
+                  laporanId: stopId,
+                  petugasId: route.petugasId,
+                }),
+              });
+            }
           }
+
+          const dispatchRouteId = await createDispatchRouteForAssignment(tx, {
+            dinasId: dinas.id,
+            petugasId: route.petugasId,
+            kendaraanId: route.kendaraanId,
+            stopIds: route.stopIds,
+            routeOrder: route.routeOrder,
+            totalLoadKg: totalLoad,
+            preparedRouteDetails: preparedRouteDetails[routeIndex],
+          });
 
           const petugasUser = await tx.petugas.findUnique({
             where: { id: route.petugasId },
@@ -198,18 +314,25 @@ export async function POST(request: NextRequest) {
           });
 
           if (petugasUser) {
-            await tx.notifikasi.create({
-              data: {
+            await persistNotification(
+              {
                 user_id: petugasUser.user_id,
                 laporan_id: route.stopIds[0],
                 pesan: `Rute pickup telah tersedia. ${route.stopIds.length} titik pickup ditugaskan kepada Anda. Segera periksa daftar tugas.`,
-                status_baca: false,
               },
+              tx,
+            );
+            pendingEvents.push({
+              userId: petugasUser.user_id,
+              event: createReportAssignedEvent({
+                laporanId: route.stopIds[0],
+                petugasId: route.petugasId,
+              }),
             });
           }
 
           assignedRoutes.push({
-            routeId: route.temporaryRouteId,
+            routeId: dispatchRouteId,
             petugasId: route.petugasId,
             kendaraanId: route.kendaraanId,
             stopCount: route.stopIds.length,
@@ -234,8 +357,13 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        return { assignedRoutes, responsePayload };
+        return { assignedRoutes, responsePayload, pendingEvents };
+      }, {
+        maxWait: 5_000,
+        timeout: 15_000,
       });
+
+      firePendingEvents(result.pendingEvents);
 
       return NextResponse.json(result.responsePayload, { status: 200 });
     } catch (error: unknown) {
@@ -270,6 +398,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: error.message, code: error.code },
           { status: error.status },
+        );
+      }
+
+      if (isTransactionTimeout(error)) {
+        return NextResponse.json(
+          {
+            error: "Konfirmasi rute memerlukan waktu terlalu lama. Silakan coba lagi.",
+            code: "TRANSACTION_TIMEOUT",
+          },
+          { status: 503 },
         );
       }
 

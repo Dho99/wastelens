@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 import { EnvironmentHero } from "../../services/dashboardService";
 
@@ -28,12 +29,13 @@ export const EnvironmentHeroes: React.FC<EnvironmentHeroesProps> = ({
           {second && (
             <div className="flex flex-col items-center flex-1">
               <div className="relative mb-2">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={second.avatarUrl}
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-100 relative">
+                  <Image
+                    src={second.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"}
                     alt={second.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="48px"
                   />
                 </div>
               </div>
@@ -54,12 +56,13 @@ export const EnvironmentHeroes: React.FC<EnvironmentHeroesProps> = ({
                 <div className="bg-[#E69300] text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider mb-1 z-20 shadow-sm">
                   TOP
                 </div>
-                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-100 -mt-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={first.avatarUrl}
+                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-100 -mt-1 relative">
+                  <Image
+                    src={first.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"}
                     alt={first.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="64px"
                   />
                 </div>
               </div>
@@ -76,12 +79,13 @@ export const EnvironmentHeroes: React.FC<EnvironmentHeroesProps> = ({
           {third && (
             <div className="flex flex-col items-center flex-1">
               <div className="relative mb-2">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={third.avatarUrl}
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-100 relative">
+                  <Image
+                    src={third.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"}
                     alt={third.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="48px"
                   />
                 </div>
               </div>

@@ -9,11 +9,18 @@ export const auth = betterAuth({
     trustedOrigins: [
         "https://phosphorescently-stretchier-sharyl.ngrok-free.dev",
         "http://localhost:3000",
+        "https://wastelens-green.vercel.app",
     ],
     emailAndPassword: {
         enabled: true,
         // Use nama as the user's display name field
         autoSignIn: true,
+    },
+    socialProviders: {
+        google: {
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        },
     },
     user: {
         additionalFields: {

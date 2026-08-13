@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Search, Download, Filter, ArrowUpDown, MapPin, Eye, Loader2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Report, Pagination } from "../types/reports";
@@ -67,7 +68,7 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <div className="bg-[#FAF9F5] min-h-screen p-8 text-neutral-800 select-none pb-24">
+    <div className="bg-[#FAF9F5] p-8 text-neutral-800 select-none pb-24">
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-5 mb-6">
         <div>
@@ -321,11 +322,12 @@ export default function AdminReportsPage() {
             <span className="text-xs font-bold text-[#1E7D38] hover:underline cursor-pointer">Buka Map</span>
           </div>
           <div className="w-full h-52 bg-slate-100 rounded-2xl overflow-hidden border border-gray-100 relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&auto=format&fit=crop&q=80"
               alt="Jakarta Map Sebaran"
-              className="w-full h-full object-cover filter brightness-95 opacity-80"
+              fill
+              className="object-cover filter brightness-95 opacity-80"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
             <div className="absolute top-1/3 left-1/3 w-3 h-3 rounded-full bg-[#1E7D38] border-2 border-white animate-ping" />
             <div className="absolute top-1/3 left-1/3 w-3 h-3 rounded-full bg-[#1E7D38] border-2 border-white shadow-lg" />
@@ -406,11 +408,12 @@ export default function AdminReportsPage() {
 
             {selectedReport.foto && selectedReport.foto.length > 0 && (
               <div className="w-full h-40 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={selectedReport.foto[0].url}
                   alt="Sampah Warga"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
             )}

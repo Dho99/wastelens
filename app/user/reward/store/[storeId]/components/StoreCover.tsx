@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 interface StoreCoverProps {
@@ -18,13 +19,17 @@ export const StoreCover: React.FC<StoreCoverProps> = ({
   return (
     <div className="px-4 mb-5">
       <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm flex flex-col justify-end">
-        {/* cover image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={coverImageUrl}
-          alt={name}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {coverImageUrl ? (
+          <Image
+            src={coverImageUrl}
+            alt={name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200" />
+        )}
 
         {/* Faint Dark Vignette Overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />

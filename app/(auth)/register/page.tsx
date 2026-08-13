@@ -42,7 +42,7 @@ export default function RegisterPage() {
             return;
         }
 
-        router.push("/");
+        router.push("/user");
         router.refresh();
     }
 
@@ -50,7 +50,14 @@ export default function RegisterPage() {
         <div className="flex min-h-screen items-center justify-center px-4 py-8">
             <div className="w-full max-w-sm space-y-6">
                 <div className="text-center mb-8">
-                    <h1 className="mt-4 text-xl font-bold text-primary mb-2">
+                    <Image
+                        src="/wastelens-logo.png"
+                        alt="WasteLens"
+                        width={64}
+                        height={64}
+                        className="mx-auto mb-3"
+                    />
+                    <h1 className="text-xl font-bold text-primary mb-2">
                         WasteLens
                     </h1>
                     <div className="w-14 h-1 bg-primary rounded-full m-auto mb-8" />

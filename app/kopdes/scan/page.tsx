@@ -218,6 +218,9 @@ export default function ScanPage() {
             countdownRef.current = null;
         }
         if (animRef.current) cancelAnimationFrame(animRef.current);
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
         if (streamRef.current) {
             streamRef.current.getTracks().forEach((t) => t.stop());
             streamRef.current = null;
@@ -281,9 +284,16 @@ export default function ScanPage() {
                 return;
             }
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: mode },
-                });
+                let stream: MediaStream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: mode },
+                    });
+                } catch {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                    });
+                }
                 streamRef.current = stream;
                 if (videoRef.current) {
                     const video = videoRef.current;

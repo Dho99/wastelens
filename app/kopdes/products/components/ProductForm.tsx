@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef } from "react";
 import {
   CloudUpload,
@@ -167,11 +168,13 @@ export function ProductForm({
                 <p className="mb-4 text-sm font-semibold">Foto Produk</p>
 
                 {imagePreview ? (
-                  <div className="relative mb-3 overflow-hidden rounded-xl">
-                    <img
+                  <div className="relative mb-3 overflow-hidden rounded-xl aspect-[4/3]">
+                    <Image
                       src={imagePreview}
                       alt="Preview"
-                      className="aspect-[4/3] w-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                     <button
                       type="button"

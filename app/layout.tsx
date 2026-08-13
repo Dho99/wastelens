@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { ClientLayout } from "@/components/client-layout";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { PwaInstallPrompt } from "@/app/components/pwa/PwaInstallPrompt";
 import { Toaster } from "sonner";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -17,10 +18,18 @@ export const metadata: Metadata = {
     manifest: "/manifest.json",
     icons: {
         icon: [
-            { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
-            { url: "/icons/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
+            {
+                url: "/icons/logo-wastelens.svg",
+                sizes: "192x192",
+                type: "image/svg+xml",
+            },
+            {
+                url: "/icons/logo-wastelens.svg",
+                sizes: "512x512",
+                type: "image/svg+xml",
+            },
         ],
-        apple: "/icons/apple-touch-icon.svg",
+        apple: "/icons/logo-wastelens.svg",
     },
     appleWebApp: {
         capable: true,
@@ -43,8 +52,14 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${manrope.className} ${manrope.variable} h-full antialiased`}>
             <body className="min-h-full flex flex-col">
+                <NextTopLoader
+                    color="#2E7D32"
+                    height={3}
+                    showSpinner={false}
+                    shadow="0 0 10px #2E7D32,0 0 5px #2E7D32"
+                />
                 <ClientLayout>{children}</ClientLayout>
-                <PWAInstallPrompt />
+                <PwaInstallPrompt />
                 <Toaster position="top-center" richColors />
             </body>
         </html>

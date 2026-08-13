@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
 
@@ -108,8 +109,7 @@ export const QrCodeCard: React.FC<QrCodeCardProps> = ({
         if (qrDataUrl) {
             return (
                 <div className="w-64 h-64 rounded-3xl overflow-hidden bg-white border border-gray-100 p-5 flex flex-col items-center justify-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={qrDataUrl} alt="QR Code" className="w-48 h-48" />
+                    <Image src={qrDataUrl} alt="QR Code" width={192} height={192} unoptimized />
                 </div>
             );
         }

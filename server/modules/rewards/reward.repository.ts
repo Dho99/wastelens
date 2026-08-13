@@ -39,19 +39,4 @@ export async function updateUserSaldoKoin(userId: string, jumlah: number, tx?: P
   });
 }
 
-export async function createNotification(
-  data: {
-    user_id: string;
-    laporan_id: string;
-    pesan: string;
-  },
-  tx?: PrismaTransaction,
-) {
-  const client = tx ?? prisma;
-  return client.notifikasi.create({
-    data: {
-      ...data,
-      status_baca: false,
-    },
-  });
-}
+export { persistNotification as createNotification } from "@/server/websocket/notify.service";

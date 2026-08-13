@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTabBar } from "@/components/nav/tab-bar-context";
@@ -149,11 +150,12 @@ export default function ScanPage() {
       )}
 
       {isCaptured && capturedPreview && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
+        <Image
           src={capturedPreview}
           alt="Preview"
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          className="object-cover"
+          sizes="100vw"
         />
       )}
 

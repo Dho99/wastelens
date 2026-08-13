@@ -15,19 +15,18 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const formData = await request.formData();
-        const photo = formData.get("photo");
+        const contentType = request.headers.get("content-type") || "image/jpeg";
 
-        if (!photo || !(photo instanceof File)) {
+        const buffer = Buffer.from(await request.arrayBuffer());
+
+        if (buffer.length === 0) {
             return NextResponse.json(
                 { error: "File foto diperlukan", code: "PHOTO_REQUIRED" },
                 { status: 400 },
             );
         }
 
-        const buffer = Buffer.from(await photo.arrayBuffer());
-
-        const result = await uploadFile(session.user.id, buffer, photo.type);
+        const result = await uploadFile(session.user.id, buffer, contentType);
 
         return NextResponse.json(
             {

@@ -54,7 +54,7 @@ export default function AdminReportDetailPage({
   };
 
   return (
-    <div className="p-6 md:p-10 space-y-6 bg-[#f8fafc] min-h-screen text-[#0f172a] select-none pb-20">
+    <div className="p-6 md:p-10 space-y-6 bg-[#f8fafc] text-[#0f172a] select-none pb-20">
       {/* Header Row with Back Button */}
       <div className="flex items-start gap-4">
         <button

@@ -1,13 +1,25 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Bell, Settings } from "lucide-react";
 import { useNotifications } from "../hooks/useNotifications";
+import { useAdmin } from "../hooks/useAdmin";
 
 function DashboardHeader() {
     const { data: notifications } = useNotifications();
-    const unreadCount = (notifications ?? []).filter((n) => !n.status_baca).length;
+    const { data: admin } = useAdmin();
+    const unreadCount = (notifications ?? []).filter(
+        (n) => !n.status_baca,
+    ).length;
+    const initials = (admin?.name ?? "Admin Dinas")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
     return (
         <header className="flex h-16 shrink-0 items-center border-b border-[#d2ddd7] bg-white px-4 sm:px-6">
             <div className="ml-auto flex items-center gap-2 sm:gap-5">
@@ -37,9 +49,28 @@ function DashboardHeader() {
                 </Link>
                 <Link
                     href="/dinas/accounts"
-                    className="flex size-8 items-center justify-center rounded-full border border-[#c6d1cb] bg-[#e7f2ee] text-[10px] font-extrabold text-[#17662d]"
+                    aria-label={`Profil ${admin?.name ?? "Admin Dinas"}`}
+                    title={admin?.name ?? "Admin Dinas"}
+                    className="relative flex size-9 items-center justify-center overflow-hidden rounded-full border-2 border-[#087529] bg-[#e7f2ee] text-[10px] font-extrabold text-[#17662d]"
                 >
-                    AD
+                    {admin?.image ? (
+                        <Image
+                            src={
+                                // admin.image ||
+                                "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                            }
+                            alt={admin.name}
+                            fill
+                            className="object-cover object-top"
+                            sizes="36px"
+                            unoptimized={
+                                admin.image.startsWith("data:") ||
+                                admin.image.startsWith("/api/dinas/media/")
+                            }
+                        />
+                    ) : (
+                        initials
+                    )}
                 </Link>
             </div>
         </header>
